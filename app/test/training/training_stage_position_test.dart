@@ -68,71 +68,79 @@ ScrollPosition trainingScroll(WidgetTester tester) {
 }
 
 void main() {
-  testWidgets('initial placement shows the melody range without tracking notes', (
-    tester,
-  ) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(840, 390);
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'initial placement shows the melody range without tracking notes',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(840, 390);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(stage(notes: melody));
-    await tester.pump();
+      await tester.pumpWidget(stage(notes: melody));
+      await tester.pump();
 
-    final scroll = trainingScroll(tester);
-    final layout = PianoKeyboardLayout(
-      const InstrumentRange(48, 108),
-      whiteKeyWidth: math.max(38.0, 840 / 21),
-      height: (390 * 0.32).clamp(110.0, 210.0),
-    );
-    final lower = layout.keyForMidi(60)!.rect;
-    final upper = layout.keyForMidi(84)!.rect;
-    final expectedInitial = ((lower.left + upper.right - 840) / 2)
-        .clamp(0.0, scroll.maxScrollExtent)
-        .toDouble();
-    expect(scroll.pixels, closeTo(expectedInitial, 0.01));
-    expect(scroll.pixels, greaterThan(0));
+      final scroll = trainingScroll(tester);
+      final layout = PianoKeyboardLayout(
+        const InstrumentRange(48, 108),
+        whiteKeyWidth: math.max(38.0, 840 / 21),
+        height: (390 * 0.32).clamp(110.0, 210.0),
+      );
+      final lower = layout.keyForMidi(60)!.rect;
+      final upper = layout.keyForMidi(84)!.rect;
+      final expectedInitial = ((lower.left + upper.right - 840) / 2)
+          .clamp(0.0, scroll.maxScrollExtent)
+          .toDouble();
+      expect(scroll.pixels, closeTo(expectedInitial, 0.01));
+      expect(scroll.pixels, greaterThan(0));
 
-    // Advancing through widely spaced notes must only repaint highlights.
-    await tester.pumpWidget(stage(
-      notes: melody,
-      currentIndex: 1,
-      detectedNote: 72,
-      phase: TrainingPhase.running,
-    ));
-    await tester.pump();
-    expect(scroll.pixels, closeTo(expectedInitial, 0.01));
+      // Advancing through widely spaced notes must only repaint highlights.
+      await tester.pumpWidget(
+        stage(
+          notes: melody,
+          currentIndex: 1,
+          detectedNote: 72,
+          phase: TrainingPhase.running,
+        ),
+      );
+      await tester.pump();
+      expect(scroll.pixels, closeTo(expectedInitial, 0.01));
 
-    await tester.pumpWidget(stage(
-      notes: melody,
-      currentIndex: 2,
-      detectedNote: 84,
-      phase: TrainingPhase.running,
-    ));
-    await tester.pump();
-    expect(scroll.pixels, closeTo(expectedInitial, 0.01));
+      await tester.pumpWidget(
+        stage(
+          notes: melody,
+          currentIndex: 2,
+          detectedNote: 84,
+          phase: TrainingPhase.running,
+        ),
+      );
+      await tester.pump();
+      expect(scroll.pixels, closeTo(expectedInitial, 0.01));
 
-    // Manual scrolling persists through detected notes, pause and reset.
-    final manuallyChosen = math.min(scroll.maxScrollExtent, expectedInitial + 175);
-    scroll.jumpTo(manuallyChosen);
-    await tester.pump();
-    await tester.pumpWidget(stage(
-      notes: melody,
-      currentIndex: 3,
-      detectedNote: 84,
-      phase: TrainingPhase.completed,
-    ));
-    await tester.pump();
-    expect(scroll.pixels, closeTo(manuallyChosen, 0.01));
+      // Manual scrolling persists through detected notes, pause and reset.
+      final manuallyChosen = math.min(
+        scroll.maxScrollExtent,
+        expectedInitial + 175,
+      );
+      scroll.jumpTo(manuallyChosen);
+      await tester.pump();
+      await tester.pumpWidget(
+        stage(
+          notes: melody,
+          currentIndex: 3,
+          detectedNote: 84,
+          phase: TrainingPhase.completed,
+        ),
+      );
+      await tester.pump();
+      expect(scroll.pixels, closeTo(manuallyChosen, 0.01));
 
-    await tester.pumpWidget(stage(
-      notes: melody,
-      currentIndex: 0,
-      phase: TrainingPhase.ready,
-    ));
-    await tester.pump();
-    expect(scroll.pixels, closeTo(manuallyChosen, 0.01));
-  });
+      await tester.pumpWidget(
+        stage(notes: melody, currentIndex: 0, phase: TrainingPhase.ready),
+      );
+      await tester.pump();
+      expect(scroll.pixels, closeTo(manuallyChosen, 0.01));
+    },
+  );
 
   testWidgets('new melody picks a new initial position only once', (
     tester,
@@ -155,11 +163,9 @@ void main() {
     // Even after a new initial layout, subsequent updates do not snap back.
     scroll.jumpTo(0);
     await tester.pump();
-    await tester.pumpWidget(stage(
-      notes: otherMelody,
-      currentIndex: 1,
-      phase: TrainingPhase.running,
-    ));
+    await tester.pumpWidget(
+      stage(notes: otherMelody, currentIndex: 1, phase: TrainingPhase.running),
+    );
     await tester.pump();
     expect(scroll.pixels, 0);
 
