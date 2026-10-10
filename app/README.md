@@ -187,3 +187,20 @@ W ustawieniach zakresu widać na bieżąco rzeczywisty układ klawiszy od najni�
 - Testy jednostkowe sprawdzają geometrię pełnej oktawy, częściowy zakres czarnych klawiszy i pojedynczy klawisz. Widget testy sprawdzają oba oznaczenia oraz przewijanie do aktywnej nuty.
 
 Klawiatura nie odtwarza dźwięków. Spadające nuty i przechodzenie do kolejnej nuty MIDI należą do #12–#14. Nie przeprowadzono jeszcze ręcznych pomiarów wydajności i rozpoznawania na wszystkich przeglądarkach mobilnych.
+
+
+## Automatyczne testy ścieżki treningu (#15)
+
+`flutter test` wykonuje deterministyczne scenariusze bez fizycznego mikrofonu:
+wygenerowane w pamięci pliki SMF typu 0/1 (nuty, pauzy, powtórzenia,
+wiele ścieżek, zmiany tempa, akordy, nuty poza zakresem i uszkodzony nagłówek)
+przechodzą przez parser, selekcję partii, walidację instrumentu,
+`NoteEventTracker` i silnik `WaitForNoteEngine`. Test widgetowy wykonuje
+import, wybór melodii, start mikrofonu ze sztucznym PCM, błędną nutę,
+dwie osobne nuty C4 i ukończenie utworu. Próby są syntetyczne i nie
+potwierdzają jakości rzeczywistego mikrofonu.
+
+Oba workflowy GitHub Actions uruchamiają format, `flutter analyze`,
+`flutter test`, testy mostków JS oraz `flutter build web --release
+--base-href /learn-piano/` **przed** publikacją strony. Nieudany test
+zatrzymuje job build, więc deployment nie może wystartować.
