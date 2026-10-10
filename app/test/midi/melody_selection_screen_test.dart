@@ -16,25 +16,28 @@ void main() {
   testWidgets('selects melody by track without treating chords as playable', (
     tester,
   ) async {
-    final bytes = midiFixture(format: 1, tracks: [
-      trackBytes([trackName('Information'), endOfTrack()]),
-      trackBytes([
-        trackName('Chords'),
-        event(0, [0x90, 60, 90]),
-        event(0, [0x90, 64, 90]),
-        event(480, [0x80, 60, 0]),
-        event(0, [0x80, 64, 0]),
-        endOfTrack(),
-      ]),
-      trackBytes([
-        trackName('Melody'),
-        event(0, [0x90, 72, 99]),
-        event(480, [0x80, 72, 0]),
-        event(240, [0x90, 74, 99]),
-        event(240, [0x80, 74, 0]),
-        endOfTrack(),
-      ]),
-    ]);
+    final bytes = midiFixture(
+      format: 1,
+      tracks: [
+        trackBytes([trackName('Information'), endOfTrack()]),
+        trackBytes([
+          trackName('Chords'),
+          event(0, [0x90, 60, 90]),
+          event(0, [0x90, 64, 90]),
+          event(480, [0x80, 60, 0]),
+          event(0, [0x80, 64, 0]),
+          endOfTrack(),
+        ]),
+        trackBytes([
+          trackName('Melody'),
+          event(0, [0x90, 72, 99]),
+          event(480, [0x80, 72, 0]),
+          event(240, [0x90, 74, 99]),
+          event(240, [0x80, 74, 0]),
+          endOfTrack(),
+        ]),
+      ],
+    );
     final picker = MelodyPickerFake()
       ..current = PickedMidiFile(name: 'song.mid', bytes: bytes);
     await tester.pumpWidget(
@@ -75,17 +78,20 @@ void main() {
   testWidgets('splits a multi-channel type 0 file and blocks percussion', (
     tester,
   ) async {
-    final bytes = midiFixture(format: 0, tracks: [
-      trackBytes([
-        event(0, [0x90, 60, 100]),
-        event(0, [0x91, 48, 90]),
-        event(0, [0x99, 36, 85]),
-        event(480, [0x80, 60, 0]),
-        event(0, [0x81, 48, 0]),
-        event(0, [0x89, 36, 0]),
-        endOfTrack(),
-      ]),
-    ]);
+    final bytes = midiFixture(
+      format: 0,
+      tracks: [
+        trackBytes([
+          event(0, [0x90, 60, 100]),
+          event(0, [0x91, 48, 90]),
+          event(0, [0x99, 36, 85]),
+          event(480, [0x80, 60, 0]),
+          event(0, [0x81, 48, 0]),
+          event(0, [0x89, 36, 0]),
+          endOfTrack(),
+        ]),
+      ],
+    );
     final picker = MelodyPickerFake()
       ..current = PickedMidiFile(name: 'multi.mid', bytes: bytes);
     await tester.pumpWidget(
@@ -121,13 +127,16 @@ void main() {
   testWidgets('switching to a different file clears stale selection', (
     tester,
   ) async {
-    final simple = midiFixture(format: 0, tracks: [
-      trackBytes([
-        event(0, [0x90, 60, 100]),
-        event(480, [0x80, 60, 0]),
-        endOfTrack(),
-      ]),
-    ]);
+    final simple = midiFixture(
+      format: 0,
+      tracks: [
+        trackBytes([
+          event(0, [0x90, 60, 100]),
+          event(480, [0x80, 60, 0]),
+          endOfTrack(),
+        ]),
+      ],
+    );
     final picker = MelodyPickerFake()
       ..current = PickedMidiFile(name: 'first.mid', bytes: simple);
     await tester.pumpWidget(
@@ -149,9 +158,12 @@ void main() {
 
     picker.current = PickedMidiFile(
       name: 'empty.mid',
-      bytes: midiFixture(format: 0, tracks: [
-        trackBytes([endOfTrack()]),
-      ]),
+      bytes: midiFixture(
+        format: 0,
+        tracks: [
+          trackBytes([endOfTrack()]),
+        ],
+      ),
     );
     await tester.tap(find.byKey(const Key('choose-midi-file')));
     await tester.pumpAndSettle();
