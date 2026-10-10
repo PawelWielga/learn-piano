@@ -5,7 +5,7 @@
 - Repozytorium: [PawelWielga/learn-piano](https://github.com/PawelWielga/learn-piano)
 - Docelowy URL: https://pawelwielga.github.io/learn-piano/
 - Backlog wydania: [issue #18](https://github.com/PawelWielga/learn-piano/issues/18)
-- Status: M0 ukończono. W M1 działa lokalne wejście PCM z mikrofonu oraz zaimplementowano detektor chwilowego kandydata wysokości nuty (YIN). Stabilizacja NoteOn jest zaimplementowana (#6), a użytkownik potwierdził działanie testera na instrumencie. Formalna walidacja przeglądarek (#7) i trening pozostają otwarte. W M2 powstaje parser/import MIDI (#8).
+- Status: M0 ukończono. W M1 działa lokalne wejście PCM z mikrofonu oraz zaimplementowano detektor chwilowego kandydata wysokości nuty (YIN). Stabilizacja NoteOn jest zaimplementowana (#6), a użytkownik potwierdził działanie testera na instrumencie. Formalna walidacja przeglądarek (#7) i trening pozostają otwarte. W M2 działa parser i import MIDI (#8), a wybór pojedynczej partii z walidacją jednogłosowości jest realizowany w #9.
 
 ## Problem i odbiorcy
 

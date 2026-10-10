@@ -1,6 +1,6 @@
 # Learn Piano Web
 
-Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn/NoteOff events now derive from successive pitch estimates; MIDI import now reads local SMF type 0/1 files; melody selection and training are separate follow-up issues.
+Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn/NoteOff events now derive from successive pitch estimates; MIDI import now reads local SMF type 0/1 files; melody selection validates one track/channel for single-note practice; physical keyboard range validation and training remain follow-up issues.
 
 ## Prerequisites
 
@@ -33,7 +33,7 @@ The dependency versions are pinned in `pubspec.lock`, generated with Flutter 3.4
 
 ## Import MIDI z urządzenia (#8)
 
-Na ekranie głównym kliknij **Importuj plik MIDI** i wybierz lokalny plik `.mid` lub `.midi`. Wyświetlą się typ pliku, PPQ, czas utworu, liczba nut, zmiany tempa, nazwy ścieżek i podgląd pierwszych nut. Ten etap to tylko import i podgląd: **wybór monofonicznej partii, sprawdzanie akordów i trening** są osobnymi zadaniami #9–#14.
+Na ekranie głównym kliknij **Importuj plik MIDI** i wybierz lokalny plik `.mid` lub `.midi`. Wyświetlą się typ pliku, PPQ, czas utworu, liczba nut, zmiany tempa, nazwy ścieżek i podgląd pierwszych nut. Po imporcie wybierasz pojedynczą partię jednogłosową (ścieżka i kanał), a aplikacja ostrzega o akordach. Ustawienie zakresu klawiatury i trening są osobnymi zadaniami #10–#14.
 
 - `lib/src/midi/midi_parser.dart` to czysty Dart bez dodatkowych bibliotek. Obsługuje nagłówki SMF typu 0 i 1, wiele ścieżek i kanałów, delta ticks i PPQ, globalne zmiany tempa, running status, SysEx, meta events, nuty NoteOn/NoteOff (także NoteOn velocity=0), długości nut i pauzy.
 - `web/midi_file_input.js` otwiera systemowe okno wyboru, odczytuje `File.arrayBuffer()` i przekazuje bajty do Darta przez JS interop. Dane nie są wysyłane ani zapisywane, nie używamy backendu ani analityki.
@@ -41,7 +41,16 @@ Na ekranie głównym kliknij **Importuj plik MIDI** i wybierz lokalny plik `.mid
 - Globalna oś tempa korzysta domyślnie z 120 BPM (500 000 mikrosekund na ćwierćnutę), dopóki plik nie ustawi nowego tempa. Dla jednakowego ticka ostatnie zdarzenie tempa w ustalonej kolejności ścieżka/zdarzenie wygrywa. W czasie nuty uwzględniane są zmiany tempa.
 - Testy generują niewielkie, własne fixtury SMF typu 0/1 (bez komercyjnych melodii). Sprawdzają pauzy, tempo między ścieżkami, nakładanie nut, running status i uszkodzone nagłówki; testy widgetowe działają z fake pickerem, a Node sprawdza mostek wyboru pliku.
 
-**Uwaga:** obecny ekran tylko prezentuje wszystkie ścieżki; może pokazać akordy lub perkusję jako dane pliku. Nie traktuj tego jako automatycznie zatwierdzonej melodii. Przed uruchomieniem ćwiczenia w #9 trzeba wybrać i zweryfikować monofoniczną partię.
+## Wybór partii i walidacja monofoniczności (#9)
+
+Po wczytaniu MIDI aplikacja dzieli każdą ścieżkę na osobne kanały MIDI, również w plikach typu 0. Nie łączy kanałów i nie wybiera automatycznie melodii. Przy każdej partii pokazuje liczbę nut, zakres, czas oraz status. Kliknięcie dostępnej partii zapisuje w pamięci bieżącego ekranu `MelodySelection` z uporządkowaną, niemodyfikowalną listą `MidiNote` dla przyszłego treningu. Zmiana pliku czyści poprzedni wybór.
+
+- **Jednogłosowość:** dwa `NoteOn` o identycznym ticku albo początek kolejnej nuty wcześniejszy niż koniec poprzedniej oznaczają nakładanie się nut. Dotyczy to również powtórzonego tego samego dźwięku. Dokładnie stykające się nuty i pauzy są dozwolone.
+- **Akordy/polifonia:** status z liczbą wykrytych nakładających się nut i brak możliwości wyboru. Nie próbujemy wyciągać pojedynczego głosu z akordu.
+- **Perkusja:** kanał 10 MIDI (indeks 9) jest pokazany jako nieobsługiwany. Ścieżki bez nut są prezentowane jako puste i nie można ich wybrać.
+- **Granica etapu:** wybór partii nie uruchamia mikrofonu ani treningu. W #10 trzeba jeszcze skonfigurować zakres fizycznej klawiatury i sprawdzić, czy wszystkie nuty się w nim mieszczą.
+
+Deterministyczne testy walidatora obejmują wiele ścieżek, typ 0 z kilkoma kanałami, puste partie, perkusję, identyczne początki, powtarzane dźwięki, nakładanie i pauzy. Testy widgetowe obejmują wybór, blokadę akordów i zmianę pliku.
 
 ## Browser microphone capture (#4)
 
