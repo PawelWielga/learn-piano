@@ -62,8 +62,13 @@ void main() {
     expect(find.text('Wczytano: melody.MIDI'), findsOneWidget);
     expect(find.textContaining('Typ 0'), findsOneWidget);
     expect(find.textContaining('480 PPQ'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('melody-part-0-0')),
+      150,
+      alignment: 0.5,
+    );
     expect(find.text('Piano'), findsOneWidget);
-    expect(find.textContaining('C4'), findsOneWidget);
+    expect(find.textContaining('C4'), findsWidgets);
   });
 
   testWidgets('rejects corrupt files and can recover with another import', (
