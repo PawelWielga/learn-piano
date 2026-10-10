@@ -475,12 +475,10 @@ String _spectrumDescription(SpectrumSnapshot? spectrum) {
         .round()
         .clamp(0, 127)
         .toInt();
-    return PitchEstimate.nameForMidi(midi) +
-        ' (' +
-        peak.frequencyHz.toStringAsFixed(0) +
-        ' Hz)';
+    return '${PitchEstimate.nameForMidi(midi)} '
+        '(${peak.frequencyHz.toStringAsFixed(0)} Hz)';
   });
-  return 'Najsilniejsze piki: ' + descriptions.join(' • ');
+  return 'Najsilniejsze piki: ${descriptions.join(' • ')}';
 }
 
 String _errorText(AudioInputFailure failure) {
