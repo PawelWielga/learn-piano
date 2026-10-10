@@ -85,13 +85,22 @@ class FallingNotesView extends StatefulWidget {
     required this.range,
     required this.currentIndex,
     this.detectedNote,
-  }) : assert(notes.length > 0),
+    this.compact = false,
+    this.rollHeight = 260,
+    this.keyboardHeight = 128,
+  }) : assert(rollHeight > 48),
+       assert(keyboardHeight > 0),
+       assert(notes.length > 0),
        assert(currentIndex >= 0 && currentIndex < notes.length);
 
   final List<MidiNote> notes;
   final InstrumentRange range;
   final int currentIndex;
   final int? detectedNote;
+  /// Hide explanatory labels when the parent provides a compact status bar.
+  final bool compact;
+  final double rollHeight;
+  final double keyboardHeight;
 
   @override
   State<FallingNotesView> createState() => _FallingNotesViewState();
@@ -137,29 +146,35 @@ class _FallingNotesViewState extends State<FallingNotesView> {
     const expectedColor = Color(0xFF00796D);
     const futureColor = Color(0xFF347CB5);
     final currentNote = widget.notes[widget.currentIndex];
-    final keyboard = PianoKeyboardLayout(widget.range, height: 128);
+    final keyboard = PianoKeyboardLayout(
+      widget.range,
+      height: widget.keyboardHeight,
+    );
     final layout = FallingNotesLayout(
       notes: widget.notes,
       keyboard: keyboard,
       currentIndex: widget.currentIndex,
+      height: widget.rollHeight,
     );
 
     return Column(
       key: const Key('falling-notes-view'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Teraz: ${PitchEstimate.nameForMidi(currentNote.midiNote)} • '
-          'nuta ${widget.currentIndex + 1} z ${widget.notes.length}',
-          key: const Key('falling-current-note'),
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Zielona: oczekiwana • niebieskie: kolejne • linia: teraz',
-          style: TextStyle(fontSize: 12),
-        ),
-        const SizedBox(height: 8),
+        if (!widget.compact) ...[
+          Text(
+            'Teraz: ${PitchEstimate.nameForMidi(currentNote.midiNote)} • '
+            'nuta ${widget.currentIndex + 1} z ${widget.notes.length}',
+            key: const Key('falling-current-note'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Zielona: oczekiwana • niebieskie: kolejne • linia: teraz',
+            style: TextStyle(fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+        ],
         LayoutBuilder(
           builder: (context, constraints) {
             _focus(keyboard, constraints.maxWidth);
@@ -211,12 +226,14 @@ class _FallingNotesViewState extends State<FallingNotesView> {
             );
           },
         ),
-        const SizedBox(height: 6),
-        const Text(
-          'Przesuń podgląd w bok, aby zobaczyć inne klawisze. '
-          'Widok nie odtwarza MIDI ani nie przesuwa się sam.',
-          style: TextStyle(fontSize: 12),
-        ),
+        if (!widget.compact) ...[
+          const SizedBox(height: 6),
+          const Text(
+            'Przesuń podgląd w bok, aby zobaczyć inne klawisze. '
+            'Widok nie odtwarza MIDI ani nie przesuwa się sam.',
+            style: TextStyle(fontSize: 12),
+          ),
+        ],
       ],
     );
   }
