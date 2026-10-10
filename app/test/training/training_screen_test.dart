@@ -318,4 +318,64 @@ void main() {
     expect(fake.disposes, 1);
     expect(find.text('Import MIDI'), findsOneWidget);
   });
+
+  testWidgets(
+    'import to completed practice rejects wrong notes and held repetitions',
+    (tester) async {
+      final fake = TrainingAudioFake();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MidiImportScreen(
+            filePicker: TrainingMidiPickerFake(),
+            trainingAudioInput: fake,
+          ),
+        ),
+      );
+      await tester.tap(find.byKey(const Key('choose-midi-file')));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('melody-part-0-0')),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.byKey(const Key('melody-part-0-0')));
+      await tester.pump();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('start-midi-training')),
+        -160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.byKey(const Key('start-midi-training')));
+      await tester.pumpAndSettle();
+
+      await startExercise(tester, fake);
+      fake.strike(67, startMs: 440); // Wrong G4, expected C4.
+      await tester.pump();
+      expect(find.text('0 / 3 nut'), findsOneWidget);
+      expect(find.text('Inna nuta. Spróbuj ponownie.'), findsOneWidget);
+
+      fake.release(startMs: 830);
+      fake.strike(60, startMs: 1220);
+      await tester.pump();
+      expect(find.text('1 / 3 nut'), findsOneWidget);
+
+      fake.tone(60, 1610); // Still held: cannot score the second C4.
+      await tester.pump();
+      expect(find.text('1 / 3 nut'), findsOneWidget);
+      fake.release(startMs: 1740);
+      fake.strike(60, startMs: 2130);
+      await tester.pump();
+      expect(find.text('2 / 3 nut'), findsOneWidget);
+      expect(find.text('Oczekiwana: E4'), findsOneWidget);
+
+      fake.release(startMs: 2520);
+      fake.strike(64, startMs: 2910);
+      await tester.pump();
+      expect(find.byKey(const Key('training-completed')), findsOneWidget);
+      expect(find.text('3 / 3 nut'), findsOneWidget);
+      expect(fake.starts, 1);
+      expect(fake.stops, 1);
+    },
+  );
+
 }
