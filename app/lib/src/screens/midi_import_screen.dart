@@ -43,7 +43,9 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
       // Browser accept filters are suggestions, not security boundaries.
       final lowerName = selected.name.toLowerCase();
       if (!lowerName.endsWith('.mid') && !lowerName.endsWith('.midi')) {
-        throw const MidiFormatException('Wybierz plik z rozszerzeniem .mid lub .midi.');
+        throw const MidiFormatException(
+          'Wybierz plik z rozszerzeniem .mid lub .midi.',
+        );
       }
       final midi = _parser.parse(selected.bytes);
       if (!mounted) return;
@@ -84,7 +86,11 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
             child: ListView(
               padding: const EdgeInsets.all(24),
               children: [
-                Icon(Icons.library_music, size: 64, color: theme.colorScheme.primary),
+                Icon(
+                  Icons.library_music,
+                  size: 64,
+                  color: theme.colorScheme.primary,
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Wybierz swoją melodię',
@@ -102,8 +108,12 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                   key: const Key('choose-midi-file'),
                   onPressed: _busy ? null : _import,
                   icon: const Icon(Icons.upload_file),
-                  label: Text(_busy ? 'Wczytywanie…' : 'Wybierz plik .mid / .midi'),
-                  style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+                  label: Text(
+                    _busy ? 'Wczytywanie…' : 'Wybierz plik .mid / .midi',
+                  ),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
