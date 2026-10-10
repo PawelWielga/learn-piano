@@ -47,11 +47,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('melody-selection-hint')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.textContaining('Pusta ścieżka'),
+      160,
+      alignment: 0.5,
+    );
     expect(find.textContaining('Pusta ścieżka'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.byKey(const Key('melody-part-1-0')),
       200,
+      alignment: 0.5,
     );
     expect(
       tester.widget<InkWell>(find.byKey(const Key('melody-part-1-0'))).onTap,
@@ -62,6 +68,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('melody-part-2-0')),
       180,
+      alignment: 0.5,
     );
     await tester.tap(find.byKey(const Key('melody-part-2-0')));
     await tester.pump();
@@ -69,6 +76,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('selected-melody')),
       -180,
+      alignment: 0.5,
     );
     expect(find.text('Wybrana melodia'), findsOneWidget);
     expect(find.textContaining('kanał 1'), findsWidgets);
@@ -103,6 +111,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('melody-part-0-9')),
       170,
+      alignment: 0.5,
     );
     expect(
       tester.widget<InkWell>(find.byKey(const Key('melody-part-0-9'))).onTap,
@@ -113,12 +122,14 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('melody-part-0-1')),
       -150,
+      alignment: 0.5,
     );
     await tester.tap(find.byKey(const Key('melody-part-0-1')));
     await tester.pump();
     await tester.scrollUntilVisible(
       find.byKey(const Key('selected-melody')),
       -150,
+      alignment: 0.5,
     );
     expect(find.textContaining('kanał 2'), findsWidgets);
     expect(find.textContaining('C3–C3'), findsOneWidget);
@@ -147,12 +158,14 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('melody-part-0-0')),
       150,
+      alignment: 0.5,
     );
     await tester.tap(find.byKey(const Key('melody-part-0-0')));
     await tester.pump();
     await tester.scrollUntilVisible(
       find.byKey(const Key('choose-midi-file')),
       -150,
+      alignment: 0.5,
     );
     expect(find.byKey(const Key('selected-melody')), findsOneWidget);
 
