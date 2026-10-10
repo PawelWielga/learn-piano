@@ -129,7 +129,8 @@ class _TrainingScreenState extends State<TrainingScreen>
       _stopAuto();
       return;
     }
-    if (_busy || _landscapeBlocked ||
+    if (_busy ||
+        _landscapeBlocked ||
         _snapshot.phase == TrainingPhase.error ||
         widget.selection.notes.isEmpty) {
       return;
@@ -163,9 +164,11 @@ class _TrainingScreenState extends State<TrainingScreen>
     if (!mounted || !_autoPlaying) return;
     final notes = widget.selection.notes;
     final duration = _autoClock.duration!;
-    final playhead = notes.first.start +
-        Duration(microseconds:
-            (duration.inMicroseconds * _autoClock.value).round());
+    final playhead =
+        notes.first.start +
+        Duration(
+          microseconds: (duration.inMicroseconds * _autoClock.value).round(),
+        );
 
     void releaseActive() {
       final index = _autoActiveIndex;
@@ -448,7 +451,9 @@ class _TrainingScreenState extends State<TrainingScreen>
   }
 
   Future<void> _pause() async {
-    if (_busy || _autoPlaying || _snapshot.phase != TrainingPhase.running) return;
+    if (_busy || _autoPlaying || _snapshot.phase != TrainingPhase.running) {
+      return;
+    }
     _releaseKeyboardNotes();
     setState(() => _snapshot = _engine.pause());
     if (_listening) await _stopCapture();
@@ -485,17 +490,17 @@ class _TrainingScreenState extends State<TrainingScreen>
     final phaseLabel = _autoPlaying
         ? 'Odsłuch wybranej partii MIDI'
         : switch (phase) {
-      TrainingPhase.ready => 'Gotowe do ćwiczenia',
-      TrainingPhase.running =>
-        _mode == TrainingInputMode.keyboard
-            ? 'Graj na klawiaturze ekranowej'
-            : _awaitingSilence
-            ? 'Poczekaj na ciszę i zagraj pierwszą nutę'
-            : 'Słucham Twojego pianinka',
-      TrainingPhase.paused => 'Ćwiczenie wstrzymane',
-      TrainingPhase.completed => 'Brawo! Melodia ukończona',
-      TrainingPhase.error => 'Nie można rozpocząć treningu',
-    };
+            TrainingPhase.ready => 'Gotowe do ćwiczenia',
+            TrainingPhase.running =>
+              _mode == TrainingInputMode.keyboard
+                  ? 'Graj na klawiaturze ekranowej'
+                  : _awaitingSilence
+                  ? 'Poczekaj na ciszę i zagraj pierwszą nutę'
+                  : 'Słucham Twojego pianinka',
+            TrainingPhase.paused => 'Ćwiczenie wstrzymane',
+            TrainingPhase.completed => 'Brawo! Melodia ukończona',
+            TrainingPhase.error => 'Nie można rozpocząć treningu',
+          };
     final attemptLabel = switch (_snapshot.lastAttempt) {
       TrainingAttempt.ignored => 'Zagraj wskazaną nutę.',
       TrainingAttempt.correct => 'Dobrze! Przejdź do kolejnej nuty.',
@@ -515,14 +520,14 @@ class _TrainingScreenState extends State<TrainingScreen>
           progress: _autoPlaying ? _autoClock.value : _snapshot.progress,
           expectedNote: _autoPlaying
               ? _autoActiveIndex == null
-                  ? null
-                  : widget.selection.notes[_autoActiveIndex!].midiNote
+                    ? null
+                    : widget.selection.notes[_autoActiveIndex!].midiNote
               : _snapshot.expectedMidiNote,
           detectedNote: _autoPlaying
               ? null
               : _mode == TrainingInputMode.keyboard
-                  ? _keyboardNote
-                  : _stableNote,
+              ? _keyboardNote
+              : _stableNote,
           lastAttempt: _autoPlaying
               ? TrainingAttempt.ignored
               : _snapshot.lastAttempt,
@@ -551,7 +556,8 @@ class _TrainingScreenState extends State<TrainingScreen>
                   _ => null,
                 },
           onReset: _busy || _autoPlaying || phase == TrainingPhase.error
-              ? null : _reset,
+              ? null
+              : _reset,
         ),
       ),
     );

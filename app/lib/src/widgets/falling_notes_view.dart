@@ -32,7 +32,8 @@ class FallingNotesLayout {
     // One scale applies to both start offsets and durations.
     final lookAhead = math.min(5, notes.length - 1);
     final lookAheadMicros =
-        notes[lookAhead].start.inMicroseconds - notes.first.start.inMicroseconds;
+        notes[lookAhead].start.inMicroseconds -
+        notes.first.start.inMicroseconds;
     pixelsPerSecond = math.min(
       88.0,
       (nowLineY - 24) * 1000000 / math.max(1, lookAheadMicros),
@@ -40,7 +41,9 @@ class FallingNotesLayout {
 
     final blocks = <FallingNoteBlock>[];
     // Include the just-played note while its tail moves past the hit line.
-    final firstIndex = playhead == null ? currentIndex : math.max(0, currentIndex - 1);
+    final firstIndex = playhead == null
+        ? currentIndex
+        : math.max(0, currentIndex - 1);
     for (var i = firstIndex; i < notes.length; i++) {
       final note = notes[i];
       final key = keyboard.keyForMidi(note.midiNote);

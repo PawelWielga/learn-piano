@@ -168,6 +168,7 @@ class _TrainingStageState extends State<TrainingStage> {
     // A completed final note must still be released by its pointer-up.
     // The parent stops voices when pausing, resetting or changing sources.
     if (oldWidget.inputMode != widget.inputMode ||
+        oldWidget.autoPlaying != widget.autoPlaying ||
         (oldWidget.phase != widget.phase &&
             (widget.phase == TrainingPhase.ready ||
                 widget.phase == TrainingPhase.paused ||
@@ -230,7 +231,8 @@ class _TrainingStageState extends State<TrainingStage> {
 
   @override
   Widget build(BuildContext context) {
-    final showOverlay = !widget.autoPlaying &&
+    final showOverlay =
+        !widget.autoPlaying &&
         (_showControls || widget.phase != TrainingPhase.running);
     final completed = widget.phase == TrainingPhase.completed;
     final expected = widget.expectedNote == null
@@ -262,7 +264,8 @@ class _TrainingStageState extends State<TrainingStage> {
         final targetMicros = widget.notes.isEmpty
             ? 0.0
             : (widget.playhead ?? widget.notes[focusedIndex].start)
-                .inMicroseconds.toDouble();
+                  .inMicroseconds
+                  .toDouble();
 
         return Stack(
           children: [
@@ -403,9 +406,11 @@ class _TrainingStageState extends State<TrainingStage> {
                           ? null
                           : widget.onAutoPlay,
                       color: TrainingStagePalette.detected,
-                      icon: Icon(widget.autoPlaying
-                          ? Icons.stop_circle_outlined
-                          : Icons.music_note),
+                      icon: Icon(
+                        widget.autoPlaying
+                            ? Icons.stop_circle_outlined
+                            : Icons.music_note,
+                      ),
                     ),
                     IconButton(
                       key: const Key('training-primary'),
