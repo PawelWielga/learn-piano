@@ -82,7 +82,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _awaitingSilence = true;
       _tracker.reset();
       _snapshot = _engine.pause();
-      _error = 'Mikrofon został przerwany. Wznów ćwiczenie, '
+      _error =
+          'Mikrofon został przerwany. Wznów ćwiczenie, '
           'gdy urządzenie będzie dostępne.';
     });
     // Also release tracks when the adapter only reported an interruption.
@@ -182,8 +183,11 @@ class _TrainingScreenState extends State<TrainingScreen> {
       if (wasListening) await _input.stop();
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Nie udało się zatrzymać mikrofonu. '
-            'Zamknij kartę, jeśli urządzenie nadal nasłuchuje.');
+        setState(
+          () => _error =
+              'Nie udało się zatrzymać mikrofonu. '
+              'Zamknij kartę, jeśli urządzenie nadal nasłuchuje.',
+        );
       }
     } finally {
       _tracker.reset();
@@ -232,9 +236,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
     final phaseLabel = switch (phase) {
       TrainingPhase.ready => 'Gotowe do ćwiczenia',
-      TrainingPhase.running => _awaitingSilence
-          ? 'Poczekaj na ciszę i zagraj pierwszą nutę'
-          : 'Słucham Twojego pianinka',
+      TrainingPhase.running =>
+        _awaitingSilence
+            ? 'Poczekaj na ciszę i zagraj pierwszą nutę'
+            : 'Słucham Twojego pianinka',
       TrainingPhase.paused => 'Ćwiczenie wstrzymane',
       TrainingPhase.completed => 'Brawo! Melodia ukończona',
       TrainingPhase.error => 'Nie można rozpocząć treningu',
@@ -301,11 +306,16 @@ class _TrainingScreenState extends State<TrainingScreen> {
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         children: [
-                          Icon(Icons.check_circle,
-                              size: 64, color: theme.colorScheme.primary),
+                          Icon(
+                            Icons.check_circle,
+                            size: 64,
+                            color: theme.colorScheme.primary,
+                          ),
                           const SizedBox(height: 8),
-                          Text('Ukończono wszystkie nuty!',
-                              style: theme.textTheme.titleLarge),
+                          Text(
+                            'Ukończono wszystkie nuty!',
+                            style: theme.textTheme.titleLarge,
+                          ),
                           const SizedBox(height: 8),
                           const Text('Wybierz Reset, aby zagrać ponownie.'),
                         ],
@@ -313,8 +323,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     ),
                   ),
                 ] else if (phase == TrainingPhase.error) ...[
-                  Text(_snapshot.errorMessage ?? 'Niepoprawna melodia.',
-                      style: TextStyle(color: theme.colorScheme.error)),
+                  Text(
+                    _snapshot.errorMessage ?? 'Niepoprawna melodia.',
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
                 ] else ...[
                   Text(
                     'Oczekiwana: ${expected == null ? '—' : PitchEstimate.nameForMidi(expected)}',
@@ -333,7 +345,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
                       attemptLabel,
                       key: const Key('training-feedback'),
                       style: TextStyle(
-                        color: _snapshot.lastAttempt == TrainingAttempt.incorrect
+                        color:
+                            _snapshot.lastAttempt == TrainingAttempt.incorrect
                             ? theme.colorScheme.error
                             : null,
                       ),
@@ -393,9 +406,11 @@ class _TrainingScreenState extends State<TrainingScreen> {
                           TrainingPhase.paused => () => _start(resume: true),
                           _ => null,
                         },
-                  icon: Icon(phase == TrainingPhase.running
-                      ? Icons.pause
-                      : Icons.play_arrow),
+                  icon: Icon(
+                    phase == TrainingPhase.running
+                        ? Icons.pause
+                        : Icons.play_arrow,
+                  ),
                   label: Text(switch (phase) {
                     TrainingPhase.ready => 'Start i mikrofon',
                     TrainingPhase.running => 'Pauza',
@@ -411,7 +426,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
               Expanded(
                 child: OutlinedButton.icon(
                   key: const Key('training-reset'),
-                  onPressed: _busy || phase == TrainingPhase.error ? null : _reset,
+                  onPressed: _busy || phase == TrainingPhase.error
+                      ? null
+                      : _reset,
                   icon: const Icon(Icons.restart_alt),
                   label: const Text('Reset'),
                   style: OutlinedButton.styleFrom(
@@ -430,12 +447,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
 String _audioErrorText(AudioInputFailure failure) => switch (failure) {
   AudioInputFailure.permissionDenied =>
     'Brak zgody na mikrofon. Zezwól na dostęp w ustawieniach witryny.',
-  AudioInputFailure.noDevice =>
-    'Nie znaleziono mikrofonu. Podłącz urządzenie.',
-  AudioInputFailure.deviceBusy =>
-    'Mikrofon jest zajęty przez inną aplikację.',
-  AudioInputFailure.insecureContext =>
-    'Mikrofon wymaga HTTPS lub localhost.',
+  AudioInputFailure.noDevice => 'Nie znaleziono mikrofonu. Podłącz urządzenie.',
+  AudioInputFailure.deviceBusy => 'Mikrofon jest zajęty przez inną aplikację.',
+  AudioInputFailure.insecureContext => 'Mikrofon wymaga HTTPS lub localhost.',
   AudioInputFailure.unsupported =>
     'Przeglądarka nie obsługuje wymaganych funkcji Web Audio.',
   AudioInputFailure.alreadyRunning => 'Mikrofon jest już włączony.',
