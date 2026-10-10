@@ -145,7 +145,8 @@ class _SpectrumPainter extends CustomPainter {
       final midi = (69 +
               12 * math.log(peak.frequencyHz / 440) / math.ln2)
           .round()
-          .clamp(0, 127);
+          .clamp(0, 127)
+          .toInt();
       final painter = TextPainter(
         text: TextSpan(
           text: PitchEstimate.nameForMidi(midi),
