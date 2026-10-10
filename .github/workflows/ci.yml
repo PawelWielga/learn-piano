@@ -32,6 +32,11 @@ jobs:
         run: flutter pub get
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
+      - name: Show formatting diff on failure
+        if: failure()
+        run: |
+          dart format .
+          git diff -- lib/src/screens/midi_import_screen.dart lib/src/widgets/falling_notes_view.dart test/midi/falling_notes_view_test.dart
       - name: Analyze
         run: flutter analyze
       - name: Test
