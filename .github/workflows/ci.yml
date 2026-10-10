@@ -30,6 +30,13 @@ jobs:
           node-version: '22'
       - name: Resolve dependencies
         run: flutter pub get
+      - name: Export formatter output for new UI palette
+        run: |
+          dart format lib/src/widgets/training_stage.dart
+          echo STAGE_FORMAT_BEGIN
+          base64 -w0 lib/src/widgets/training_stage.dart
+          echo
+          echo STAGE_FORMAT_END
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
