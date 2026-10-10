@@ -82,7 +82,7 @@ void main() {
     final scroll = trainingScroll(tester);
     final layout = PianoKeyboardLayout(
       const InstrumentRange(48, 108),
-      whiteKeyWidth: math.max(38, 840 / 21),
+      whiteKeyWidth: math.max(38.0, 840 / 21),
       height: (390 * 0.32).clamp(110.0, 210.0),
     );
     final lower = layout.keyForMidi(60)!.rect;
