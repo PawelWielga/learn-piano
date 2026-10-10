@@ -106,9 +106,8 @@ class TrainingStage extends StatefulWidget {
 class _TrainingStageState extends State<TrainingStage> {
   final ScrollController _scrollController = ScrollController();
   bool _showControls = true;
-  int? _lastFocus;
-  InstrumentRange? _lastRange;
-  double? _lastWidth;
+  bool _initialPositionScheduled = false;
+  int _positionGeneration = 0;
   final Map<int, int> _pointerNotes = <int, int>{};
   PianoKeyboardLayout? _activeKeyboard;
   double _activeRollHeight = 0;
@@ -152,6 +151,13 @@ class _TrainingStageState extends State<TrainingStage> {
   @override
   void didUpdateWidget(TrainingStage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // A different melody/range is a new layout. Progress, phase changes,
+    // detected notes and viewport resizes must never reposition the keys.
+    if (oldWidget.range != widget.range ||
+        !identical(oldWidget.notes, widget.notes)) {
+      _initialPositionScheduled = false;
+      _positionGeneration++;
+    }
     // A completed final note must still be released by its pointer-up.
     // The parent stops voices when pausing, resetting or changing sources.
     if (oldWidget.inputMode != widget.inputMode ||
@@ -176,26 +182,43 @@ class _TrainingStageState extends State<TrainingStage> {
     super.dispose();
   }
 
-  void _focus(PianoKeyboardLayout keyboard, double width) {
-    final focus = widget.expectedNote ?? widget.detectedNote;
-    if (_lastFocus == focus &&
-        _lastRange == widget.range &&
-        _lastWidth == width) {
-      return;
+  /// Pick the initial view from the *melody*, not its changing cursor.
+  /// If the entire melody range fits, center it; otherwise show the first
+  /// note. After this one-time positioning, only the user can scroll.
+  void _positionAtStart(PianoKeyboardLayout keyboard) {
+    if (_initialPositionScheduled) return;
+    _initialPositionScheduled = true;
+    final generation = _positionGeneration;
+    final firstNote = widget.notes.isEmpty
+        ? null
+        : keyboard.keyForMidi(widget.notes.first.midiNote);
+
+    var melodyLeft = double.infinity;
+    var melodyRight = double.negativeInfinity;
+    for (final note in widget.notes) {
+      final key = keyboard.keyForMidi(note.midiNote);
+      if (key == null) continue;
+      melodyLeft = math.min(melodyLeft, key.rect.left);
+      melodyRight = math.max(melodyRight, key.rect.right);
     }
-    _lastFocus = focus;
-    _lastRange = widget.range;
-    _lastWidth = width;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_scrollController.hasClients) return;
-      final key = focus == null ? null : keyboard.keyForMidi(focus);
-      final target = key == null
+      if (!mounted ||
+          generation != _positionGeneration ||
+          !_scrollController.hasClients) {
+        return;
+      }
+      final position = _scrollController.position;
+      final width = position.viewportDimension;
+      final target = melodyLeft.isFinite &&
+              melodyRight - melodyLeft <= width
+          ? (melodyLeft + melodyRight - width) / 2
+          : firstNote == null
           ? 0.0
-          : (key.rect.center.dx - width / 2).clamp(
-              0.0,
-              _scrollController.position.maxScrollExtent,
-            );
-      _scrollController.jumpTo(target.toDouble());
+          : firstNote.rect.center.dx - width / 2;
+      _scrollController.jumpTo(
+        target.clamp(0.0, position.maxScrollExtent).toDouble(),
+      );
     });
   }
 
@@ -225,7 +248,7 @@ class _TrainingStageState extends State<TrainingStage> {
         final rollHeight = height - keyboardHeight;
         _activeKeyboard = keyboard;
         _activeRollHeight = rollHeight;
-        _focus(keyboard, width);
+        _positionAtStart(keyboard);
         final focusedIndex = widget.notes.isEmpty
             ? 0
             : widget.currentIndex.clamp(0, widget.notes.length - 1).toInt();
