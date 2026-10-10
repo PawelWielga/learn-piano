@@ -122,7 +122,9 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
     final selection = _selection;
     final rangeCheck = selection == null
         ? null
-        : _instrumentRange.checkNotes(selection.notes.map((note) => note.midiNote));
+        : _instrumentRange.checkNotes(
+            selection.notes.map((note) => note.midiNote),
+          );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Import MIDI')),
