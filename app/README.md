@@ -114,6 +114,28 @@ Widget tests: `test/layout/landscape_gate_test.dart` i testy zmiany
 orientacji w `widget_test.dart` oraz `training/training_screen_test.dart`.
 Test na fizycznym telefonie pozostaje częścią #16.
 
+## Trening na ekranowej klawiaturze (#41)
+
+W górnym pasku treningu można przełączyć mikrofon na ikonę pianina
+(„klawiatura ekranowa”). Wybierz tryb klawiatury i **Start**.
+Naciśnięcie białego lub czarnego klawisza generuje lokalnie dźwięk
+o odpowiadającej mu wysokości MIDI i przekazuje NoteOn do tego samego
+silnika Wait for Note co mikrofon. Zwolnienie klawisza generuje NoteOff.
+Błędne nuty nie przesuwają treningu, powtarzane nuty wymagają oddzielnego
+naciśnięcia, a kilka palców może przytrzymywać niezależne dźwięki.
+Przewijanie klawiatury pozostaje możliwe; przesunięcie palca poza
+naciśnięty klawisz kończy tę nutę.
+
+Adapter `lib/src/audio/note_output.dart` i `web/note_output.js` używa
+Web Audio API (lokalne oscylatory z obwiednią). Nie pobiera próbek,
+nie prosi o mikrofon i nie łączy się z serwerem. Kontekst audio powstaje
+po dotknięciu klawisza. Zmiana źródła w trakcie ćwiczenia wstrzymuje je,
+a pauza, reset, opuszczenie ekranu i schowanie karty zatrzymują aktywne
+głosy. Dźwięk ma syntetyczną, a nie samplowaną barwę pianina.
+Na platformach bez Web Audio dotyk może nadal zaliczać nuty, ale widoczny
+jest komunikat o braku odtwarzania. Testy Flutter i Node używają fake'ów;
+rzeczywiste audio na Chrome Android i Safari iOS wymaga ręcznej weryfikacji.
+
 ## Browser microphone capture (#4)
 
 The input is requested **only** after tapping **Włącz mikrofon**. The browser requires HTTPS (GitHub Pages) or localhost. `web/audio_input.js` wraps `getUserMedia` and Web Audio. `web/audio_capture_processor.js` buffers mono float PCM on an AudioWorklet thread and transfers 2048-sample frames into Dart through `dart:js_interop`. Frames carry the **actual AudioContext sample rate** and a timestamp relative to its clock. Raw frames stay in the browser, are never saved, uploaded or logged.
@@ -191,7 +213,9 @@ W ustawieniach zakresu widać na bieżąco rzeczywisty układ klawiszy od najni�
 - Grafika korzysta z `CustomPainter`, który maluje klawisze w kolejności białe → czarne. Przerysowanie zależy od zakresu lub oznaczonych nut, a tester ogranicza częstotliwość aktualizacji wyników audio (obecnie około 8 FPS).
 - Testy jednostkowe sprawdzają geometrię pełnej oktawy, częściowy zakres czarnych klawiszy i pojedynczy klawisz. Widget testy sprawdzają oba oznaczenia oraz przewijanie do aktywnej nuty.
 
-Klawiatura nie odtwarza dźwięków. Spadające nuty i przechodzenie do kolejnej nuty MIDI należą do #12–#14. Nie przeprowadzono jeszcze ręcznych pomiarów wydajności i rozpoznawania na wszystkich przeglądarkach mobilnych.
+Klawiatura podglądu w ustawieniach i testerze nie odtwarza dźwięków.
+W ekranie treningu (#41) klawisze są interaktywne i odtwarzają dźwięk.
+Spadające nuty i postęp działają z silnikiem Wait for Note (#12–#14). Nie przeprowadzono jeszcze ręcznych pomiarów wydajności i rozpoznawania na wszystkich przeglądarkach mobilnych.
 
 
 ## Automatyczne testy ścieżki treningu (#15)
