@@ -397,21 +397,22 @@ class _TrainingStageState extends State<TrainingStage> {
                             : Icons.piano,
                       ),
                     ),
-                    IconButton(
-                      key: const Key('training-auto-play'),
-                      tooltip: widget.autoPlaying
-                          ? 'Zatrzymaj odsłuch MIDI'
-                          : 'Posłuchaj wybranej partii MIDI',
-                      onPressed: widget.busy && !widget.autoPlaying
-                          ? null
-                          : widget.onAutoPlay,
-                      color: TrainingStagePalette.detected,
-                      icon: Icon(
-                        widget.autoPlaying
-                            ? Icons.stop_circle_outlined
-                            : Icons.music_note,
+                    if (width >= 460)
+                      IconButton(
+                        key: const Key('training-auto-play'),
+                        tooltip: widget.autoPlaying
+                            ? 'Zatrzymaj odsłuch MIDI'
+                            : 'Posłuchaj wybranej partii MIDI',
+                        onPressed: widget.busy && !widget.autoPlaying
+                            ? null
+                            : widget.onAutoPlay,
+                        color: TrainingStagePalette.detected,
+                        icon: Icon(
+                          widget.autoPlaying
+                              ? Icons.stop_circle_outlined
+                              : Icons.music_note,
+                        ),
                       ),
-                    ),
                     IconButton(
                       key: const Key('training-primary'),
                       tooltip: widget.phase == TrainingPhase.running
