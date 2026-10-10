@@ -290,8 +290,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   value: _snapshot.progress,
                   minHeight: 8,
                   semanticsLabel: 'Postęp ćwiczenia',
-                  semanticsValue:
-                      '${_snapshot.completedNotes} z ${_snapshot.totalNotes}',
                 ),
                 const SizedBox(height: 8),
                 Text(
