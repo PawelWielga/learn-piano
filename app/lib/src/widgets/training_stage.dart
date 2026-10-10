@@ -255,7 +255,8 @@ class _TrainingStageState extends State<TrainingStage> {
                       onPointerDown: _onPointerDown,
                       onPointerMove: _onPointerMove,
                       onPointerUp: (event) => _releasePointer(event.pointer),
-                      onPointerCancel: (event) => _releasePointer(event.pointer),
+                      onPointerCancel: (event) =>
+                          _releasePointer(event.pointer),
                       child: CustomPaint(
                         key: const Key('training-stage-canvas'),
                         painter: _TrainingStagePainter(
@@ -488,9 +489,10 @@ class _TrainingStageState extends State<TrainingStage> {
                                 minimumSize: const Size(90, 44),
                                 foregroundColor: foreground,
                                 backgroundColor:
-                                    widget.inputMode == TrainingInputMode.microphone
-                                        ? TrainingStagePalette.microphoneIdle
-                                        : TrainingStagePalette.microphoneActive,
+                                    widget.inputMode ==
+                                        TrainingInputMode.microphone
+                                    ? TrainingStagePalette.microphoneIdle
+                                    : TrainingStagePalette.microphoneActive,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
