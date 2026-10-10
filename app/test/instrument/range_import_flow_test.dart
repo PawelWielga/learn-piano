@@ -49,12 +49,14 @@ void main() {
     tester,
   ) async {
     final store = RangeStoreFake();
-    await tester.pumpWidget(MaterialApp(
-      home: MidiImportScreen(
-        filePicker: RangeFilePicker(),
-        rangeStore: store,
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MidiImportScreen(
+          filePicker: RangeFilePicker(),
+          rangeStore: store,
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('choose-midi-file')));
     await tester.pumpAndSettle();
@@ -62,7 +64,10 @@ void main() {
     await tester.tap(find.byKey(const Key('melody-part-0-0')));
     await tester.pump();
     await reveal(tester, find.byKey(const Key('selected-range-blocked')));
-    expect(find.textContaining('Poza zakresem instrumentu: 1 nut'), findsOneWidget);
+    expect(
+      find.textContaining('Poza zakresem instrumentu: 1 nut'),
+      findsOneWidget,
+    );
 
     await reveal(tester, find.byKey(const Key('selected-open-range')));
     await tester.tap(find.byKey(const Key('selected-open-range')));
