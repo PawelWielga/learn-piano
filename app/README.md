@@ -88,6 +88,27 @@ Silnik śledzi aktualnie brzmiące wysokości. Drugie `NoteOn` bez `NoteOff` tej
 
 Testy `test/training/wait_for_note_engine_test.dart` obejmują poprawne i błędne nuty/oktawy, C4-C4-C4, pauzę i wznowienie, reset w trakcie trzymania klawisza, koniec utworu i błędne partie. `test/training/wait_for_note_pipeline_test.dart` łączy prawdziwe fixtury MIDI z selektorem partii, trackerem pitch i silnikiem przy deterministycznej sekwencji nut.
 
+## Pozioma orientacja ekranu (#33)
+
+`MaterialApp.builder` zawiera `LandscapeGate`. Przy viewportach wyższych
+niż szerszych zasłania interfejs komunikatem o obróceniu urządzenia, wyłącza
+interakcje i ukrywa niedostępne elementy przed czytnikami ekranu. Nawigator
+pozostaje zamontowany, więc po obrocie nie znika import MIDI ani pozycja
+treningu. Ekrany mikrofonu i ćwiczenia reagują na zmianę rozmiaru przez
+`MediaQuery`: zatrzymują aktywny nasłuch, a trening przechodzi w pauzę.
+Rozpoczęte, lecz niedokończone żądanie mikrofonu jest unieważniane. Powrót
+do poziomu **nie** wznawia mikrofonu bez działania użytkownika.
+
+`web/manifest.json` deklaruje `orientation: landscape` dla przeglądarek
+obsługujących tę wskazówkę po instalacji PWA. W zwykłej karcie, zwłaszcza
+Safari na iOS, nie ma niezawodnego programowego blokowania orientacji, więc
+pokazujemy instrukcję zamiast zakładać sukces `screen.orientation.lock()`.
+Pionowe okna desktopowe również widzą wskazówkę o poszerzeniu okna.
+
+Widget tests: `test/layout/landscape_gate_test.dart` i testy zmiany
+orientacji w `widget_test.dart` oraz `training/training_screen_test.dart`.
+Test na fizycznym telefonie pozostaje częścią #16.
+
 ## Browser microphone capture (#4)
 
 The input is requested **only** after tapping **Włącz mikrofon**. The browser requires HTTPS (GitHub Pages) or localhost. `web/audio_input.js` wraps `getUserMedia` and Web Audio. `web/audio_capture_processor.js` buffers mono float PCM on an AudioWorklet thread and transfers 2048-sample frames into Dart through `dart:js_interop`. Frames carry the **actual AudioContext sample rate** and a timestamp relative to its clock. Raw frames stay in the browser, are never saved, uploaded or logged.

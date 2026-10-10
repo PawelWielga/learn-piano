@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'layout/landscape_gate.dart';
 import 'screens/home_screen.dart';
 
 class LearnPianoApp extends StatelessWidget {
@@ -10,6 +11,8 @@ class LearnPianoApp extends StatelessWidget {
     return MaterialApp(
       title: 'Learn Piano',
       debugShowCheckedModeBanner: false,
+      builder: (context, child) =>
+          LandscapeGate(child: child ?? const SizedBox.shrink()),
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF087E77)),

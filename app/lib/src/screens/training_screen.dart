@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../audio/audio_input.dart';
 import '../audio/audio_input_factory.dart';
 import '../instrument/instrument_range.dart';
+import '../layout/landscape_gate.dart';
 import '../midi/melody_part_analyzer.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';
@@ -49,6 +50,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   bool _busy = false;
   bool _listening = false;
+  bool _landscapeBlocked = false;
+  int _startRequestId = 0;
   bool _awaitingSilence = true;
   Duration? _quietSince;
   Duration? _lastAnalyzedAt;
@@ -66,6 +69,24 @@ class _TrainingScreenState extends State<TrainingScreen> {
     _input = widget.audioInput ?? createAudioInput();
     _frames = _input.frames.listen(_onFrame);
     _statuses = _input.statuses.listen(_onAudioStatus);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final blocked = isPortraitViewport(context);
+    if (blocked && !_landscapeBlocked) {
+      // Cancel a pending getUserMedia request as well as active capture.
+      _startRequestId++;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_landscapeBlocked) return;
+        if (_snapshot.phase == TrainingPhase.running) {
+          setState(() => _snapshot = _engine.pause());
+        }
+        if (_listening) unawaited(_stopCapture());
+      });
+    }
+    _landscapeBlocked = blocked;
   }
 
   void _onAudioStatus(AudioInputStatus status) {
@@ -138,7 +159,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   Future<void> _start({bool resume = false}) async {
-    if (_busy || _listening || _snapshot.phase == TrainingPhase.error) return;
+    if (_busy ||
+        _listening ||
+        _landscapeBlocked ||
+        _snapshot.phase == TrainingPhase.error) {
+      return;
+    }
+    final requestId = ++_startRequestId;
     setState(() {
       _busy = true;
       _error = null;
@@ -146,7 +173,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
     try {
       await _input.start();
-      if (!mounted) {
+      if (!mounted || requestId != _startRequestId || _landscapeBlocked) {
         await _input.stop();
         return;
       }
@@ -160,11 +187,11 @@ class _TrainingScreenState extends State<TrainingScreen> {
         _stableNote = null;
       });
     } on AudioInputException catch (exception) {
-      if (mounted) {
+      if (mounted && requestId == _startRequestId) {
         setState(() => _error = _audioErrorText(exception.failure));
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && requestId == _startRequestId) {
         setState(() => _error = 'Nie udało się uruchomić mikrofonu.');
       }
     } finally {
