@@ -30,7 +30,8 @@ class FallingNotesLayout {
     // Keep up to five upcoming note starts in view even across long rests.
     // One scale applies to both start offsets and durations.
     final lookAhead = math.min(currentIndex + 5, notes.length - 1);
-    final lookAheadMicros = notes[lookAhead].start.inMicroseconds - anchorMicros;
+    final lookAheadMicros =
+        notes[lookAhead].start.inMicroseconds - anchorMicros;
     pixelsPerSecond = math.min(
       88.0,
       (nowLineY - 24) * 1000000 / math.max(1, lookAheadMicros),
@@ -161,7 +162,8 @@ class _FallingNotesViewState extends State<FallingNotesView> {
           builder: (context, constraints) {
             _focus(keyboard, constraints.maxWidth);
             return Semantics(
-              label: 'Podgląd melodii nad klawiaturą, przewijany poziomo. '
+              label:
+                  'Podgląd melodii nad klawiaturą, przewijany poziomo. '
                   'Teraz ${PitchEstimate.nameForMidi(currentNote.midiNote)}, '
                   'nuta ${widget.currentIndex + 1} z ${widget.notes.length}.',
               child: ClipRRect(
