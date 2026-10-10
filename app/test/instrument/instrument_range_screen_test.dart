@@ -26,10 +26,10 @@ class TestRangeStore implements InstrumentRangeStore {
   }
 }
 
-Future<void> visible(WidgetTester tester, Finder target) async {
+Future<void> visible(WidgetTester tester, Finder target, {double delta = 160}) async {
   await tester.scrollUntilVisible(
     target,
-    160,
+    delta,
     scrollable: find.byType(Scrollable).first,
   );
   await Scrollable.ensureVisible(tester.element(target), alignment: 0.5);
@@ -153,7 +153,11 @@ void main() {
     await visible(tester, find.byKey(const Key('range-outside-warning')));
     expect(find.textContaining('Poza zakresem: 3 z 5 nut'), findsOneWidget);
     expect(find.textContaining('B3, C#5'), findsOneWidget);
-    await visible(tester, find.byKey(const Key('range-preset-88')));
+    await visible(
+      tester,
+      find.byKey(const Key('range-preset-88')),
+      delta: -160,
+    );
     await tester.tap(find.byKey(const Key('range-preset-88')));
     await tester.pump();
     await visible(tester, find.byKey(const Key('range-playable')));
