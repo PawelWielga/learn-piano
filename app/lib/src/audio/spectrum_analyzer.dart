@@ -129,7 +129,9 @@ class SpectrumAnalyzer {
       final divisor = left - 2 * center + right;
       var offset = 0.0;
       if (divisor.abs() > 1e-12) {
-        offset = (0.5 * (left - right) / divisor).clamp(-1.0, 1.0);
+        offset = (0.5 * (left - right) / divisor)
+            .clamp(-1.0, 1.0)
+            .toDouble();
       }
       peaks.add(
         SpectrumPeak((bin + offset) * sampleRate / windowSize, level),
