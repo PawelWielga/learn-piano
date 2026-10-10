@@ -368,14 +368,15 @@ class _TrainingStageState extends State<TrainingStage> {
                       color: foreground,
                       icon: const Icon(Icons.restart_alt),
                     ),
-                    IconButton(
-                      key: const Key('training-controls-toggle'),
-                      tooltip: showOverlay ? 'Ukryj panel' : 'Pokaż panel',
-                      onPressed: () =>
-                          setState(() => _showControls = !_showControls),
-                      color: foreground,
-                      icon: const Icon(Icons.tune),
-                    ),
+                    if (width >= 440)
+                      IconButton(
+                        key: const Key('training-controls-toggle'),
+                        tooltip: showOverlay ? 'Ukryj panel' : 'Pokaż panel',
+                        onPressed: () =>
+                            setState(() => _showControls = !_showControls),
+                        color: foreground,
+                        icon: const Icon(Icons.tune),
+                      ),
                   ],
                 ),
               ),
