@@ -38,6 +38,7 @@ cd app
 dart format --output=none --set-exit-if-changed .
 flutter analyze
 flutter test
+node --test test_js/*.test.cjs
 flutter build web --release --base-href /learn-piano/
 ```
 
@@ -49,7 +50,7 @@ Więcej: [app/README.md](app/README.md).
 - **Merge/push do `main`:** `.github/workflows/deploy-pages.yml` powtarza kontrole, buduje projekt z `--base-href /learn-piano/` i publikuje `app/build/web` przez oficjalne akcje GitHub Pages.
 - **Jednorazowa konfiguracja repozytorium:** `Settings → Pages → Build and deployment → Source: GitHub Actions`. Bez tego ustawienia workflow nie gwarantuje publicznego wdrożenia. Jeśli środowisko `github-pages` jest chronione, może wymagać zatwierdzenia.
 
-Link do Pages to **adres docelowy**, a nie potwierdzenie dostępności przed pierwszym udanym wdrożeniem.
+Pierwszy workflow publikacji na GitHub Pages zakończył się sukcesem; dostępność i obsługę mikrofonu trzeba zweryfikować ręcznie na docelowych przeglądarkach.
 
 ## Poza MVP 1
 
@@ -57,4 +58,4 @@ Landing page Jaspr, natywne Android/iOS, akordy, nagrywanie melodii do MIDI, got
 
 ## Aktualny stan
 
-Rozpoczęto M0. Początkowy projekt zawiera ekran startowy i przygotowawczy widok testera; **jeszcze nie nagrywa ani nie rozpoznaje dźwięku**. Nie uznajemy zgodności z telefonami ani skuteczności detekcji, dopóki nie wykonamy testów na fizycznym instrumencie.
+M0 jest zrealizowane. Rozpoczęto M1: tester potrafi uruchomić mikrofon i wyświetlić poziom wejścia oraz parametry próbek PCM. **Nie rozpoznaje jeszcze wysokości nut ani nie zapisuje nagrań.** Bez przeprowadzenia prób na fizycznym instrumencie nie deklarujemy kompatybilności mobilnej. Szczegóły i lista ręcznych testów: [app/README.md](app/README.md).
