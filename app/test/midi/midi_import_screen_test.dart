@@ -22,14 +22,17 @@ class FakeMidiFilePicker implements MidiFilePicker {
 }
 
 void main() {
-  final valid = midiFixture(format: 0, tracks: [
-    trackBytes([
-      trackName('Piano'),
-      event(0, [0x90, 60, 100]),
-      event(480, [0x80, 60, 0]),
-      endOfTrack(),
-    ]),
-  ]);
+  final valid = midiFixture(
+    format: 0,
+    tracks: [
+      trackBytes([
+        trackName('Piano'),
+        event(0, [0x90, 60, 100]),
+        event(480, [0x80, 60, 0]),
+        endOfTrack(),
+      ]),
+    ],
+  );
 
   testWidgets('home opens MIDI import, without requesting a microphone', (
     tester,
