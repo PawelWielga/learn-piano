@@ -85,11 +85,7 @@ void main() {
     expect(find.textContaining('C4'), findsWidgets);
     expect(find.textContaining('G#5'), findsWidgets);
 
-    await reveal(
-      tester,
-      find.byKey(const Key('range-preset-88')),
-      delta: -160,
-    );
+    await reveal(tester, find.byKey(const Key('range-preset-88')), delta: -160);
     await tester.tap(find.byKey(const Key('range-preset-88')));
     await tester.pump();
     await reveal(tester, find.byKey(const Key('range-playable')));
