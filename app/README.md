@@ -1,6 +1,6 @@
 # Learn Piano Web
 
-Web-only Flutter application for the first MVP. The home screen opens a microphone test showing capture status, level, actual sample rate and PCM buffer size. Pitch detection, MIDI import and training are separate follow-up issues.
+Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn events, MIDI import and training are separate follow-up issues.
 
 ## Prerequisites
 
@@ -38,9 +38,30 @@ The input is requested **only** after tapping **Włącz mikrofon**. The browser 
 - Tapping **Wyłącz mikrofon**, leaving the screen or moving the tab to the background stops tracks and closes the AudioContext.
 - Denied permission, missing device, unsupported API and interruption show a message and allow manual retry.
 - PCM frames are forwarded at ~23 frames/s at 48 kHz, and UI updates are throttled to at most ~8 times/s.
-- There is **no pitch detection yet**; the meter only confirms that audio reaches Flutter. Android/iOS adapters are outside MVP 1.
+- The detector now estimates **one pitch at a time**, but does not yet recognize separate key presses or chords (#6). Android/iOS native adapters are outside MVP 1.
 - AudioWorklet is preferred to deprecated ScriptProcessorNode. Some embedded/in-app browsers may not support it; no silent fallback to insecure capture is provided.
 - Sample timestamps describe AudioContext time, not wall-clock milliseconds. The source is mono (first input channel), without applying an extra gain or compressor. The browser may still apply device or driver processing.
+
+## Live pitch candidates (#5)
+
+`lib/src/pitch/pitch_detector.dart` implements a pure-Dart **YIN** estimator based on cumulative mean normalized difference, selecting the **first** reliable periodicity dip (rather than the strongest FFT peak). Quadratic interpolation estimates periods between samples. Detected pitch is mapped to the nearest MIDI number with **A4 = 440 Hz** and **MIDI 60 = C4**. The visible note is a *raw candidate*, not a stable event or a claim that a piano key was pressed.
+
+Defaults (all configurable in the constructor):
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| Mono analysis buffer | 2048 float samples | About 42.7 ms at 48 kHz or 46.4 ms at 44.1 kHz |
+| Supported frequency | 90–1500 Hz | Approximately F#2–F#6; outside this range is unsupported |
+| Minimum RMS | 0.015 | Suppress silence and faint ambient sound |
+| YIN dip threshold | 0.18 | Search for a clear periodicity |
+| Minimum confidence | 0.93 | Reject ambiguous/noisy candidates; may need tuning on a real instrument |
+| UI + analysis rate | ≤ roughly 8 times/s | Analyze at most one received frame per 120 ms, rather than every buffer |
+
+The AudioWorklet keeps producing PCM while the Dart UI is throttled. On a mobile device the worst perceived update delay includes the worklet buffer duration and sampling/throttle interval; no end-to-end latency measurement has been performed. `PitchDetector` rejects short/invalid buffers, silence, noise and insufficient periodicity by returning null. It uses the **actual** Web Audio sample rate (not a hard-coded 44.1/48 kHz).
+
+Tests use generated sine waves and tones with harmonics at 44.1/48 kHz across several octaves, plus silence, random noise, invalid frames and closely competing pitches. **No acoustic detector is guaranteed to distinguish all chords, reverb, subharmonics or background music**; an overtone-only sound may cause an octave mistake. Actual piano timbre, attack latency, mobile performance and release/rearticulation must be measured on physical hardware before proceeding past M1.
+
+Try the public tester on Pages: choose **Test mikrofonu**, allow access, play isolated C4 (261.6 Hz) and A4 (440 Hz), then verify the shown MIDI octave, frequency and confidence. Repeat notes, try quieter tones and log missed/incorrect detections under issues #5 and #7. The next step (#6) adds stability and distinct NoteOn events.
 
 ### Manual device validation required before closing #4
 

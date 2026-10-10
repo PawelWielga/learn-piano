@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -45,6 +46,32 @@ class FakeAudioInput implements AudioInput {
         samples: Float32List.fromList([0.2, -0.2, 0.1, -0.1]),
         sampleRate: 48000,
         capturedAt: const Duration(milliseconds: 50),
+      ),
+    );
+  }
+
+  void emitTone(double frequency, {int sampleRate = 48000, int timeMs = 50}) {
+    final samples = Float32List.fromList(
+      List<double>.generate(
+        2048,
+        (i) => 0.35 * math.sin(2 * math.pi * frequency * i / sampleRate),
+      ),
+    );
+    _frames.add(
+      PcmFrame(
+        samples: samples,
+        sampleRate: sampleRate,
+        capturedAt: Duration(milliseconds: timeMs),
+      ),
+    );
+  }
+
+  void emitSilence({int timeMs = 250}) {
+    _frames.add(
+      PcmFrame(
+        samples: Float32List(2048),
+        sampleRate: 48000,
+        capturedAt: Duration(milliseconds: timeMs),
       ),
     );
   }
@@ -100,6 +127,39 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
     expect(input.disposes, 1);
+  });
+
+  testWidgets('shows detected note and clears it for silence and stop', (
+    tester,
+  ) async {
+    final input = FakeAudioInput();
+    await tester.pumpWidget(
+      MaterialApp(home: MicrophonePreviewScreen(audioInput: input)),
+    );
+
+    expect(find.text('—'), findsOneWidget);
+    await tester.tap(find.text('Włącz mikrofon'));
+    await tester.pump();
+
+    input.emitTone(440);
+    await tester.pump();
+    expect(find.text('A4'), findsOneWidget);
+    expect(find.textContaining('440.0 Hz'), findsOneWidget);
+    expect(find.textContaining('pewność'), findsOneWidget);
+
+    input.emitSilence(timeMs: 200);
+    await tester.pump();
+    expect(find.text('Brak pewnej nuty'), findsOneWidget);
+
+    input.emitTone(261.6256, timeMs: 400);
+    await tester.pump();
+    expect(find.text('C4'), findsOneWidget);
+
+    await tester.tap(find.text('Wyłącz mikrofon'));
+    await tester.pump();
+    expect(find.text('A4'), findsNothing);
+    expect(find.text('C4'), findsNothing);
+    expect(find.text('—'), findsOneWidget);
   });
 
   testWidgets('permission rejection reports error and allows retry', (

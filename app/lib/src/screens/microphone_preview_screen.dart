@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../audio/audio_input.dart';
 import '../audio/audio_input_factory.dart';
+import '../pitch/pitch_detector.dart';
 
 class MicrophonePreviewScreen extends StatefulWidget {
   const MicrophonePreviewScreen({super.key, this.audioInput});
@@ -22,13 +23,16 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   StreamSubscription<PcmFrame>? _frameSubscription;
   StreamSubscription<AudioInputStatus>? _statusSubscription;
 
+  final _detector = const PitchDetector();
+  PitchEstimate? _candidate;
+  Duration? _lastAnalyzedAt;
+
   bool _busy = false;
   bool _listening = false;
   int? _sampleRate;
   int? _frameSize;
   double _level = 0;
   String? _error;
-  DateTime _lastPaint = DateTime.fromMillisecondsSinceEpoch(0);
 
   @override
   void initState() {
@@ -41,6 +45,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
         setState(() {
           _listening = false;
           _level = 0;
+          _candidate = null;
+          _lastAnalyzedAt = null;
           _error =
               'Nasłuch został przerwany (np. zmiana karty lub '
               'odłączenie mikrofonu). Możesz go włączyć ponownie.';
@@ -51,20 +57,29 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
 
   void _onFrame(PcmFrame frame) {
     if (!mounted || !_listening || frame.samples.isEmpty) return;
-    final now = DateTime.now();
-    if (now.difference(_lastPaint) < const Duration(milliseconds: 120)) return;
-    _lastPaint = now;
+
+    // Worklet timestamps use AudioContext time. Throttle analysis to about
+    // 8 FPS on a 48 kHz stream; UI and YIN must not run for each audio frame.
+    final last = _lastAnalyzedAt;
+    if (last != null &&
+        frame.capturedAt >= last &&
+        frame.capturedAt - last < const Duration(milliseconds: 120)) {
+      return;
+    }
+    _lastAnalyzedAt = frame.capturedAt;
 
     var sum = 0.0;
     for (final sample in frame.samples) {
       sum += sample * sample;
     }
     final rms = math.sqrt(sum / frame.samples.length);
+    final pitch = _detector.detect(frame.samples, frame.sampleRate);
 
     setState(() {
       _sampleRate = frame.sampleRate;
       _frameSize = frame.samples.length;
-      _level = rms.clamp(0.0, 1.0);
+      _level = rms.isFinite ? rms.clamp(0.0, 1.0) : 0;
+      _candidate = pitch;
     });
   }
 
@@ -76,6 +91,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
       _sampleRate = null;
       _frameSize = null;
       _level = 0;
+      _candidate = null;
+      _lastAnalyzedAt = null;
     });
     try {
       await _input.start();
@@ -105,6 +122,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
         setState(() {
           _listening = false;
           _level = 0;
+          _candidate = null;
+          _lastAnalyzedAt = null;
         });
       }
     } catch (_) {
@@ -132,89 +151,127 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final pitch = _candidate;
     return Scaffold(
       appBar: AppBar(title: const Text('Test mikrofonu')),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
-            child: ListView(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              children: [
-                Icon(
-                  _listening ? Icons.mic : Icons.mic_none,
-                  size: 72,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(height: 16),
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    _listening ? 'Nasłuch aktywny' : 'Mikrofon nieaktywny',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Icon(
+                    _listening ? Icons.mic : Icons.mic_none,
+                    size: 72,
+                    color: theme.colorScheme.primary,
                   ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Dźwięk jest analizowany wyłącznie w tej przeglądarce. '
-                  'Nie zapisujemy ani nie wysyłamy nagrań. '
-                  'Włącz mikrofon i zagraj pojedynczą nutę.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 28),
-                FilledButton.icon(
-                  key: const Key('microphone-toggle'),
-                  onPressed: _busy ? null : (_listening ? _stop : _start),
-                  icon: Icon(_listening ? Icons.stop : Icons.mic),
-                  label: Text(
-                    _busy
-                        ? 'Trwa zmiana stanu…'
-                        : _listening
-                        ? 'Wyłącz mikrofon'
-                        : 'Włącz mikrofon',
-                  ),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(56),
-                  ),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   Semantics(
                     liveRegion: true,
                     child: Text(
-                      _error!,
-                      key: const Key('microphone-error'),
-                      style: TextStyle(color: theme.colorScheme.error),
+                      _listening ? 'Nasłuch aktywny' : 'Mikrofon nieaktywny',
                       textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineSmall,
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Dźwięk jest analizowany wyłącznie w tej przeglądarce. '
+                    'Nie zapisujemy ani nie wysyłamy nagrań. '
+                    'Włącz mikrofon i zagraj pojedynczą nutę.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 28),
+                  FilledButton.icon(
+                    key: const Key('microphone-toggle'),
+                    onPressed: _busy ? null : (_listening ? _stop : _start),
+                    icon: Icon(_listening ? Icons.stop : Icons.mic),
+                    label: Text(
+                      _busy
+                          ? 'Trwa zmiana stanu…'
+                          : _listening
+                          ? 'Wyłącz mikrofon'
+                          : 'Włącz mikrofon',
+                    ),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                    ),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 18),
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        _error!,
+                        key: const Key('microphone-error'),
+                        style: TextStyle(color: theme.colorScheme.error),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 32),
+                  Text(
+                    'Wykryta nuta (chwilowy kandydat)',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      !_listening ? '—' : pitch?.noteName ?? 'Brak pewnej nuty',
+                      key: const Key('detected-note'),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.displayMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    pitch == null || !_listening
+                        ? 'Cisza lub niejednoznaczny dźwięk'
+                        : '${pitch.frequencyHz.toStringAsFixed(1)} Hz  •  '
+                              'pewność ${(pitch.confidence * 100).toStringAsFixed(0)}%  •  '
+                              '${pitch.centsFromNote >= 0 ? '+' : ''}'
+                              '${pitch.centsFromNote.toStringAsFixed(0)} centów',
+                    key: const Key('pitch-details'),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'To pojedynczy pomiar, jeszcze bez stabilizacji i wykrywania '
+                    'osobnych naciśnięć klawisza.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 32),
+                  Text('Poziom wejścia', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 12),
+                  LinearProgressIndicator(
+                    value: _listening ? _level : 0,
+                    minHeight: 12,
+                    semanticsLabel: 'Poziom sygnału mikrofonu',
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Próbkowanie: ${_sampleRate == null ? '—' : '${_sampleRate!} Hz'}',
+                    key: const Key('sample-rate'),
+                  ),
+                  Text(
+                    'Rozmiar ramki: ${_frameSize == null ? '—' : '${_frameSize!} próbek'}',
+                    key: const Key('frame-size'),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Detekcja obejmuje pojedyncze nuty (około F#2–F#6). '
+                    'Akordy i hałas mogą dawać niepewne wyniki.',
+                    style: theme.textTheme.bodySmall,
+                  ),
                 ],
-                const SizedBox(height: 32),
-                Text('Poziom wejścia', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 12),
-                LinearProgressIndicator(
-                  value: _listening ? _level : 0,
-                  minHeight: 12,
-                  semanticsLabel: 'Poziom sygnału mikrofonu',
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Próbkowanie: ${_sampleRate == null ? '—' : '${_sampleRate!} Hz'}',
-                  key: const Key('sample-rate'),
-                ),
-                Text(
-                  'Rozmiar ramki: ${_frameSize == null ? '—' : '${_frameSize!} próbek'}',
-                  key: const Key('frame-size'),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Rozpoznawanie wysokości nut dodamy w następnym kroku. '
-                  'Ten ekran pozwala na razie sprawdzić, czy mikrofon '
-                  'dostarcza próbki.',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
+              ),
             ),
           ),
         ),

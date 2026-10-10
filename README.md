@@ -58,4 +58,4 @@ Landing page Jaspr, natywne Android/iOS, akordy, nagrywanie melodii do MIDI, got
 
 ## Aktualny stan
 
-M0 jest zrealizowane. Rozpoczęto M1: tester potrafi uruchomić mikrofon i wyświetlić poziom wejścia oraz parametry próbek PCM. **Nie rozpoznaje jeszcze wysokości nut ani nie zapisuje nagrań.** Bez przeprowadzenia prób na fizycznym instrumencie nie deklarujemy kompatybilności mobilnej. Szczegóły i lista ręcznych testów: [app/README.md](app/README.md).
+M0 jest zrealizowane. W M1 tester uruchamia mikrofon, wyświetla poziom wejścia oraz **kandydacką nutę, oktawę, częstotliwość i pewność detekcji YIN**. Nie rozpoznaje jeszcze osobnych uderzeń (NoteOn), nie importuje MIDI i nie zapisuje nagrań. Przed potwierdzeniem jakości rozpoznawania na fizycznym pianinku wymagane są próby sprzętowe. Szczegóły: [app/README.md](app/README.md).
