@@ -53,37 +53,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('melody-selection-hint')), findsOneWidget);
-    await reveal(
-      tester,
-      find.textContaining('Pusta ścieżka'),
-      160,
-    );
+    await reveal(tester, find.textContaining('Pusta ścieżka'), 160);
     expect(find.textContaining('Pusta ścieżka'), findsOneWidget);
 
-    await reveal(
-      tester,
-      find.byKey(const Key('melody-part-1-0')),
-      200,
-    );
+    await reveal(tester, find.byKey(const Key('melody-part-1-0')), 200);
     expect(
       tester.widget<InkWell>(find.byKey(const Key('melody-part-1-0'))).onTap,
       isNull,
     );
     expect(find.textContaining('Akordy/nakładające się nuty'), findsWidgets);
 
-    await reveal(
-      tester,
-      find.byKey(const Key('melody-part-2-0')),
-      180,
-    );
+    await reveal(tester, find.byKey(const Key('melody-part-2-0')), 180);
     await tester.tap(find.byKey(const Key('melody-part-2-0')));
     await tester.pump();
 
-    await reveal(
-      tester,
-      find.byKey(const Key('selected-melody')),
-      -180,
-    );
+    await reveal(tester, find.byKey(const Key('selected-melody')), -180);
     expect(find.text('Wybrana melodia'), findsOneWidget);
     expect(find.textContaining('kanał 1'), findsWidgets);
     expect(find.textContaining('C5–D5'), findsOneWidget);
@@ -114,29 +98,17 @@ void main() {
     await tester.tap(find.byKey(const Key('choose-midi-file')));
     await tester.pumpAndSettle();
 
-    await reveal(
-      tester,
-      find.byKey(const Key('melody-part-0-9')),
-      170,
-    );
+    await reveal(tester, find.byKey(const Key('melody-part-0-9')), 170);
     expect(
       tester.widget<InkWell>(find.byKey(const Key('melody-part-0-9'))).onTap,
       isNull,
     );
     expect(find.textContaining('Perkusja:'), findsOneWidget);
 
-    await reveal(
-      tester,
-      find.byKey(const Key('melody-part-0-1')),
-      -150,
-    );
+    await reveal(tester, find.byKey(const Key('melody-part-0-1')), -150);
     await tester.tap(find.byKey(const Key('melody-part-0-1')));
     await tester.pump();
-    await reveal(
-      tester,
-      find.byKey(const Key('selected-melody')),
-      -150,
-    );
+    await reveal(tester, find.byKey(const Key('selected-melody')), -150);
     expect(find.textContaining('kanał 2'), findsWidgets);
     expect(find.textContaining('C3–C3'), findsOneWidget);
   });
@@ -161,24 +133,12 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('choose-midi-file')));
     await tester.pumpAndSettle();
-    await reveal(
-      tester,
-      find.byKey(const Key('melody-part-0-0')),
-      150,
-    );
+    await reveal(tester, find.byKey(const Key('melody-part-0-0')), 150);
     await tester.tap(find.byKey(const Key('melody-part-0-0')));
     await tester.pump();
-    await reveal(
-      tester,
-      find.byKey(const Key('selected-melody')),
-      -150,
-    );
+    await reveal(tester, find.byKey(const Key('selected-melody')), -150);
     expect(find.byKey(const Key('selected-melody')), findsOneWidget);
-    await reveal(
-      tester,
-      find.byKey(const Key('choose-midi-file')),
-      -150,
-    );
+    await reveal(tester, find.byKey(const Key('choose-midi-file')), -150);
 
     picker.current = PickedMidiFile(
       name: 'empty.mid',
