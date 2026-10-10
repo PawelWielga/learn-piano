@@ -22,6 +22,20 @@ void main() {
     expect(layout.keyForMidi(72), isNull);
   });
 
+  test('touch hit testing prefers overlapping black keys', () {
+    final layout = PianoKeyboardLayout(const InstrumentRange(60, 72));
+    final c = layout.keyForMidi(60)!;
+    final sharp = layout.keyForMidi(61)!;
+    expect(layout.noteAt(sharp.rect.center), 61);
+    expect(layout.noteAt(c.rect.center), 60);
+    expect(
+      layout.noteAt(Offset(c.rect.center.dx, layout.height - 2)),
+      60,
+    );
+    expect(layout.noteAt(const Offset(-5, 20)), isNull);
+    expect(layout.noteAt(Offset(c.rect.center.dx, layout.height + 1)), isNull);
+  });
+
   test('partial black-key ranges are shifted into visible bounds', () {
     final layout = PianoKeyboardLayout(const InstrumentRange(42, 61));
     expect(layout.keys.first.isBlack, isTrue); // F#2
