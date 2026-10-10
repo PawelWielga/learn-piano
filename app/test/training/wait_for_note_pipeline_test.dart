@@ -133,16 +133,15 @@ void main() {
       final selected = analyzer.select(parts, trackIndex: 1, channel: 0);
       expect(selected, isNotNull);
       expect(selected!.notes.map((note) => note.midiNote), [60, 60, 64]);
+      expect(selected.notes.map((note) => note.start), [
+        Duration.zero,
+        const Duration(milliseconds: 750),
+        const Duration(seconds: 2),
+      ]);
       expect(
-        selected.notes.map((note) => note.start),
-        [
-          Duration.zero,
-          const Duration(milliseconds: 750),
-          const Duration(seconds: 2),
-        ],
+        range.checkNotes(selected.notes.map((n) => n.midiNote)).canPractice,
+        isTrue,
       );
-      expect(range.checkNotes(selected.notes.map((n) => n.midiNote)).canPractice,
-          isTrue);
 
       // A chord track is never silently reduced to a melody.
       expect(analyzer.select(parts, trackIndex: 2, channel: 0), isNull);
@@ -237,5 +236,4 @@ void main() {
     expect(parts.single.canPractice, isFalse);
     expect(analyzer.select(parts, trackIndex: 0, channel: 0), isNull);
   });
-
 }
