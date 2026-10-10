@@ -19,11 +19,7 @@ MidiNote note(int pitch, int startMs, int lengthMs) => MidiNote(
 void main() {
   test('uses keyboard coordinates and actual MIDI time for blocks', () {
     final keyboard = PianoKeyboardLayout(const InstrumentRange(60, 72));
-    final notes = [
-      note(60, 0, 500),
-      note(61, 750, 250),
-      note(64, 1000, 1000),
-    ];
+    final notes = [note(60, 0, 500), note(61, 750, 250), note(64, 1000, 1000)];
     final layout = FallingNotesLayout(
       notes: notes,
       keyboard: keyboard,
@@ -35,8 +31,14 @@ void main() {
     final first = layout.visibleBlocks[0].rect;
     final second = layout.visibleBlocks[1].rect;
     final third = layout.visibleBlocks[2].rect;
-    expect(first.center.dx, closeTo(keyboard.keyForMidi(60)!.rect.center.dx, 0.001));
-    expect(second.center.dx, closeTo(keyboard.keyForMidi(61)!.rect.center.dx, 0.001));
+    expect(
+      first.center.dx,
+      closeTo(keyboard.keyForMidi(60)!.rect.center.dx, 0.001),
+    );
+    expect(
+      second.center.dx,
+      closeTo(keyboard.keyForMidi(61)!.rect.center.dx, 0.001),
+    );
     expect(first.bottom, closeTo(layout.nowLineY, 0.001));
     expect(first.height, closeTo(44, 0.001)); // 500 ms at 88 px/s
     expect(second.height, closeTo(22, 0.001));
@@ -46,10 +48,7 @@ void main() {
 
   test('long rests adapt the scale and preserve five upcoming starts', () {
     final keyboard = PianoKeyboardLayout(const InstrumentRange(60, 72));
-    final notes = List.generate(
-      8,
-      (i) => note(60 + i, i * 30000, 5000),
-    );
+    final notes = List.generate(8, (i) => note(60 + i, i * 30000, 5000));
     final layout = FallingNotesLayout(
       notes: notes,
       keyboard: keyboard,
@@ -57,37 +56,40 @@ void main() {
     );
 
     expect(layout.pixelsPerSecond, lessThan(88));
-    expect(layout.visibleBlocks.map((block) => block.index), containsAll([0, 1, 2, 3, 4, 5]));
+    expect(
+      layout.visibleBlocks.map((block) => block.index),
+      containsAll([0, 1, 2, 3, 4, 5]),
+    );
     expect(layout.visibleBlocks.first.rect.bottom, layout.nowLineY);
     expect(layout.visibleBlocks[5].rect.bottom, closeTo(24, 0.001));
   });
 
-  test('cursor controls the anchored note and zero-length note stays visible', () {
-    final keyboard = PianoKeyboardLayout(const InstrumentRange(60, 72));
-    final notes = [note(60, 0, 0), note(64, 300, 200), note(67, 800, 400)];
-    final start = FallingNotesLayout(
-      notes: notes,
-      keyboard: keyboard,
-      currentIndex: 0,
-    );
-    final next = FallingNotesLayout(
-      notes: notes,
-      keyboard: keyboard,
-      currentIndex: 1,
-    );
+  test(
+    'cursor controls the anchored note and zero-length note stays visible',
+    () {
+      final keyboard = PianoKeyboardLayout(const InstrumentRange(60, 72));
+      final notes = [note(60, 0, 0), note(64, 300, 200), note(67, 800, 400)];
+      final start = FallingNotesLayout(
+        notes: notes,
+        keyboard: keyboard,
+        currentIndex: 0,
+      );
+      final next = FallingNotesLayout(
+        notes: notes,
+        keyboard: keyboard,
+        currentIndex: 1,
+      );
 
-    expect(start.visibleBlocks.first.rect.height, 4);
-    expect(next.visibleBlocks.first.index, 1);
-    expect(next.visibleBlocks.first.rect.bottom, next.nowLineY);
-    expect(next.visibleBlocks.last.index, 2);
-  });
+      expect(start.visibleBlocks.first.rect.height, 4);
+      expect(next.visibleBlocks.first.index, 1);
+      expect(next.visibleBlocks.first.rect.bottom, next.nowLineY);
+      expect(next.visibleBlocks.last.index, 2);
+    },
+  );
 
   test('does not lay out the entire long song per progress update', () {
     final keyboard = PianoKeyboardLayout(const InstrumentRange(60, 72));
-    final notes = List.generate(
-      20000,
-      (i) => note(60 + i % 12, i * 250, 180),
-    );
+    final notes = List.generate(20000, (i) => note(60 + i % 12, i * 250, 180));
     final layout = FallingNotesLayout(
       notes: notes,
       keyboard: keyboard,
