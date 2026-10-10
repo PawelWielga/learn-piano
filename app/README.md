@@ -1,6 +1,6 @@
 # Learn Piano Web
 
-Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn/NoteOff events now derive from successive pitch estimates; MIDI import now reads local SMF type 0/1 files; melody selection validates one track/channel for single-note practice; physical keyboard range validation now prevents unplayable melody selection; the physical keyboard preview now renders key geometry and highlights (#11); falling notes and training remain follow-up issues.
+Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn/NoteOff events now derive from successive pitch estimates; MIDI import now reads local SMF type 0/1 files; melody selection validates one track/channel for single-note practice; physical keyboard range validation now prevents unplayable melody selection; the physical keyboard preview now renders key geometry and highlights (#11); the stationary falling-note preview now covers #12; microphone-controlled training remains #13–#14.
 
 ## Prerequisites
 
@@ -61,6 +61,16 @@ Wybierz **Ustaw zakres klawiatury** na ekranie głównym lub **Dostosuj klawiatu
 Preferencja `v1:LOW:HIGH` jest zapisywana **wyłącznie w przeglądarce** przez `web/instrument_range.js` i `localStorage`. Nie zapisujemy plików MIDI ani dźwięku. Uszkodzona wartość jest ignorowana; niedostępne localStorage nie blokuje importu, a ekran ustawień pozwala użyć zakresu w aktualnej sesji bez trwałego zapisu. Android/iOS nie używają tego adaptera w MVP Web.
 
 Testy obejmują granice 0/127, wartości niepoprawne, presety, powtarzane nuty poza zakresem, błędy zapisu, integrację z wyborem MIDI i lokalną warstwę JS. **Pełna wizualizacja klawiatury jest w #11**: w #10 pokazujemy tylko wartości i zgodność partii, bez grafiki klawiszy. Brak możliwości rozpoczęcia treningu jest zachowany, ponieważ tryb ćwiczenia jeszcze nie istnieje.
+
+## Podgląd spadających nut (#12)
+
+Po zaimportowaniu MIDI i wybraniu jednogłosowej partii, której wszystkie nuty mieszczą się w ustawionym zakresie, ekran pokazuje **oś czasu z blokami nad fizycznymi klawiszami**. Kolor zielony oznacza aktualną nutę, niebieskie bloki to przyszłe nuty, a pozioma linia oznacza moment rozpoczęcia bieżącej nuty. Długości bloków i odstępy między nimi wynikają z bezwzględnych czasów startu i długości wyliczonych z mapy tempa MIDI. Nuty o zerowym czasie trwania mają minimalny widoczny znacznik (4 px). Klawiatura i bloki używają dokładnie tych samych współrzędnych X, także przy niepełnych oktawach. Cały podgląd przewija się w poziomie na telefonie i desktopie.
+
+Przyciski **Poprzednia** i **Następna** przesuwają tylko numer oczekiwanej nuty. Nie jest używany zegar odtwarzania, timer ani mikrofon; podgląd stoi w miejscu, dopóki nie wybierzesz kolejnej nuty. Widok został przygotowany pod przekazywanie indeksu z silnika *Wait for Note* (#13); to nie jest jeszcze właściwe ćwiczenie. Po wyborze innej partii lub nowego pliku pozycja wraca do początku.
+
+Oś czasu ma maksymalną skalę 88 px/s, ale przy długich pauzach pomniejsza ją na podstawie pięciu kolejnych początków nut, żeby były widoczne. Jedna skala obowiązuje zarówno przesunięcia, jak i długości bloków. Dla bardzo długich nut górna część może być ucięta w oknie podglądu. Renderer tworzy figury tylko dla nut, które przecinają bieżące okno czasu, zamiast rysować cały długi utwór. Jeśli wybrana melodia wykracza poza fizyczny zakres, użytkownik widzi ostrzeżenie i klawiaturę zamiast częściowo pominiętych bloków.
+
+Testy: `test/midi/falling_notes_view_test.dart` sprawdza mapowanie czasu/długości/pauz i osi X, dopasowywanie skali, zerowe długości, przewijanie oraz culling przy długich utworach; `test/midi/falling_notes_import_test.dart` sprawdza zmiany pozycji po zaimportowaniu melodii. Testy automatyczne nie zastępują ręcznego sprawdzenia płynności w przeglądarce mobilnej.
 
 ## Browser microphone capture (#4)
 
