@@ -68,8 +68,7 @@ class SpectrumAnalyzer {
     for (var i = 0; i < windowSize; i++) {
       final sample = _samples[(_write + i) % windowSize];
       energy += sample * sample;
-      final window = 0.5 -
-          0.5 * math.cos(2 * math.pi * i / (windowSize - 1));
+      final window = 0.5 - 0.5 * math.cos(2 * math.pi * i / (windowSize - 1));
       real[i] = sample * window;
     }
     if (math.sqrt(energy / windowSize) < 0.006) {
@@ -101,11 +100,9 @@ class SpectrumAnalyzer {
     if (strongest <= 0) return SpectrumSnapshot.empty;
 
     double levelFor(double magnitude) {
-      final db = 20 * math.log(math.max(magnitude / strongest, 1e-12)) /
-          math.ln10;
-      return ((db - _noiseFloorDb) / -_noiseFloorDb)
-          .clamp(0.0, 1.0)
-          .toDouble();
+      final db =
+          20 * math.log(math.max(magnitude / strongest, 1e-12)) / math.ln10;
+      return ((db - _noiseFloorDb) / -_noiseFloorDb).clamp(0.0, 1.0).toDouble();
     }
 
     final points = <SpectrumPoint>[];
@@ -129,13 +126,9 @@ class SpectrumAnalyzer {
       final divisor = left - 2 * center + right;
       var offset = 0.0;
       if (divisor.abs() > 1e-12) {
-        offset = (0.5 * (left - right) / divisor)
-            .clamp(-1.0, 1.0)
-            .toDouble();
+        offset = (0.5 * (left - right) / divisor).clamp(-1.0, 1.0).toDouble();
       }
-      peaks.add(
-        SpectrumPeak((bin + offset) * sampleRate / windowSize, level),
-      );
+      peaks.add(SpectrumPeak((bin + offset) * sampleRate / windowSize, level));
     }
 
     // Keep the strongest peaks, but present them from low to high pitch.
