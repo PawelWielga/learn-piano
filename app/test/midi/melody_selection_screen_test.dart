@@ -13,7 +13,7 @@ class MelodyPickerFake implements MidiFilePicker {
 }
 
 Future<void> reveal(WidgetTester tester, Finder finder, double delta) async {
-  await reveal(tester,finder, delta);
+  await tester.scrollUntilVisible(finder, delta);
   await Scrollable.ensureVisible(tester.element(finder), alignment: 0.5);
   await tester.pumpAndSettle();
 }
@@ -53,13 +53,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('melody-selection-hint')), findsOneWidget);
-    await reveal(tester,
+    await reveal(
+      tester,
       find.textContaining('Pusta ścieżka'),
       160,
     );
     expect(find.textContaining('Pusta ścieżka'), findsOneWidget);
 
-    await reveal(tester,
+    await reveal(
+      tester,
       find.byKey(const Key('melody-part-1-0')),
       200,
     );
@@ -69,14 +71,16 @@ void main() {
     );
     expect(find.textContaining('Akordy/nakładające się nuty'), findsWidgets);
 
-    await reveal(tester,
+    await reveal(
+      tester,
       find.byKey(const Key('melody-part-2-0')),
       180,
     );
     await tester.tap(find.byKey(const Key('melody-part-2-0')));
     await tester.pump();
 
-    await reveal(tester,
+    await reveal(
+      tester,
       find.byKey(const Key('selected-melody')),
       -180,
     );
@@ -110,7 +114,8 @@ void main() {
     await tester.tap(find.byKey(const Key('choose-midi-file')));
     await tester.pumpAndSettle();
 
-    await reveal(tester,
+    await reveal(
+      tester,
       find.byKey(const Key('melody-part-0-9')),
       170,
     );
@@ -120,13 +125,15 @@ void main() {
     );
     expect(find.textContaining('Perkusja:'), findsOneWidget);
 
-    await reveal(tester,
+    await reveal(
+      tester,
       find.byKey(const Key('melody-part-0-1')),
       -150,
     );
     await tester.tap(find.byKey(const Key('melody-part-0-1')));
     await tester.pump();
-    await reveal(tester,
+    await reveal(
+      tester,
       find.byKey(const Key('selected-melody')),
       -150,
     );
@@ -154,17 +161,24 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('choose-midi-file')));
     await tester.pumpAndSettle();
-    await reveal(tester,
+    await reveal(
+      tester,
       find.byKey(const Key('melody-part-0-0')),
       150,
     );
     await tester.tap(find.byKey(const Key('melody-part-0-0')));
     await tester.pump();
-    await reveal(tester,
-      find.byKey(const Key('choose-midi-file')),
+    await reveal(
+      tester,
+      find.byKey(const Key('selected-melody')),
       -150,
     );
     expect(find.byKey(const Key('selected-melody')), findsOneWidget);
+    await reveal(
+      tester,
+      find.byKey(const Key('choose-midi-file')),
+      -150,
+    );
 
     picker.current = PickedMidiFile(
       name: 'empty.mid',
