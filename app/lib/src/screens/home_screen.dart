@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'microphone_preview_screen.dart';
 import 'midi_import_screen.dart';
+import 'instrument_range_screen.dart';
+import '../instrument/instrument_range.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -77,6 +79,22 @@ class HomeScreen extends StatelessWidget {
                   'Wczytaj melodię i podejrzyj nuty oraz ścieżki.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 18),
+                OutlinedButton.icon(
+                  key: const Key('open-instrument-range'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<InstrumentRange>(
+                        builder: (_) => const InstrumentRangeScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.tune),
+                  label: const Text('Ustaw zakres klawiatury'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                  ),
                 ),
                 const SizedBox(height: 28),
                 OutlinedButton.icon(
