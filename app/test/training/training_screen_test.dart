@@ -184,8 +184,10 @@ Future<TestGesture> pressKey(WidgetTester tester, int note) async {
   final height = rect.height;
   final keyboard = PianoKeyboardLayout(
     const InstrumentRange(48, 72),
-    whiteKeyWidth: math.max(38.0, tester.view.physicalSize.width /
-        tester.view.devicePixelRatio / 21),
+    whiteKeyWidth: math.max(
+      38.0,
+      tester.view.physicalSize.width / tester.view.devicePixelRatio / 21,
+    ),
     height: (height * 0.32).clamp(110.0, 210.0),
   );
   final key = keyboard.keyForMidi(note)!;
