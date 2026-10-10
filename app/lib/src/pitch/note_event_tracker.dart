@@ -94,7 +94,8 @@ class NoteEventTracker {
     }
     _lastObservationAt = at;
 
-    final note = estimate != null &&
+    final note =
+        estimate != null &&
             estimate.confidence >= minConfidence &&
             estimate.centsFromNote.isFinite &&
             estimate.centsFromNote.abs() <= maxCentsDeviation &&
@@ -110,7 +111,11 @@ class NoteEventTracker {
         _releaseSince ??= at;
         if (at - _releaseSince! >= minReleaseDuration) {
           events.add(
-            NoteEvent(type: NoteEventType.noteOff, midiNote: _stableNote!, at: at),
+            NoteEvent(
+              type: NoteEventType.noteOff,
+              midiNote: _stableNote!,
+              at: at,
+            ),
           );
           _stableNote = null;
           _releaseSince = null;
@@ -152,11 +157,10 @@ class NoteEventTracker {
     _lastObservationAt = null;
   }
 
-  NoteDetectionUpdate _snapshot(List<NoteEvent> events) =>
-      NoteDetectionUpdate(
-        phase: phase,
-        stableNote: _stableNote,
-        candidateNote: _candidateNote,
-        events: List.unmodifiable(events),
-      );
+  NoteDetectionUpdate _snapshot(List<NoteEvent> events) => NoteDetectionUpdate(
+    phase: phase,
+    stableNote: _stableNote,
+    candidateNote: _candidateNote,
+    events: List.unmodifiable(events),
+  );
 }
