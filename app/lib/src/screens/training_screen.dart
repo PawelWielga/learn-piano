@@ -254,7 +254,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
     super.dispose();
   }
 
-
   /// A short landscape viewport has no room for the desktop's long scroll.
   /// Keep progress, audio state, piano roll and actions on screen together.
   Widget _buildCompactScaffold(
@@ -354,8 +353,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     final microphoneLabel = _listening
         ? 'Mikrofon aktywny'
         : 'Mikrofon wyłączony';
-    final compactPhaseLabel =
-        phase == TrainingPhase.running && _awaitingSilence
+    final compactPhaseLabel = phase == TrainingPhase.running && _awaitingSilence
         ? 'Czekam na ciszę'
         : phaseLabel;
     final feedbackLabel = switch (_snapshot.lastAttempt) {
@@ -389,7 +387,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   Icon(
                     _listening ? Icons.mic : Icons.mic_off,
                     size: 16,
-                    color: _listening ? scheme.primary : scheme.onSurfaceVariant,
+                    color: _listening
+                        ? scheme.primary
+                        : scheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -444,7 +444,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: _snapshot.lastAttempt ==
+                            color:
+                                _snapshot.lastAttempt ==
                                     TrainingAttempt.incorrect
                                 ? scheme.error
                                 : scheme.primary,
@@ -514,8 +515,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     ),
                   );
                 }
-                final keyboardHeight =
-                    (constraints.maxHeight * 0.60).clamp(68.0, 154.0);
+                final keyboardHeight = (constraints.maxHeight * 0.60).clamp(
+                  68.0,
+                  154.0,
+                );
                 return FallingNotesView(
                   notes: widget.selection.notes,
                   range: widget.instrumentRange,
