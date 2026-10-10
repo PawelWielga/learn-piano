@@ -32,6 +32,11 @@ jobs:
         run: flutter pub get
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
+      - name: Print Dart formatting diff on failure
+        if: failure()
+        run: |
+          dart format .
+          git diff -- lib/src/training/wait_for_note_engine.dart test/training/wait_for_note_engine_test.dart test/training/wait_for_note_pipeline_test.dart
       - name: Analyze
         run: flutter analyze
       - name: Test
