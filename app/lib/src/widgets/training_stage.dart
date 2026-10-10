@@ -210,8 +210,7 @@ class _TrainingStageState extends State<TrainingStage> {
       }
       final position = _scrollController.position;
       final width = position.viewportDimension;
-      final target = melodyLeft.isFinite &&
-              melodyRight - melodyLeft <= width
+      final target = melodyLeft.isFinite && melodyRight - melodyLeft <= width
           ? (melodyLeft + melodyRight - width) / 2
           : firstNote == null
           ? 0.0
