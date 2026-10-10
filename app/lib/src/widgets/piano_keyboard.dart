@@ -17,12 +17,9 @@ class PianoKeyGeometry {
 }
 
 class PianoKeyboardLayout {
-  PianoKeyboardLayout(
-    this.range, {
-    this.whiteKeyWidth = 40,
-    this.height = 160,
-  }) : assert(whiteKeyWidth > 0),
-       assert(height > 0) {
+  PianoKeyboardLayout(this.range, {this.whiteKeyWidth = 40, this.height = 160})
+    : assert(whiteKeyWidth > 0),
+      assert(height > 0) {
     final blackWidth = whiteKeyWidth * 0.62;
     final raw = <PianoKeyGeometry>[];
     for (var note = range.low; note <= range.high; note++) {
