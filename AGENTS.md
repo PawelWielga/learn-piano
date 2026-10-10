@@ -99,7 +99,7 @@ Ważne zasady:
 
 ## 7. Komendy developerskie i weryfikacja
 
-**Aktualny stan repozytorium:** M0 zawiera projekt Flutter Web w `app/`, CI i workflow Pages. M1 ma wejście PCM przez getUserMedia + AudioWorklet (#4) oraz algorytm YIN do rozpoznawania nut i oktaw (#5). W #6 rozwijany jest niezależny automat stabilizacji i zdarzenia `NoteOn`/`NoteOff`; fizyczna walidacja na keyboardzie jest nadal wymagana (#7). `app/pubspec.lock` został wygenerowany Flutterem 3.47.7. Każdą nową zmianę weryfikuj osobnym przebiegiem CI; nie traktuj wcześniejszego sukcesu testów jako potwierdzenia nowych zmian.
+**Aktualny stan repozytorium:** M0 zawiera projekt Flutter Web w `app/`, CI i workflow Pages. M1 ma wejście PCM przez getUserMedia + AudioWorklet (#4) oraz algorytm YIN do rozpoznawania nut i oktaw (#5). W #6 dodano stabilizację `NoteOn`/`NoteOff`; użytkownik potwierdził działanie na swoim instrumencie, ale formalne pomiary i macierz przeglądarek dla #7 pozostają otwarte. W M2 rozwijamy import SMF typu 0/1 (#8), przed wyborem partii i treningiem. `app/pubspec.lock` został wygenerowany Flutterem 3.47.7. Każdą nową zmianę weryfikuj osobnym przebiegiem CI; nie traktuj wcześniejszego sukcesu testów jako potwierdzenia nowych zmian.
 
 Gdy `app/` zostanie utworzony:
 
