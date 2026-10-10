@@ -12,6 +12,12 @@ class MelodyPickerFake implements MidiFilePicker {
   Future<PickedMidiFile?> pick() async => current;
 }
 
+Future<void> reveal(WidgetTester tester, Finder finder, double delta) async {
+  await reveal(tester,finder, delta);
+  await Scrollable.ensureVisible(tester.element(finder), alignment: 0.5);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('selects melody by track without treating chords as playable', (
     tester,
@@ -47,17 +53,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('melody-selection-hint')), findsOneWidget);
-    await tester.scrollUntilVisible(
+    await reveal(tester,
       find.textContaining('Pusta ścieżka'),
       160,
-      alignment: 0.5,
     );
     expect(find.textContaining('Pusta ścieżka'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
+    await reveal(tester,
       find.byKey(const Key('melody-part-1-0')),
       200,
-      alignment: 0.5,
     );
     expect(
       tester.widget<InkWell>(find.byKey(const Key('melody-part-1-0'))).onTap,
@@ -65,18 +69,16 @@ void main() {
     );
     expect(find.textContaining('Akordy/nakładające się nuty'), findsWidgets);
 
-    await tester.scrollUntilVisible(
+    await reveal(tester,
       find.byKey(const Key('melody-part-2-0')),
       180,
-      alignment: 0.5,
     );
     await tester.tap(find.byKey(const Key('melody-part-2-0')));
     await tester.pump();
 
-    await tester.scrollUntilVisible(
+    await reveal(tester,
       find.byKey(const Key('selected-melody')),
       -180,
-      alignment: 0.5,
     );
     expect(find.text('Wybrana melodia'), findsOneWidget);
     expect(find.textContaining('kanał 1'), findsWidgets);
@@ -108,10 +110,9 @@ void main() {
     await tester.tap(find.byKey(const Key('choose-midi-file')));
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
+    await reveal(tester,
       find.byKey(const Key('melody-part-0-9')),
       170,
-      alignment: 0.5,
     );
     expect(
       tester.widget<InkWell>(find.byKey(const Key('melody-part-0-9'))).onTap,
@@ -119,17 +120,15 @@ void main() {
     );
     expect(find.textContaining('Perkusja:'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
+    await reveal(tester,
       find.byKey(const Key('melody-part-0-1')),
       -150,
-      alignment: 0.5,
     );
     await tester.tap(find.byKey(const Key('melody-part-0-1')));
     await tester.pump();
-    await tester.scrollUntilVisible(
+    await reveal(tester,
       find.byKey(const Key('selected-melody')),
       -150,
-      alignment: 0.5,
     );
     expect(find.textContaining('kanał 2'), findsWidgets);
     expect(find.textContaining('C3–C3'), findsOneWidget);
@@ -155,17 +154,15 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('choose-midi-file')));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
+    await reveal(tester,
       find.byKey(const Key('melody-part-0-0')),
       150,
-      alignment: 0.5,
     );
     await tester.tap(find.byKey(const Key('melody-part-0-0')));
     await tester.pump();
-    await tester.scrollUntilVisible(
+    await reveal(tester,
       find.byKey(const Key('choose-midi-file')),
       -150,
-      alignment: 0.5,
     );
     expect(find.byKey(const Key('selected-melody')), findsOneWidget);
 
