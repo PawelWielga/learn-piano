@@ -16,7 +16,8 @@ class SpectrumChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Semantics(
-      label: 'Widmo częstotliwości 60 do 1200 Hz. '
+      label:
+          'Widmo częstotliwości 60 do 1200 Hz. '
           'Piki mogą oznaczać harmoniczne, nie osobne naciśnięcia.',
       child: Container(
         key: const Key('spectrum-chart'),
@@ -79,8 +80,7 @@ class _SpectrumPainter extends CustomPainter {
     return rect.left +
         math.log(hz / SpectrumAnalyzer.minFrequencyHz) /
             math.log(
-              SpectrumAnalyzer.maxFrequencyHz /
-                  SpectrumAnalyzer.minFrequencyHz,
+              SpectrumAnalyzer.maxFrequencyHz / SpectrumAnalyzer.minFrequencyHz,
             ) *
             rect.width;
   }
@@ -111,12 +111,7 @@ class _SpectrumPainter extends CustomPainter {
       axis,
     );
     _write(canvas, '0 dB', const Offset(4, 27), textColor);
-    _write(
-      canvas,
-      '-55',
-      Offset(8, rect.bottom - 9),
-      textColor,
-    );
+    _write(canvas, '-55', Offset(8, rect.bottom - 9), textColor);
 
     final data = snapshot;
     if (data == null) return;
@@ -142,8 +137,7 @@ class _SpectrumPainter extends CustomPainter {
       canvas.drawCircle(Offset(x, y), 3, peakPaint);
 
       if (peak.level < 0.52) continue;
-      final midi = (69 +
-              12 * math.log(peak.frequencyHz / 440) / math.ln2)
+      final midi = (69 + 12 * math.log(peak.frequencyHz / 440) / math.ln2)
           .round()
           .clamp(0, 127)
           .toInt();
@@ -175,11 +169,7 @@ class _SpectrumPainter extends CustomPainter {
         final marker = Paint()
           ..color = candidate
           ..strokeWidth = 2;
-        canvas.drawLine(
-          Offset(x, rect.top),
-          Offset(x, rect.bottom),
-          marker,
-        );
+        canvas.drawLine(Offset(x, rect.top), Offset(x, rect.bottom), marker);
         canvas.drawCircle(Offset(x, rect.top), 4, marker);
       }
     }
