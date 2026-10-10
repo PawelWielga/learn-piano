@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'microphone_preview_screen.dart';
+import 'midi_import_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -52,6 +53,28 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   'Sprawdź zgodę na mikrofon i poziom dźwięku.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 28),
+                FilledButton.icon(
+                  key: const Key('open-midi-import'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const MidiImportScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Importuj plik MIDI'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Wczytaj melodię i podejrzyj nuty oraz ścieżki.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall,
                 ),
