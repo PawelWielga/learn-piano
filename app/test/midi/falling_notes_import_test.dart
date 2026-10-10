@@ -42,7 +42,12 @@ void main() {
     await tester.pumpAndSettle();
 
     final next = find.byKey(const Key('midi-preview-next'));
-    await tester.ensureVisible(next);
+    await tester.scrollUntilVisible(
+      next,
+      -180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await Scrollable.ensureVisible(tester.element(next), alignment: 0.5);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('falling-notes-view')), findsOneWidget);
     expect(find.textContaining('Teraz: C4'), findsOneWidget);
