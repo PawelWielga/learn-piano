@@ -8,6 +8,7 @@ import '../audio/audio_input_factory.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';
 import '../instrument/instrument_range.dart';
+import '../layout/landscape_gate.dart';
 import '../instrument/instrument_range_store.dart';
 import '../instrument/instrument_range_store_factory.dart';
 import '../widgets/piano_keyboard.dart';
@@ -40,6 +41,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
 
   bool _busy = false;
   bool _listening = false;
+  bool _landscapeBlocked = false;
+  int _startRequestId = 0;
   int? _sampleRate;
   int? _frameSize;
   double _level = 0;
@@ -67,6 +70,21 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
         });
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final blocked = isPortraitViewport(context);
+    if (blocked && !_landscapeBlocked) {
+      _startRequestId++;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _landscapeBlocked && _listening) {
+          unawaited(_stop());
+        }
+      });
+    }
+    _landscapeBlocked = blocked;
   }
 
   Future<void> _loadInstrumentRange() async {
@@ -118,7 +136,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   }
 
   Future<void> _start() async {
-    if (_busy || _listening) return;
+    if (_busy || _listening || _landscapeBlocked) return;
+    final requestId = ++_startRequestId;
     setState(() {
       _busy = true;
       _error = null;
@@ -134,12 +153,17 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
     });
     try {
       await _input.start();
-      if (!mounted) return;
+      if (!mounted || requestId != _startRequestId || _landscapeBlocked) {
+        await _input.stop();
+        return;
+      }
       setState(() => _listening = true);
     } on AudioInputException catch (error) {
-      if (mounted) setState(() => _error = _errorText(error.failure));
+      if (mounted && requestId == _startRequestId) {
+        setState(() => _error = _errorText(error.failure));
+      }
     } catch (_) {
-      if (mounted) {
+      if (mounted && requestId == _startRequestId) {
         setState(
           () => _error =
               'Nie udało się uruchomić mikrofonu. '

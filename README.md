@@ -44,6 +44,16 @@ flutter build web --release --base-href /learn-piano/
 
 Więcej: [app/README.md](app/README.md).
 
+## Układ poziomy
+
+Na pionowym ekranie pojawia się komunikat o obróceniu urządzenia. Aplikacja
+zachowuje wczytane MIDI, wybór melodii i postęp treningu po obrocie.
+Jeśli podczas ćwiczenia działał mikrofon, jego nasłuch zostaje zatrzymany,
+a trening wstrzymany. Po powrocie do poziomu trzeba ręcznie wznowić ćwiczenie.
+Manifest zainstalowanej PWA sugeruje orientację poziomą, ale zwykła karta
+mobilnej przeglądarki (szczególnie Safari iOS) nie udostępnia niezawodnego
+wymuszenia fizycznego obrotu. Można też poszerzyć okno na desktopie.
+
 ## CI i GitHub Pages
 
 - **Pull request do `main`:** `.github/workflows/ci.yml` uruchamia format, analizę, testy oraz release build. Nie publikuje strony.

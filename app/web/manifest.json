@@ -3,6 +3,7 @@
   "short_name": "Learn Piano",
   "start_url": ".",
   "display": "standalone",
+  "orientation": "landscape",
   "background_color": "#ffffff",
   "theme_color": "#087E77",
   "description": "Ćwicz grę na prawdziwym pianinie lub keyboardzie.",

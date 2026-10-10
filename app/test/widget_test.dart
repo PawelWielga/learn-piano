@@ -111,6 +111,34 @@ void main() {
     expect(find.textContaining('Próbkowanie:'), findsOneWidget);
   });
 
+  testWidgets('rotating to portrait stops active microphone capture', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(844, 390);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final input = FakeAudioInput();
+    await tester.pumpWidget(
+      MaterialApp(home: MicrophonePreviewScreen(audioInput: input)),
+    );
+    await tester.tap(find.text('Włącz mikrofon'));
+    await tester.pump();
+    expect(input.starts, 1);
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pump();
+    await tester.pump();
+    expect(input.stops, 1);
+    expect(find.text('Mikrofon nieaktywny'), findsOneWidget);
+
+    tester.view.physicalSize = const Size(844, 390);
+    await tester.pump();
+    expect(input.starts, 1);
+    expect(find.text('Włącz mikrofon'), findsOneWidget);
+  });
+
   testWidgets('starts, displays PCM metadata and stops', (tester) async {
     final input = FakeAudioInput();
     await tester.pumpWidget(

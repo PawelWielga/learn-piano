@@ -255,6 +255,35 @@ void main() {
     expect(find.text('0 / 3 nut'), findsOneWidget);
   });
 
+  testWidgets('portrait suspends listening without losing training progress', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(844, 390);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final fake = TrainingAudioFake();
+    await launch(tester, fake);
+    await startExercise(tester, fake);
+    fake.strike(60, startMs: 440);
+    await tester.pump();
+    expect(find.text('1 / 3 nut'), findsOneWidget);
+
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pump();
+    await tester.pump();
+    expect(fake.stops, 1);
+    expect(find.text('Ćwiczenie wstrzymane'), findsOneWidget);
+    expect(find.text('1 / 3 nut'), findsOneWidget);
+
+    tester.view.physicalSize = const Size(844, 390);
+    await tester.pump();
+    expect(fake.starts, 1);
+    expect(find.text('Wznów'), findsOneWidget);
+    expect(find.text('1 / 3 nut'), findsOneWidget);
+  });
+
   testWidgets('microphone errors and interruptions pause without scoring', (
     tester,
   ) async {
