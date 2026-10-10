@@ -81,7 +81,7 @@ void main() {
     await tester.tap(find.byKey(const Key('range-preset-88')));
     await tester.pump();
     await reveal(tester, find.byKey(const Key('range-playable')));
-    expect(find.textContaining('Wszystkie 2 nuty'), findsOneWidget);
+    expect(find.textContaining('Wszystkie 2 nut'), findsOneWidget);
 
     await reveal(tester, find.byKey(const Key('range-save')));
     await tester.tap(find.byKey(const Key('range-save')));
