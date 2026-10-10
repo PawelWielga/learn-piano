@@ -162,6 +162,21 @@ void main() {
     expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.correct);
   });
 
+  test('only confirmed silence of a new session can clear held keys', () {
+    final engine = engineFor([midiNote(60, 0, 100), midiNote(60, 200, 300)])
+      ..start();
+    expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.correct);
+    engine.pause();
+    engine.resume();
+    expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.ignored);
+    expect(engine.snapshot.currentIndex, 1);
+
+    // The screen invokes this only after acoustic silence, never on pause.
+    engine.releaseHeldNotesAfterSilence();
+    expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.correct);
+    expect(engine.snapshot.phase, TrainingPhase.completed);
+  });
+
   test('wrong events do not count twice until a new release and onset', () {
     final engine = engineFor([midiNote(62, 0, 100)])..start();
     expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.incorrect);

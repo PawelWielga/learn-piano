@@ -98,10 +98,16 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 28),
                 OutlinedButton.icon(
-                  key: const Key('training-coming-soon'),
-                  onPressed: null,
+                  key: const Key('training-start-from-home'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const MidiImportScreen(),
+                      ),
+                    );
+                  },
                   icon: const Icon(Icons.music_note),
-                  label: const Text('Trening z pliku MIDI (wkrótce)'),
+                  label: const Text('Ćwicz z plikiem MIDI'),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(56),
                   ),

@@ -94,10 +94,10 @@ void main() {
     expect(find.text('Ucz się na swoim pianinku'), findsOneWidget);
     expect(find.byKey(const Key('open-midi-import')), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.byKey(const Key('training-coming-soon')),
+      find.byKey(const Key('training-start-from-home')),
       200,
     );
-    expect(find.byKey(const Key('training-coming-soon')), findsOneWidget);
+    expect(find.byKey(const Key('training-start-from-home')), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const Key('open-microphone-preview')),
       -200,
