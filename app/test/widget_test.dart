@@ -177,6 +177,33 @@ void main() {
     );
   });
 
+  testWidgets('detects and stabilizes C2 from Web-style PCM frames', (
+    tester,
+  ) async {
+    final input = FakeAudioInput();
+    await tester.pumpWidget(
+      MaterialApp(home: MicrophonePreviewScreen(audioInput: input)),
+    );
+    await tester.tap(find.text('Włącz mikrofon'));
+    await tester.pump();
+
+    // 65.4064 Hz was previously rejected by the 90 Hz detector cutoff.
+    input.emitTone(65.4064, timeMs: 50);
+    await tester.pump();
+    expect(
+      tester.widget<Text>(find.byKey(const Key('detected-note'))).data,
+      'C2',
+    );
+    input.emitTone(65.4064, timeMs: 180);
+    input.emitTone(65.4064, timeMs: 310);
+    await tester.pump();
+    expect(
+      tester.widget<Text>(find.byKey(const Key('stable-note'))).data,
+      'C2',
+    );
+    expect(find.text('Zdarzenia NoteOn: 1'), findsOneWidget);
+  });
+
   testWidgets('confirms separate NoteOn events only after stable re-strikes', (
     tester,
   ) async {
