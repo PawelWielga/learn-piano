@@ -46,29 +46,33 @@ MelodySelection song(List<int> pitches) {
         duration: const Duration(milliseconds: 500),
       ),
   ];
-  return MelodySelection(MelodyPart(
-    trackIndex: 0,
-    trackName: 'Practice',
-    channel: 0,
-    notes: notes,
-    overlapCount: 0,
-    minMidiNote: pitches.reduce((a, b) => a < b ? a : b),
-    maxMidiNote: pitches.reduce((a, b) => a > b ? a : b),
-    start: Duration.zero,
-    duration: Duration(milliseconds: pitches.length * 500),
-  ));
+  return MelodySelection(
+    MelodyPart(
+      trackIndex: 0,
+      trackName: 'Practice',
+      channel: 0,
+      notes: notes,
+      overlapCount: 0,
+      minMidiNote: pitches.reduce((a, b) => a < b ? a : b),
+      maxMidiNote: pitches.reduce((a, b) => a > b ? a : b),
+      start: Duration.zero,
+      duration: Duration(milliseconds: pitches.length * 500),
+    ),
+  );
 }
 
 void main() {
   testWidgets('loads stored keyboard range on open', (tester) async {
     final store = TestRangeStore()..saved = const InstrumentRange(48, 84);
-    await tester.pumpWidget(MaterialApp(
-      home: InstrumentRangeScreen(rangeStore: store),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(home: InstrumentRangeScreen(rangeStore: store)),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('C3–C6 (37 klawiszy)'), findsOneWidget);
     expect(
-      tester.widget<ChoiceChip>(find.byKey(const Key('range-preset-37'))).selected,
+      tester
+          .widget<ChoiceChip>(find.byKey(const Key('range-preset-37')))
+          .selected,
       isTrue,
     );
   });
@@ -97,14 +101,18 @@ void main() {
     expect(store.writes, 1);
   });
 
-  testWidgets('invalid endpoints disable saving until repaired', (tester) async {
+  testWidgets('invalid endpoints disable saving until repaired', (
+    tester,
+  ) async {
     final store = TestRangeStore();
-    await tester.pumpWidget(MaterialApp(
-      home: InstrumentRangeScreen(
-        initialRange: const InstrumentRange(60, 60),
-        rangeStore: store,
+    await tester.pumpWidget(
+      MaterialApp(
+        home: InstrumentRangeScreen(
+          initialRange: const InstrumentRange(60, 60),
+          rangeStore: store,
+        ),
       ),
-    ));
+    );
     await visible(tester, find.byKey(const Key('range-low-increase')));
     await tester.tap(find.byKey(const Key('range-low-increase')));
     await tester.pump();
@@ -112,7 +120,9 @@ void main() {
     expect(find.byKey(const Key('range-invalid')), findsOneWidget);
     await visible(tester, find.byKey(const Key('range-save')));
     expect(
-      tester.widget<FilledButton>(find.byKey(const Key('range-save'))).onPressed,
+      tester
+          .widget<FilledButton>(find.byKey(const Key('range-save')))
+          .onPressed,
       isNull,
     );
     expect(store.writes, 0);
@@ -127,13 +137,15 @@ void main() {
     tester,
   ) async {
     final store = TestRangeStore();
-    await tester.pumpWidget(MaterialApp(
-      home: InstrumentRangeScreen(
-        initialRange: const InstrumentRange(60, 72),
-        selection: song([59, 60, 72, 73, 59]),
-        rangeStore: store,
+    await tester.pumpWidget(
+      MaterialApp(
+        home: InstrumentRangeScreen(
+          initialRange: const InstrumentRange(60, 72),
+          selection: song([59, 60, 72, 73, 59]),
+          rangeStore: store,
+        ),
       ),
-    ));
+    );
     await visible(tester, find.byKey(const Key('range-outside-warning')));
     expect(find.textContaining('Poza zakresem: 3 z 5 nut'), findsOneWidget);
     expect(find.textContaining('B3, C#5'), findsOneWidget);
@@ -146,9 +158,9 @@ void main() {
 
   testWidgets('blocked storage offers use for current session', (tester) async {
     final store = TestRangeStore()..failWrite = true;
-    await tester.pumpWidget(MaterialApp(
-      home: InstrumentRangeScreen(rangeStore: store),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(home: InstrumentRangeScreen(rangeStore: store)),
+    );
     await visible(tester, find.byKey(const Key('range-save')));
     await tester.tap(find.byKey(const Key('range-save')));
     await tester.pumpAndSettle();
