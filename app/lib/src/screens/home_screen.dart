@@ -51,7 +51,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Ekran przygotowawczy. Nasłuch dodamy w następnym etapie.',
+                  'Sprawdź zgodę na mikrofon i poziom dźwięku.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall,
                 ),

@@ -99,7 +99,7 @@ Ważne zasady:
 
 ## 7. Komendy developerskie i weryfikacja
 
-**Aktualny stan repozytorium:** w ramach M0 przygotowano projekt Flutter Web w `app/` oraz workflowy CI/Pages. Ekran testera jest na razie przygotowawczy, bez uruchomionego mikrofonu. W pierwszym przebiegu walidacyjnym przeprowadzono formatowanie, analizę, test widgetowy i release build Flutter Web w GitHub Actions. `app/pubspec.lock` został wygenerowany Flutterem 3.47.7 i dodany do repozytorium. Nie twierdź, że testy/build zakończyły się powodzeniem bez ich uruchomienia.
+**Aktualny stan repozytorium:** w ramach M0 przygotowano projekt Flutter Web w `app/` oraz workflowy CI/Pages. W ramach M1 rozpoczęto wejście mikrofonowe przez getUserMedia + AudioWorklet; tester pokazuje stan i parametry próbek PCM, ale pitch detection i stabilizacja nut nie są jeszcze zaimplementowane. W pierwszym przebiegu walidacyjnym przeprowadzono formatowanie, analizę, test widgetowy i release build Flutter Web w GitHub Actions. `app/pubspec.lock` został wygenerowany Flutterem 3.47.7 i dodany do repozytorium. Nie twierdź, że testy/build zakończyły się powodzeniem bez ich uruchomienia.
 
 Gdy `app/` zostanie utworzony:
 
