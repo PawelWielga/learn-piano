@@ -150,11 +150,11 @@ class _PianoKeyboardState extends State<PianoKeyboard> {
       children: [
         if (widget.showRangeLabel)
           Text(
-          'Klawiatura: ${PitchEstimate.nameForMidi(widget.range.low)}–'
-          '${PitchEstimate.nameForMidi(widget.range.high)} '
-          '(${widget.range.keyCount} klawiszy)',
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+            'Klawiatura: ${PitchEstimate.nameForMidi(widget.range.low)}–'
+            '${PitchEstimate.nameForMidi(widget.range.high)} '
+            '(${widget.range.keyCount} klawiszy)',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 18,
