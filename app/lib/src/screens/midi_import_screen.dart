@@ -274,6 +274,7 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                               PianoKeyboard(
                                 range: _instrumentRange,
                                 expectedNote: selection.notes.first.midiNote,
+                                showRangeLabel: false,
                               ),
                             ],
                           ),
