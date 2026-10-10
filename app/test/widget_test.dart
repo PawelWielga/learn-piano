@@ -137,7 +137,10 @@ void main() {
       MaterialApp(home: MicrophonePreviewScreen(audioInput: input)),
     );
 
-    expect(tester.widget<Text>(find.byKey(const Key('detected-note'))).data, '—');
+    expect(
+      tester.widget<Text>(find.byKey(const Key('detected-note'))).data,
+      '—',
+    );
     await tester.tap(find.text('Włącz mikrofon'));
     await tester.pump();
 
@@ -159,7 +162,10 @@ void main() {
     await tester.pump();
     expect(find.text('A4'), findsNothing);
     expect(find.text('C4'), findsNothing);
-    expect(tester.widget<Text>(find.byKey(const Key('detected-note'))).data, '—');
+    expect(
+      tester.widget<Text>(find.byKey(const Key('detected-note'))).data,
+      '—',
+    );
   });
 
   testWidgets('confirms separate NoteOn events only after stable re-strikes', (
@@ -196,10 +202,7 @@ void main() {
     input.emitSilence(timeMs: 960);
     input.emitSilence(timeMs: 1090);
     await tester.pump();
-    expect(
-      tester.widget<Text>(find.byKey(const Key('stable-note'))).data,
-      '—',
-    );
+    expect(tester.widget<Text>(find.byKey(const Key('stable-note'))).data, '—');
 
     input.emitTone(440, timeMs: 1220);
     input.emitTone(440, timeMs: 1350);
@@ -210,10 +213,7 @@ void main() {
 
     await tester.tap(find.text('Wyłącz mikrofon'));
     await tester.pump();
-    expect(
-      tester.widget<Text>(find.byKey(const Key('stable-note'))).data,
-      '—',
-    );
+    expect(tester.widget<Text>(find.byKey(const Key('stable-note'))).data, '—');
 
     await tester.tap(find.text('Włącz mikrofon'));
     await tester.pump();
