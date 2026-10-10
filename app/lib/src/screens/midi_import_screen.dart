@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../audio/audio_input.dart';
+
 import '../midi/midi_file_picker.dart';
 import '../midi/midi_file_picker_factory.dart';
 import '../midi/midi_parser.dart';
@@ -9,15 +11,22 @@ import '../instrument/instrument_range.dart';
 import '../instrument/instrument_range_store.dart';
 import '../instrument/instrument_range_store_factory.dart';
 import 'instrument_range_screen.dart';
+import 'training_screen.dart';
 import '../widgets/falling_notes_view.dart';
 import '../widgets/piano_keyboard.dart';
 
 class MidiImportScreen extends StatefulWidget {
-  const MidiImportScreen({super.key, this.filePicker, this.rangeStore});
+  const MidiImportScreen({
+    super.key,
+    this.filePicker,
+    this.rangeStore,
+    this.trainingAudioInput,
+  });
 
   /// Injectable so tests never open a native browser file dialog.
   final MidiFilePicker? filePicker;
   final InstrumentRangeStore? rangeStore;
+  final AudioInput? trainingAudioInput;
 
   @override
   State<MidiImportScreen> createState() => _MidiImportScreenState();
@@ -70,6 +79,26 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
     if (mounted && result != null) {
       setState(() => _instrumentRange = result);
     }
+  }
+
+  void _openTraining() {
+    final selection = _selection;
+    if (selection == null ||
+        !_instrumentRange
+            .checkNotes(selection.notes.map((note) => note.midiNote))
+            .canPractice) {
+      return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => TrainingScreen(
+          selection: selection,
+          instrumentRange: _instrumentRange,
+          songTitle: _fileName,
+          audioInput: widget.trainingAudioInput,
+        ),
+      ),
+    );
   }
 
   Future<void> _import() async {
@@ -246,7 +275,7 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                               if (rangeCheck!.canPractice)
                                 const Text(
                                   'Wszystkie nuty mieszczą się w zakresie. '
-                                  'Melodia jest gotowa do kolejnego etapu.',
+                                  'Melodia jest gotowa do treningu.',
                                   key: Key('selected-range-ok'),
                                 )
                               else
@@ -269,6 +298,16 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                               ),
                               const SizedBox(height: 16),
                               if (rangeCheck.canPractice) ...[
+                                FilledButton.icon(
+                                  key: const Key('start-midi-training'),
+                                  onPressed: _openTraining,
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: const Text('Rozpocznij trening'),
+                                  style: FilledButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(56),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
                                 Text(
                                   'Podgląd melodii',
                                   style: theme.textTheme.titleSmall,
@@ -312,7 +351,7 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                                 const SizedBox(height: 8),
                                 const Text(
                                   'Przyciski zmieniają tylko podgląd. '
-                                  'Zaliczanie zagranych nut dojdzie w treningu.',
+                                  'Podgląd ręczny. W treningu postęp zależy od mikrofonu.',
                                   style: TextStyle(fontSize: 12),
                                 ),
                               ] else ...[
@@ -461,8 +500,8 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                   const SizedBox(height: 20),
                   const Text(
                     'Po wyborze melodii możesz ustawić zakres swojej '
-                    'klawiatury. Podgląd klawiszy jest dostępny po wyborze '
-                    'melodii; trening dodamy później.',
+                    'klawiatury. Wybierz dostępną partię i rozpocznij trening '
+                    'przy użyciu mikrofonu.',
                     key: Key('midi-next-step'),
                   ),
                 ],
