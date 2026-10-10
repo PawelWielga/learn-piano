@@ -28,10 +28,7 @@ void main() {
     final sharp = layout.keyForMidi(61)!;
     expect(layout.noteAt(sharp.rect.center), 61);
     expect(layout.noteAt(c.rect.center), 60);
-    expect(
-      layout.noteAt(Offset(c.rect.center.dx, layout.height - 2)),
-      60,
-    );
+    expect(layout.noteAt(Offset(c.rect.center.dx, layout.height - 2)), 60);
     expect(layout.noteAt(const Offset(-5, 20)), isNull);
     expect(layout.noteAt(Offset(c.rect.center.dx, layout.height + 1)), isNull);
   });
