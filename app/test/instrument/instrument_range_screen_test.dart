@@ -27,7 +27,11 @@ class TestRangeStore implements InstrumentRangeStore {
 }
 
 Future<void> visible(WidgetTester tester, Finder target) async {
-  await tester.scrollUntilVisible(target, 160);
+  await tester.scrollUntilVisible(
+    target,
+    160,
+    scrollable: find.byType(Scrollable).first,
+  );
   await Scrollable.ensureVisible(tester.element(target), alignment: 0.5);
   await tester.pumpAndSettle();
 }
