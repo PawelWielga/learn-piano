@@ -244,10 +244,7 @@ class _PianoKeyboardPainter extends CustomPainter {
 
   void _drawKey(Canvas canvas, PianoKeyGeometry key) {
     final rect = key.rect;
-    final shape = RRect.fromRectAndRadius(
-      rect,
-      const Radius.circular(3),
-    );
+    final shape = RRect.fromRectAndRadius(rect, const Radius.circular(3));
     final base = key.isBlack
         ? const Color(0xFF20252B)
         : const Color(0xFFFDFDFD);
