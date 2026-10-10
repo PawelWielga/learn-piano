@@ -61,7 +61,7 @@ logicznych) trening przechodzi w układ kompaktowy. Nad klawiaturą widoczne są
 stan mikrofonu, oczekiwana i wykryta nuta, komunikat o trafieniu oraz postęp.
 Pianino i podgląd kolejnych nut dopasowują wysokość do dostępnego miejsca,
 a Start/Pauza i Reset pozostają na ekranie bez przewijania całej strony.
-Zakres klawiatury nadal można przesuwać poziomo. Na większych ekranach
+Po wejściu do treningu klawiatura ustawia się raz pod zakres melodii i\n**nie podąża za kolejnymi nutami**. Można ją przesuwać poziomo ręcznie,\na postęp, pauza i reset nie zmieniają wybranej pozycji. Na większych ekranach
 pozostaje pełny widok treningu. W wyjątkowo niskim oknie sam podgląd
 może przewijać się pionowo.
 
