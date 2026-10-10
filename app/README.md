@@ -1,6 +1,6 @@
 # Learn Piano Web
 
-Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn events, MIDI import and training are separate follow-up issues.
+Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn/NoteOff events now derive from successive pitch estimates; MIDI import and training remain separate follow-up issues.
 
 ## Prerequisites
 
@@ -38,7 +38,7 @@ The input is requested **only** after tapping **Włącz mikrofon**. The browser 
 - Tapping **Wyłącz mikrofon**, leaving the screen or moving the tab to the background stops tracks and closes the AudioContext.
 - Denied permission, missing device, unsupported API and interruption show a message and allow manual retry.
 - PCM frames are forwarded at ~23 frames/s at 48 kHz, and UI updates are throttled to at most ~8 times/s.
-- The detector now estimates **one pitch at a time**, but does not yet recognize separate key presses or chords (#6). Android/iOS native adapters are outside MVP 1.
+- Pitch estimates are stabilized into separate NoteOn events (#6) for monophonic input, but do not identify chords. Android/iOS native adapters are outside MVP 1.
 - AudioWorklet is preferred to deprecated ScriptProcessorNode. Some embedded/in-app browsers may not support it; no silent fallback to insecure capture is provided.
 - Sample timestamps describe AudioContext time, not wall-clock milliseconds. The source is mono (first input channel), without applying an extra gain or compressor. The browser may still apply device or driver processing.
 
@@ -61,7 +61,25 @@ The AudioWorklet keeps producing PCM while the Dart UI is throttled. On a mobile
 
 Tests use generated sine waves and tones with harmonics at 44.1/48 kHz across several octaves, plus silence, random noise, invalid frames and closely competing pitches. **No acoustic detector is guaranteed to distinguish all chords, reverb, subharmonics or background music**; an overtone-only sound may cause an octave mistake. Actual piano timbre, attack latency, mobile performance and release/rearticulation must be measured on physical hardware before proceeding past M1.
 
-Try the public tester on Pages: choose **Test mikrofonu**, allow access, play isolated C4 (261.6 Hz) and A4 (440 Hz), then verify the shown MIDI octave, frequency and confidence. Repeat notes, try quieter tones and log missed/incorrect detections under issues #5 and #7. The next step (#6) adds stability and distinct NoteOn events.
+Try the public tester on Pages: choose **Test mikrofonu**, allow access, play isolated C4 (261.6 Hz) and A4 (440 Hz), then verify the shown MIDI octave, frequency and confidence. Repeat notes, try quieter tones and log missed/incorrect detections under issues #5 and #7. The next manual step (#7) validates stabilizing thresholds and repeated strikes on a real piano.
+
+## Stable NoteOn/NoteOff events (#6)
+
+`lib/src/pitch/note_event_tracker.dart` consumes **throttled YIN results** with AudioContext timestamps and maintains `silent`, `candidate`, `stable` and `releasing` states. It is pure Dart, without Flutter or microphone dependencies. The microphone tester shows the latest raw candidate, the stable note, a phase label, the total number of confirmed **NoteOn** events and the most recent strike. This helps validate consecutive repetitions on real hardware.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| Minimum stable pitch | 200 ms | Same MIDI note must remain credible over this period before a NoteOn |
+| Minimum silence to release | 240 ms | Short missing/ambiguous frames do not end a held note |
+| Maximum observation gap | 400 ms | Discard pending candidate/release if analyzed frames pause longer; do not fabricate an onset |
+| Minimum confidence | 0.93 | Reject uncertain YIN candidates |
+| Maximum tuning deviation | ±35 cents | Reject estimates close to a semitone boundary |
+
+A stable change from one MIDI note to another emits NoteOff for the previous note and NoteOn for the new one. A short wrong-semitone candidate does not switch the held note. **A held note never emits a second NoteOn**. Repeating C4 requires a sufficiently long low-energy gap followed by renewed stable C4 detection. The tracker resets on stop, interruption and the next start; counts reset at the next start.
+
+**Physical limitation:** a piano string rings long after a key is released. No reliable key-up or second strike can be inferred from pitch alone when sound never drops below the silence gate, and reverb/background noise may prevent NoteOff. The current MVP intentionally does **not** guess same-pitch re-articulation from a transient increase in loudness. Test both detached and legato repeated notes on a real keyboard; tune the duration/RMS thresholds based on measured misses and false triggers. A short flutter in pitch or microphone processing can also extend release detection. A 200 ms stability gate plus the ~120 ms frame-analysis interval trades response speed for fewer false events. Actual acoustic latency is not yet measured.
+
+Deterministic unit tests cover repeated strikes, continuous sustain, semitone flicker, brief silence, alternative pitches, threshold rejection, gaps, stale timestamps and resets. Widget tests use fake PCM and verify the counter without needing microphone access on CI. These tests are not a substitute for issue #7's physical keyboard experiments.
 
 ### Manual device validation required before closing #4
 
