@@ -84,12 +84,14 @@ class FallingNotesView extends StatefulWidget {
     required this.notes,
     required this.range,
     required this.currentIndex,
+    this.detectedNote,
   }) : assert(notes.length > 0),
        assert(currentIndex >= 0 && currentIndex < notes.length);
 
   final List<MidiNote> notes;
   final InstrumentRange range;
   final int currentIndex;
+  final int? detectedNote;
 
   @override
   State<FallingNotesView> createState() => _FallingNotesViewState();
@@ -195,7 +197,7 @@ class _FallingNotesViewState extends State<FallingNotesView> {
                             painter: PianoKeyboardPainter(
                               layout: keyboard,
                               expectedNote: currentNote.midiNote,
-                              detectedNote: null,
+                              detectedNote: widget.detectedNote,
                               expectedColor: expectedColor,
                               detectedColor: const Color(0xFFAB5300),
                             ),
