@@ -31,7 +31,10 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
       - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed .
+        run: |
+          dart format .
+          git diff -- lib/src/audio/spectrum_analyzer.dart lib/src/screens/microphone_preview_screen.dart lib/src/widgets/spectrum_chart.dart test/audio/spectrum_analyzer_test.dart
+          git diff --exit-code
       - name: Analyze
         run: flutter analyze
       - name: Test
