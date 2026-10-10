@@ -31,6 +31,12 @@ The build outputs `app/build/web`. The base href must match the GitHub Pages rep
 
 The dependency versions are pinned in `pubspec.lock`, generated with Flutter 3.47.7. After changing `pubspec.yaml`, run `flutter pub get` and review the lockfile diff.
 
+## Debugowanie mikrofonu: widmo FFT
+
+Na ekranie **Test mikrofonu** można rozwinąć przycisk **Pokaż widmo (debug)**. Dopiero po jego włączeniu przetwarzamy widmo FFT. Wykres pokazuje piki częstotliwości w skali logarytmicznej (60–1200 Hz, od C2 do C6), najbliższe nazwy nut i Hz. Linia w kolorze akcentu oznacza chwilowego kandydata zwróconego przez dotychczasowy detektor YIN. **Piki FFT nie odpowiadają jeden do jednego naciskanym klawiszom**: pojedyncza nuta pianina zwykle wytwarza szereg harmonicznych (np. A3 220 Hz oraz A4 440 Hz). Detekcja i punktowanie treningu nadal korzystają z YIN i stabilizacji NoteOn.
+
+Wykres korzysta z lokalnego bufora 8192 próbek z ramkami 2048 próbek Web Audio. Przy 48 kHz rozdzielczość binu wynosi około 5,9 Hz, a pełne okno to około 171 ms. Nałożone okno Hanna ogranicza wyciek widmowy; pozycje pików są interpolowane. Sam FFT jest uruchamiany tylko przy widocznym panelu, około 8 razy na sekundę, a bufor jest czyszczony po wyłączeniu/ponownym uruchomieniu mikrofonu. Próbki nie są zapisywane ani przesyłane na serwer.
+
 ## Import MIDI z urządzenia (#8)
 
 Na ekranie głównym kliknij **Importuj plik MIDI** i wybierz lokalny plik `.mid` lub `.midi`. Wyświetlą się typ pliku, PPQ, czas utworu, liczba nut, zmiany tempa, nazwy ścieżek i podgląd pierwszych nut. Po imporcie wybierasz pojedynczą partię jednogłosową (ścieżka i kanał), a aplikacja ostrzega o akordach. Możesz ustawić zakres fizycznej klawiatury i sprawdzić, czy wybrane nuty da się zagrać; klawiaturę i trening uruchamiasz po wybraniu partii zgodnej z zakresem.
