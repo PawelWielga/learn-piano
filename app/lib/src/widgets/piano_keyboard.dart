@@ -76,11 +76,13 @@ class PianoKeyboard extends StatefulWidget {
     required this.range,
     this.expectedNote,
     this.detectedNote,
+    this.showRangeLabel = true,
   });
 
   final InstrumentRange range;
   final int? expectedNote;
   final int? detectedNote;
+  final bool showRangeLabel;
 
   @override
   State<PianoKeyboard> createState() => _PianoKeyboardState();
@@ -146,7 +148,8 @@ class _PianoKeyboardState extends State<PianoKeyboard> {
       key: const Key('piano-keyboard'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
+        if (widget.showRangeLabel)
+          Text(
           'Klawiatura: ${PitchEstimate.nameForMidi(widget.range.low)}–'
           '${PitchEstimate.nameForMidi(widget.range.high)} '
           '(${widget.range.keyCount} klawiszy)',
