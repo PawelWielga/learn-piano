@@ -9,6 +9,7 @@ import '../instrument/instrument_range.dart';
 import '../instrument/instrument_range_store.dart';
 import '../instrument/instrument_range_store_factory.dart';
 import 'instrument_range_screen.dart';
+import '../widgets/falling_notes_view.dart';
 import '../widgets/piano_keyboard.dart';
 
 class MidiImportScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
   MidiFile? _midi;
   List<MelodyPart> _parts = const [];
   MelodySelection? _selection;
+  int _previewIndex = 0;
   String? _fileName;
   String? _error;
   bool _busy = false;
@@ -93,6 +95,7 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
         _midi = midi;
         _parts = _analyzer.analyze(midi);
         _selection = null;
+        _previewIndex = 0;
         _fileName = selected.name;
       });
     } on MidiFormatException catch (error) {
@@ -101,6 +104,7 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
           _midi = null;
           _parts = const [];
           _selection = null;
+        _previewIndex = 0;
           _fileName = null;
           _error = error.message;
         });
@@ -264,18 +268,65 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                                 label: const Text('Dostosuj klawiaturę'),
                               ),
                               const SizedBox(height: 16),
-                              Text(
-                                'Podgląd: pierwsza nuta melodii '
-                                '(${PitchEstimate.nameForMidi(selection.notes.first.midiNote)})',
-                                key: const Key('midi-first-note-preview'),
-                                style: theme.textTheme.titleSmall,
-                              ),
-                              const SizedBox(height: 8),
-                              PianoKeyboard(
-                                range: _instrumentRange,
-                                expectedNote: selection.notes.first.midiNote,
-                                showRangeLabel: false,
-                              ),
+                              if (rangeCheck.canPractice) ...[
+                                Text(
+                                  'Podgląd melodii',
+                                  style: theme.textTheme.titleSmall,
+                                ),
+                                const SizedBox(height: 8),
+                                FallingNotesView(
+                                  key: ValueKey(selection.part),
+                                  notes: selection.notes,
+                                  range: _instrumentRange,
+                                  currentIndex: _previewIndex,
+                                ),
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 10,
+                                  runSpacing: 8,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      key: const Key('midi-preview-previous'),
+                                      onPressed: _previewIndex == 0
+                                          ? null
+                                          : () => setState(() {
+                                              _previewIndex--;
+                                            }),
+                                      icon: const Icon(Icons.arrow_back),
+                                      label: const Text('Poprzednia'),
+                                    ),
+                                    FilledButton.icon(
+                                      key: const Key('midi-preview-next'),
+                                      onPressed:
+                                          _previewIndex == selection.notes.length - 1
+                                          ? null
+                                          : () => setState(() {
+                                              _previewIndex++;
+                                            }),
+                                      icon: const Icon(Icons.arrow_forward),
+                                      label: const Text('Następna'),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Przyciski zmieniają tylko podgląd. '
+                                  'Zaliczanie zagranych nut dojdzie w treningu.',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ] else ...[
+                                const Text(
+                                  'Podgląd spadających nut wymaga zakresu '
+                                  'obejmującego całą melodię.',
+                                  key: Key('midi-preview-range-warning'),
+                                ),
+                                const SizedBox(height: 8),
+                                PianoKeyboard(
+                                  range: _instrumentRange,
+                                  expectedNote: selection.notes.first.midiNote,
+                                  showRangeLabel: false,
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -331,6 +382,7 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                                             trackIndex: part.trackIndex,
                                             channel: part.channel,
                                           );
+                                          _previewIndex = 0;
                                         })
                                       : null,
                                   child: Padding(
