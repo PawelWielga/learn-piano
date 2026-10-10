@@ -277,10 +277,7 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
                     style: theme.textTheme.bodySmall,
                   ),
                   const SizedBox(height: 28),
-                  Text(
-                    'Stabilna nuta',
-                    style: theme.textTheme.titleMedium,
-                  ),
+                  Text('Stabilna nuta', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Semantics(
                     liveRegion: true,
