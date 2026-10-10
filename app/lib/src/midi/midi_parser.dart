@@ -70,7 +70,8 @@ class MidiFile {
   final List<MidiTempoChange> tempoChanges;
   final Duration duration;
 
-  int get noteCount => tracks.fold<int>(0, (count, track) => count + track.notes.length);
+  int get noteCount =>
+      tracks.fold<int>(0, (count, track) => count + track.notes.length);
 }
 
 /// Small, dependency-free SMF type 0/1 parser usable in Flutter Web and tests.
@@ -100,13 +101,19 @@ class MidiParser {
     reader.skip(headerLength - 6);
 
     if (format != 0 && format != 1) {
-      throw const MidiFormatException('Obsługiwane są tylko pliki MIDI typu 0 i 1.');
+      throw const MidiFormatException(
+        'Obsługiwane są tylko pliki MIDI typu 0 i 1.',
+      );
     }
-    if (trackCount == 0 || trackCount > 64 || (format == 0 && trackCount != 1)) {
+    if (trackCount == 0 ||
+        trackCount > 64 ||
+        (format == 0 && trackCount != 1)) {
       throw const MidiFormatException('Niepoprawna liczba ścieżek MIDI.');
     }
     if (division == 0 || (division & 0x8000) != 0) {
-      throw const MidiFormatException('Obsługiwany jest tylko podział czasu PPQ, nie SMPTE.');
+      throw const MidiFormatException(
+        'Obsługiwany jest tylko podział czasu PPQ, nie SMPTE.',
+      );
     }
 
     final parsedTracks = <_RawTrack>[];
@@ -129,16 +136,18 @@ class MidiParser {
       for (final raw in track.notes) {
         final start = tempoMap.timeAt(raw.startTick);
         final end = tempoMap.timeAt(raw.endTick);
-        notes.add(MidiNote(
-          trackIndex: track.index,
-          channel: raw.channel,
-          midiNote: raw.note,
-          velocity: raw.velocity,
-          startTick: raw.startTick,
-          endTick: raw.endTick,
-          start: start,
-          duration: end - start,
-        ));
+        notes.add(
+          MidiNote(
+            trackIndex: track.index,
+            channel: raw.channel,
+            midiNote: raw.note,
+            velocity: raw.velocity,
+            startTick: raw.startTick,
+            endTick: raw.endTick,
+            start: start,
+            duration: end - start,
+          ),
+        );
       }
       notes.sort((a, b) {
         final byTick = a.startTick.compareTo(b.startTick);
@@ -146,12 +155,14 @@ class MidiParser {
         final byChannel = a.channel.compareTo(b.channel);
         return byChannel != 0 ? byChannel : a.midiNote.compareTo(b.midiNote);
       });
-      tracks.add(MidiTrack(
-        index: track.index,
-        name: track.name,
-        notes: List.unmodifiable(notes),
-        endTick: track.endTick,
-      ));
+      tracks.add(
+        MidiTrack(
+          index: track.index,
+          name: track.name,
+          notes: List.unmodifiable(notes),
+          endTick: track.endTick,
+        ),
+      );
     }
 
     return MidiFile(
@@ -177,13 +188,15 @@ class MidiParser {
       if (starts == null || starts.isEmpty) return;
       final start = starts.removeAt(0);
       if (starts.isEmpty) active.remove(key);
-      notes.add(_RawNote(
-        channel: channel,
-        note: pitch,
-        velocity: start.velocity,
-        startTick: start.tick,
-        endTick: tick,
-      ));
+      notes.add(
+        _RawNote(
+          channel: channel,
+          note: pitch,
+          velocity: start.velocity,
+          startTick: start.tick,
+          endTick: tick,
+        ),
+      );
     }
 
     while (reader.remaining > 0) {
@@ -223,11 +236,15 @@ class MidiParser {
           name = utf8.decode(payload, allowMalformed: true).trim();
         } else if (metaType == 0x51) {
           if (length != 3) {
-            throw const MidiFormatException('Niepoprawne zdarzenie tempa MIDI.');
+            throw const MidiFormatException(
+              'Niepoprawne zdarzenie tempa MIDI.',
+            );
           }
           final tempo = (payload[0] << 16) | (payload[1] << 8) | payload[2];
           if (tempo == 0) {
-            throw const MidiFormatException('Tempo MIDI nie może wynosić zero.');
+            throw const MidiFormatException(
+              'Tempo MIDI nie może wynosić zero.',
+            );
           }
           tempos.add(_RawTempo(tick, tempo, index, eventIndex));
         } else if (metaType == 0x2F) {
@@ -240,7 +257,9 @@ class MidiParser {
         runningStatus = null;
         reader.skip(reader.readVariableLength());
       } else {
-        throw const MidiFormatException('Nieobsługiwany status zdarzenia MIDI.');
+        throw const MidiFormatException(
+          'Nieobsługiwany status zdarzenia MIDI.',
+        );
       }
       eventIndex++;
     }
@@ -397,6 +416,8 @@ class _MidiReader {
       value = (value << 7) | (byte & 0x7F);
       if ((byte & 0x80) == 0) return value;
     }
-    throw const MidiFormatException('Niepoprawna liczba zmiennej długości MIDI.');
+    throw const MidiFormatException(
+      'Niepoprawna liczba zmiennej długości MIDI.',
+    );
   }
 }
