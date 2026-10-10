@@ -24,12 +24,18 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('landscape-required')), findsNothing);
-    expect(tester.state<NavigatorState>(find.byType(Navigator)), same(navigator));
-    expect(find.byKey(const Key('open-midi-import')), findsOneWidget);
+    expect(
+      tester.state<NavigatorState>(find.byType(Navigator)),
+      same(navigator),
+    );
+    expect(find.text('Ucz się na swoim pianinku'), findsOneWidget);
 
     tester.view.physicalSize = const Size(390, 844);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('landscape-required')), findsOneWidget);
-    expect(tester.state<NavigatorState>(find.byType(Navigator)), same(navigator));
+    expect(
+      tester.state<NavigatorState>(find.byType(Navigator)),
+      same(navigator),
+    );
   });
 }
