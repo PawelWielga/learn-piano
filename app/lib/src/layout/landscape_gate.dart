@@ -95,7 +95,9 @@ class _LandscapeGateState extends State<LandscapeGate> {
                           const SizedBox(height: 20),
                           FilledButton.icon(
                             key: const Key('request-landscape-lock'),
-                            onPressed: _requestingLock ? null : _tryLockLandscape,
+                            onPressed: _requestingLock
+                                ? null
+                                : _tryLockLandscape,
                             icon: const Icon(Icons.screen_lock_rotation),
                             label: Text(
                               _requestingLock
