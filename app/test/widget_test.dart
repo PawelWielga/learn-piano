@@ -92,7 +92,16 @@ void main() {
     await tester.pumpWidget(const LearnPianoApp());
 
     expect(find.text('Ucz się na swoim pianinku'), findsOneWidget);
+    expect(find.byKey(const Key('open-midi-import')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('training-coming-soon')),
+      200,
+    );
     expect(find.byKey(const Key('training-coming-soon')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('open-microphone-preview')),
+      -200,
+    );
 
     await tester.tap(find.byKey(const Key('open-microphone-preview')));
     await tester.pumpAndSettle();
