@@ -285,10 +285,7 @@ class _TrainingStageState extends State<TrainingStage> {
                       Text(
                         'Wykryta: $detected',
                         key: const Key('training-detected'),
-                        style: const TextStyle(
-                          color: foreground,
-                          fontSize: 12,
-                        ),
+                        style: const TextStyle(color: foreground, fontSize: 12),
                       ),
                       const SizedBox(width: 14),
                       Flexible(
@@ -310,7 +307,9 @@ class _TrainingStageState extends State<TrainingStage> {
                 ],
               ),
             ),
-            if (showOverlay && !completed && widget.phase != TrainingPhase.error)
+            if (showOverlay &&
+                !completed &&
+                widget.phase != TrainingPhase.error)
               Positioned(
                 top: 91,
                 left: 12,
@@ -336,9 +335,7 @@ class _TrainingStageState extends State<TrainingStage> {
                               icon: Icon(
                                 widget.listening ? Icons.mic : Icons.mic_none,
                               ),
-                              label: Text(
-                                widget.listening ? 'Mic ON' : 'Mic',
-                              ),
+                              label: Text(widget.listening ? 'Mic ON' : 'Mic'),
                               style: TextButton.styleFrom(
                                 minimumSize: const Size(68, 44),
                                 foregroundColor: foreground,
@@ -361,12 +358,14 @@ class _TrainingStageState extends State<TrainingStage> {
                             ),
                             const SizedBox(width: 8),
                             const Tooltip(
-                              message: 'Wybór ręki będzie dostępny w przyszłości.',
+                              message:
+                                  'Wybór ręki będzie dostępny w przyszłości.',
                               child: _UnavailableControl(label: 'L   Both   R'),
                             ),
                             const SizedBox(width: 8),
                             const Tooltip(
-                              message: 'Akompaniament nie jest jeszcze obsługiwany.',
+                              message:
+                                  'Akompaniament nie jest jeszcze obsługiwany.',
                               child: _UnavailableControl(label: 'Accomp.'),
                             ),
                           ],
@@ -389,18 +388,18 @@ class _TrainingStageState extends State<TrainingStage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton.filled(
-                    key: const Key('training-center-play'),
-                    tooltip: widget.phase == TrainingPhase.paused
-                        ? 'Wznów ćwiczenie'
-                        : 'Rozpocznij ćwiczenie',
-                    onPressed: widget.busy ? null : widget.onPrimary,
-                    iconSize: 38,
-                    color: foreground,
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xD1483E50),
-                      minimumSize: const Size(70, 70),
-                    ),
-                    icon: const Icon(Icons.play_arrow),
+                        key: const Key('training-center-play'),
+                        tooltip: widget.phase == TrainingPhase.paused
+                            ? 'Wznów ćwiczenie'
+                            : 'Rozpocznij ćwiczenie',
+                        onPressed: widget.busy ? null : widget.onPrimary,
+                        iconSize: 38,
+                        color: foreground,
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xD1483E50),
+                          minimumSize: const Size(70, 70),
+                        ),
+                        icon: const Icon(Icons.play_arrow),
                       ),
                       if (widget.phase == TrainingPhase.paused)
                         const Text(
@@ -466,9 +465,7 @@ class _TrainingStageState extends State<TrainingStage> {
                         ? const Color(0xFFFFB4AB)
                         : foreground,
                     fontSize: 12,
-                    shadows: const [
-                      Shadow(blurRadius: 5, color: Colors.black),
-                    ],
+                    shadows: const [Shadow(blurRadius: 5, color: Colors.black)],
                   ),
                 ),
               ),
@@ -481,10 +478,7 @@ class _TrainingStageState extends State<TrainingStage> {
                 key: const Key('training-song-title'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFF59505F),
-                  fontSize: 10,
-                ),
+                style: const TextStyle(color: Color(0xFF59505F), fontSize: 10),
               ),
             ),
           ],
@@ -510,10 +504,7 @@ class _UnavailableControl extends StatelessWidget {
     ),
     child: Text(
       label,
-      style: const TextStyle(
-        color: Color(0xFF8C8594),
-        fontSize: 12,
-      ),
+      style: const TextStyle(color: Color(0xFF8C8594), fontSize: 12),
     ),
   );
 }
@@ -539,11 +530,7 @@ class _TrainingStagePainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFF1F0A34),
-          Color(0xFF100E16),
-          Color(0xFF070707),
-        ],
+        colors: [Color(0xFF1F0A34), Color(0xFF100E16), Color(0xFF070707)],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, background);
 
@@ -610,8 +597,7 @@ class _TrainingStagePainter extends CustomPainter {
     final isDetected = key.midiNote == detectedNote;
     canvas.drawRRect(
       shape,
-      Paint()
-        ..color = key.isBlack ? const Color(0xFF050505) : Colors.white,
+      Paint()..color = key.isBlack ? const Color(0xFF050505) : Colors.white,
     );
     if (isExpected || isDetected) {
       canvas.drawRRect(
