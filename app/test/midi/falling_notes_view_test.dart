@@ -87,6 +87,35 @@ void main() {
     },
   );
 
+  test('a changing playhead moves note blocks smoothly at a fixed scale', () {
+    final keyboard = PianoKeyboardLayout(const InstrumentRange(60, 72));
+    final notes = [note(60, 0, 500), note(64, 750, 300)];
+    final start = FallingNotesLayout(
+      notes: notes,
+      keyboard: keyboard,
+      currentIndex: 0,
+      playhead: Duration.zero,
+    );
+    final advanced = FallingNotesLayout(
+      notes: notes,
+      keyboard: keyboard,
+      currentIndex: 0,
+      playhead: const Duration(milliseconds: 250),
+    );
+
+    expect(advanced.pixelsPerSecond, start.pixelsPerSecond);
+    expect(
+      advanced.visibleBlocks.first.rect.bottom -
+          start.visibleBlocks.first.rect.bottom,
+      closeTo(22, 0.001),
+    );
+    expect(
+      advanced.visibleBlocks.last.rect.bottom -
+          start.visibleBlocks.last.rect.bottom,
+      closeTo(22, 0.001),
+    );
+  });
+
   test('does not lay out the entire long song per progress update', () {
     final keyboard = PianoKeyboardLayout(const InstrumentRange(60, 72));
     final notes = List.generate(20000, (i) => note(60 + i % 12, i * 250, 180));

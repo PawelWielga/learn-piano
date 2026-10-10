@@ -9,7 +9,6 @@ import '../audio/note_output.dart';
 import '../audio/note_output_factory.dart';
 import '../instrument/instrument_range.dart';
 import '../layout/landscape_gate.dart';
-import '../midi/midi_parser.dart';
 import '../midi/melody_part_analyzer.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';

@@ -85,6 +85,21 @@ po interakcji użytkownika. Na fizycznym telefonie warto sprawdzić głośność
 opóźnienie i zachowanie przewijania. Gra z mikrofonu działa nadal jako
 oddzielny tryb, aby głośnik nie powodował przypadkowego naliczania nut.
 
+## Płynne nuty i odsłuch MIDI
+
+W trybie **Wait for Note** spadające nuty po trafieniu płynnie przechodzą
+do kolejnej pozycji, zamiast przeskakiwać. Gdy czekamy na zagranie nuty,
+widok pozostaje w miejscu, a ćwiczenie nie zalicza kolejnych dźwięków samo.
+Pozioma pozycja klawiatury pozostaje taka, jak ustawiono ją na początku
+lub ręcznie przesunięto.
+
+Przycisk z ikoną nuty w górnym pasku, **Posłuchaj wybranej partii MIDI**,
+odtwarza melodię przez przeglądarkowy syntezator i jednocześnie przesuwa
+nuty zgodnie z czasami i długościami zapisanymi w MIDI. Ponowne naciśnięcie
+przerywa odsłuch. W tym trybie mikrofon nie ocenia gry i postęp treningu
+pozostaje zachowany. Odsłuch dotyczy wybranej partii jednogłosowej, a nie
+wszystkich ścieżek utworu. Dźwięki są syntezowane lokalnie bez sieci.
+
 ## CI i GitHub Pages
 
 - **Pull request do `main`:** `.github/workflows/ci.yml` uruchamia format, analizę, testy oraz release build. Nie publikuje strony.
