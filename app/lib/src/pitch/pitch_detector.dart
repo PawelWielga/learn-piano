@@ -45,7 +45,8 @@ class PitchEstimate {
 /// unsupported range or no sufficiently periodic candidate.
 class PitchDetector {
   const PitchDetector({
-    this.minFrequencyHz = 90,
+    // C2 (65.4 Hz) must be playable; include detuning margin.
+    this.minFrequencyHz = 60,
     this.maxFrequencyHz = 1500,
     this.minRms = 0.015,
     this.yinThreshold = 0.18,
