@@ -9,6 +9,44 @@ import '../training/wait_for_note_engine.dart';
 import 'falling_notes_view.dart';
 import 'piano_keyboard.dart';
 
+/// Distinct Learn Piano visual language: graphite, deep teal and amber.
+/// Centralized to keep the practice HUD, roll and keyboard consistent.
+class TrainingStagePalette {
+  const TrainingStagePalette._();
+
+  static const foreground = Color(0xFFF3FAFA);
+  static const secondaryText = Color(0xFFB5C9CE);
+  static const primary = Color(0xFF52E0CB);
+  static const primaryOnWhite = Color(0xFF006D65);
+  static const upcoming = Color(0xFF4C9FB6);
+  static const detected = Color(0xFFFFC16B);
+  static const detectedOnWhite = Color(0xFF875015);
+  static const listening = Color(0xFF43D7AC);
+  static const idle = Color(0xFF81999E);
+  static const hud = Color(0xE409242C);
+  static const progressTrack = Color(0xFF25434B);
+  static const panel = Color(0xF0102C34);
+  static const panelBorder = Color(0xFF3A6670);
+  static const microphoneActive = Color(0xFF11796F);
+  static const microphoneIdle = Color(0xFF294A53);
+  static const playButton = Color(0xFF137E76);
+  static const disabledSurface = Color(0xFF203B43);
+  static const disabledBorder = Color(0xFF395962);
+  static const disabledText = Color(0xFFBAC9CE);
+  static const sky = Color(0xFF153740);
+  static const deepSea = Color(0xFF102830);
+  static const charcoal = Color(0xFF07161C);
+  static const measureGuide = Color(0x405E9AA5);
+  static const beatGuide = Color(0x218FB5BB);
+  static const nowLine = Color(0xAA52E0CB);
+  static const expectedKeyTint = Color(0x5552E0CB);
+  static const detectedKeyTint = Color(0x66FFC16B);
+  static const darkKey = Color(0xFF0C1317);
+  static const lightKey = Color(0xFFF8FBFA);
+  static const darkKeyBorder = Color(0xFF35434B);
+  static const lightKeyBorder = Color(0xFFABBAC0);
+}
+
 /// A landscape-first, single-surface training view. The roll and keyboard
 /// share one scroll position and one MIDI-to-X mapping.
 class TrainingStage extends StatefulWidget {
@@ -113,8 +151,8 @@ class _TrainingStageState extends State<TrainingStage> {
     final detected = widget.detectedNote == null
         ? '—'
         : PitchEstimate.nameForMidi(widget.detectedNote!);
-    const accent = Color(0xFFD547E9);
-    const foreground = Colors.white;
+    const accent = TrainingStagePalette.primary;
+    const foreground = TrainingStagePalette.foreground;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -178,7 +216,7 @@ class _TrainingStageState extends State<TrainingStage> {
               right: 0,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                color: const Color(0xB710071D),
+                color: TrainingStagePalette.hud,
                 child: Row(
                   children: [
                     IconButton(
@@ -205,7 +243,7 @@ class _TrainingStageState extends State<TrainingStage> {
                           key: const Key('training-progress'),
                           value: widget.progress,
                           minHeight: 9,
-                          backgroundColor: const Color(0xFF292131),
+                          backgroundColor: TrainingStagePalette.progressTrack,
                           valueColor: const AlwaysStoppedAnimation(accent),
                         ),
                       ),
@@ -215,8 +253,8 @@ class _TrainingStageState extends State<TrainingStage> {
                       Icons.circle,
                       size: 11,
                       color: widget.listening
-                          ? const Color(0xFF00D36B)
-                          : const Color(0xFF77727B),
+                          ? TrainingStagePalette.listening
+                          : TrainingStagePalette.idle,
                     ),
                     IconButton(
                       key: const Key('training-primary'),
@@ -285,7 +323,11 @@ class _TrainingStageState extends State<TrainingStage> {
                       Text(
                         'Wykryta: $detected',
                         key: const Key('training-detected'),
-                        style: const TextStyle(color: foreground, fontSize: 12),
+                        style: const TextStyle(
+                          color: TrainingStagePalette.detected,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Flexible(
@@ -297,7 +339,7 @@ class _TrainingStageState extends State<TrainingStage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: Color(0xFFAAA6B2),
+                            color: TrainingStagePalette.secondaryText,
                             fontSize: 11,
                           ),
                         ),
@@ -321,9 +363,11 @@ class _TrainingStageState extends State<TrainingStage> {
                       height: 58,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xF0181021),
-                        border: Border.all(color: const Color(0xFF5A4663)),
-                        borderRadius: BorderRadius.circular(40),
+                        color: TrainingStagePalette.panel,
+                        border: Border.all(
+                          color: TrainingStagePalette.panelBorder,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
@@ -340,8 +384,11 @@ class _TrainingStageState extends State<TrainingStage> {
                                 minimumSize: const Size(68, 44),
                                 foregroundColor: foreground,
                                 backgroundColor: widget.listening
-                                    ? const Color(0xFF7B258F)
-                                    : const Color(0xFF392341),
+                                    ? TrainingStagePalette.microphoneActive
+                                    : TrainingStagePalette.microphoneIdle,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -397,7 +444,10 @@ class _TrainingStageState extends State<TrainingStage> {
                         iconSize: 38,
                         color: foreground,
                         style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xD1483E50),
+                          backgroundColor: TrainingStagePalette.playButton,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           minimumSize: const Size(70, 70),
                         ),
                         icon: const Icon(Icons.play_arrow),
@@ -421,7 +471,7 @@ class _TrainingStageState extends State<TrainingStage> {
                     key: const Key('training-completed'),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xF0181021),
+                      color: TrainingStagePalette.panel,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: const Text(
@@ -479,7 +529,10 @@ class _TrainingStageState extends State<TrainingStage> {
                 key: const Key('training-song-title'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Color(0xFF59505F), fontSize: 10),
+                style: const TextStyle(
+                  color: TrainingStagePalette.secondaryText,
+                  fontSize: 10,
+                ),
               ),
             ),
           ],
@@ -499,13 +552,16 @@ class _UnavailableControl extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
     decoration: BoxDecoration(
-      color: const Color(0xFF27212B),
-      borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: const Color(0xFF493D50)),
+      color: TrainingStagePalette.disabledSurface,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: TrainingStagePalette.disabledBorder),
     ),
     child: Text(
       label,
-      style: const TextStyle(color: Color(0xFF8C8594), fontSize: 12),
+      style: const TextStyle(
+        color: TrainingStagePalette.disabledText,
+        fontSize: 12,
+      ),
     ),
   );
 }
@@ -531,7 +587,11 @@ class _TrainingStagePainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Color(0xFF1F0A34), Color(0xFF100E16), Color(0xFF070707)],
+        colors: [
+          TrainingStagePalette.sky,
+          TrainingStagePalette.deepSea,
+          TrainingStagePalette.charcoal,
+        ],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, background);
 
@@ -541,7 +601,7 @@ class _TrainingStagePainter extends CustomPainter {
           Offset(key.rect.left, 0),
           Offset(key.rect.left, rollHeight),
           Paint()
-            ..color = const Color(0x308A698D)
+            ..color = TrainingStagePalette.measureGuide
             ..strokeWidth = 1.5,
         );
       }
@@ -551,7 +611,7 @@ class _TrainingStagePainter extends CustomPainter {
         Offset(0, y),
         Offset(size.width, y),
         Paint()
-          ..color = const Color(0x15FFFFFF)
+          ..color = TrainingStagePalette.beatGuide
           ..strokeWidth = 1,
       );
     }
@@ -567,15 +627,15 @@ class _TrainingStagePainter extends CustomPainter {
           shape,
           Paint()
             ..color = isCurrent
-                ? const Color(0xFFD547E9)
-                : const Color(0xFF6B4EBD),
+                ? TrainingStagePalette.primary
+                : TrainingStagePalette.upcoming,
         );
       }
       canvas.drawLine(
         Offset(0, roll!.nowLineY),
         Offset(size.width, roll!.nowLineY),
         Paint()
-          ..color = const Color(0x8CD547E9)
+          ..color = TrainingStagePalette.nowLine
           ..strokeWidth = 2,
       );
     }
@@ -598,22 +658,25 @@ class _TrainingStagePainter extends CustomPainter {
     final isDetected = key.midiNote == detectedNote;
     canvas.drawRRect(
       shape,
-      Paint()..color = key.isBlack ? const Color(0xFF050505) : Colors.white,
+      Paint()
+        ..color = key.isBlack
+            ? TrainingStagePalette.darkKey
+            : TrainingStagePalette.lightKey,
     );
     if (isExpected || isDetected) {
       canvas.drawRRect(
         shape,
         Paint()
           ..color = isExpected
-              ? const Color(0x55D547E9)
-              : const Color(0x6600BE9C),
+              ? TrainingStagePalette.expectedKeyTint
+              : TrainingStagePalette.detectedKeyTint,
       );
       canvas.drawRRect(
         shape,
         Paint()
           ..color = isExpected
-              ? const Color(0xFFD547E9)
-              : const Color(0xFF00BE9C)
+              ? TrainingStagePalette.primary
+              : TrainingStagePalette.detected
           ..strokeWidth = 2.5
           ..style = PaintingStyle.stroke,
       );
@@ -622,8 +685,8 @@ class _TrainingStagePainter extends CustomPainter {
       shape,
       Paint()
         ..color = key.isBlack
-            ? const Color(0xFF3B3B3B)
-            : const Color(0xFFB7B7B7)
+            ? TrainingStagePalette.darkKeyBorder
+            : TrainingStagePalette.lightKeyBorder
         ..strokeWidth = 1
         ..style = PaintingStyle.stroke,
     );
@@ -637,9 +700,15 @@ class _TrainingStagePainter extends CustomPainter {
               : math.min(25, keyboard.whiteKeyWidth * 0.37),
           fontWeight: FontWeight.bold,
           color: isExpected
-              ? const Color(0xFFB825D3)
+              ? (key.isBlack
+                    ? TrainingStagePalette.primary
+                    : TrainingStagePalette.primaryOnWhite)
+              : isDetected
+              ? (key.isBlack
+                    ? TrainingStagePalette.detected
+                    : TrainingStagePalette.detectedOnWhite)
               : key.isBlack
-              ? Colors.white
+              ? TrainingStagePalette.foreground
               : const Color(0xFF111111),
         ),
       ),

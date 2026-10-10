@@ -11,6 +11,7 @@ import 'package:learn_piano/src/midi/midi_file_picker.dart';
 import 'package:learn_piano/src/midi/midi_parser.dart';
 import 'package:learn_piano/src/screens/midi_import_screen.dart';
 import 'package:learn_piano/src/screens/training_screen.dart';
+import 'package:learn_piano/src/widgets/training_stage.dart';
 
 import '../midi/midi_fixtures.dart';
 
@@ -173,6 +174,21 @@ void main() {
     expect(find.text('Wait Mode'), findsOneWidget);
     expect(find.text('0 / 3 nut'), findsOneWidget);
     expect(fake.starts, 0);
+
+    // Exercise colors belong to Learn Piano rather than the layout reference.
+    final progress = tester.widget<LinearProgressIndicator>(
+      find.byKey(const Key('training-progress')),
+    );
+    final expectedLabel = tester.widget<Text>(
+      find.byKey(const Key('training-expected')),
+    );
+    final detectedLabel = tester.widget<Text>(
+      find.byKey(const Key('training-detected')),
+    );
+    expect(progress.valueColor?.value, TrainingStagePalette.primary);
+    expect(expectedLabel.style?.color, TrainingStagePalette.primary);
+    expect(detectedLabel.style?.color, TrainingStagePalette.detected);
+    expect(TrainingStagePalette.primary, isNot(TrainingStagePalette.detected));
     expect(tester.takeException(), isNull);
 
     await tester.tap(find.byKey(const Key('training-center-play')));
