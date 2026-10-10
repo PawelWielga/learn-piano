@@ -116,34 +116,32 @@ void main() {
     expect(engine.snapshot.currentIndex, 3);
   });
 
-  test('ready/paused events are ignored but still gate held keys on resume', () {
-    final engine = engineFor([
-      midiNote(60, 0, 100),
-      midiNote(62, 200, 300),
-    ]);
-    expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.ignored);
-    engine.start();
-    expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.ignored);
-    engine.onNoteEvent(off(60));
-    expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.correct);
-    expect(engine.pause().phase, TrainingPhase.paused);
-    expect(engine.pause().phase, TrainingPhase.paused);
-    expect(engine.onNoteEvent(on(62)).attempt, TrainingAttempt.ignored);
-    expect(engine.snapshot.currentIndex, 1);
-    expect(engine.resume().phase, TrainingPhase.running);
-    expect(engine.onNoteEvent(on(62)).attempt, TrainingAttempt.ignored);
-    expect(engine.snapshot.currentIndex, 1);
-    engine.onNoteEvent(off(62));
-    expect(engine.onNoteEvent(on(62)).attempt, TrainingAttempt.correct);
-    expect(engine.snapshot.phase, TrainingPhase.completed);
-    expect(engine.resume().phase, TrainingPhase.completed);
-  });
+  test(
+    'ready/paused events are ignored but still gate held keys on resume',
+    () {
+      final engine = engineFor([midiNote(60, 0, 100), midiNote(62, 200, 300)]);
+      expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.ignored);
+      engine.start();
+      expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.ignored);
+      engine.onNoteEvent(off(60));
+      expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.correct);
+      expect(engine.pause().phase, TrainingPhase.paused);
+      expect(engine.pause().phase, TrainingPhase.paused);
+      expect(engine.onNoteEvent(on(62)).attempt, TrainingAttempt.ignored);
+      expect(engine.snapshot.currentIndex, 1);
+      expect(engine.resume().phase, TrainingPhase.running);
+      expect(engine.onNoteEvent(on(62)).attempt, TrainingAttempt.ignored);
+      expect(engine.snapshot.currentIndex, 1);
+      engine.onNoteEvent(off(62));
+      expect(engine.onNoteEvent(on(62)).attempt, TrainingAttempt.correct);
+      expect(engine.snapshot.phase, TrainingPhase.completed);
+      expect(engine.resume().phase, TrainingPhase.completed);
+    },
+  );
 
   test('reset preserves held keys and clears feedback/progress safely', () {
-    final engine = engineFor([
-      midiNote(60, 0, 100),
-      midiNote(60, 100, 200),
-    ])..start();
+    final engine = engineFor([midiNote(60, 0, 100), midiNote(60, 100, 200)])
+      ..start();
     engine.onNoteEvent(on(60));
     expect(engine.snapshot.lastAttempt, TrainingAttempt.correct);
     expect(engine.reset().phase, TrainingPhase.ready);
@@ -185,10 +183,7 @@ void main() {
     final selections = [
       melody([]),
       melody([midiNote(60, 0, 100)], channel: 9),
-      melody([
-        midiNote(60, 0, 200),
-        midiNote(64, 100, 300),
-      ], overlapCount: 1),
+      melody([midiNote(60, 0, 200), midiNote(64, 100, 300)], overlapCount: 1),
       melody([
         midiNote(60, 0, 200),
         midiNote(64, 100, 300),
