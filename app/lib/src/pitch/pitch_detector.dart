@@ -50,7 +50,7 @@ class PitchDetector {
     this.maxFrequencyHz = 1500,
     this.minRms = 0.015,
     this.yinThreshold = 0.18,
-    this.minConfidence = 0.93,
+    this.minConfidence = 0.94,
   }) : assert(minFrequencyHz > 0),
        assert(maxFrequencyHz > minFrequencyHz),
        assert(minRms > 0),
@@ -110,7 +110,9 @@ class PitchDetector {
       break;
     }
 
-    if (selectedLag == null) return null;
+    // At the search boundary, a still-decreasing difference can mimic a
+    // periodicity below minFrequencyHz. Require an actual interior minimum.
+    if (selectedLag == null || selectedLag == maxLag) return null;
     final confidence = (1.0 - cmndf[selectedLag]).clamp(0.0, 1.0);
     if (confidence < minConfidence) return null;
 
