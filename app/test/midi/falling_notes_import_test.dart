@@ -36,7 +36,12 @@ void main() {
     await tester.tap(find.byKey(const Key('choose-midi-file')));
     await tester.pumpAndSettle();
     final part = find.byKey(const Key('melody-part-0-0'));
-    await tester.ensureVisible(part);
+    await tester.scrollUntilVisible(
+      part,
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await Scrollable.ensureVisible(tester.element(part), alignment: 0.5);
     await tester.pumpAndSettle();
     await tester.tap(part);
     await tester.pumpAndSettle();
