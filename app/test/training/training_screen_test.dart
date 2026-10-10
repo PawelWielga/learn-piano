@@ -197,6 +197,33 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('very short landscape keeps essential actions usable', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(600, 300);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final fake = TrainingAudioFake();
+    await launch(tester, fake);
+
+    expect(find.byKey(const Key('training-stage-canvas')), findsOneWidget);
+    expect(find.byKey(const Key('training-center-play')), findsNothing);
+    expect(find.byKey(const Key('training-primary')), findsOneWidget);
+    expect(find.byType(ListView), findsNothing);
+    expect(
+      tester.getRect(find.byKey(const Key('training-reset'))).bottom,
+      lessThanOrEqualTo(300),
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byKey(const Key('training-primary')));
+    await tester.pump();
+    expect(fake.starts, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('requires a user gesture and confirms silence before scoring', (
     tester,
   ) async {
