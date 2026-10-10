@@ -195,7 +195,7 @@ class _PianoKeyboardState extends State<PianoKeyboard> {
                     width: layout.width,
                     height: layout.height,
                     child: CustomPaint(
-                      painter: _PianoKeyboardPainter(
+                      painter: PianoKeyboardPainter(
                         layout: layout,
                         expectedNote: widget.expectedNote,
                         detectedNote: widget.detectedNote,
@@ -219,8 +219,8 @@ class _PianoKeyboardState extends State<PianoKeyboard> {
   }
 }
 
-class _PianoKeyboardPainter extends CustomPainter {
-  const _PianoKeyboardPainter({
+class PianoKeyboardPainter extends CustomPainter {
+  const PianoKeyboardPainter({
     required this.layout,
     required this.expectedNote,
     required this.detectedNote,
@@ -318,7 +318,7 @@ class _PianoKeyboardPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _PianoKeyboardPainter oldDelegate) =>
+  bool shouldRepaint(covariant PianoKeyboardPainter oldDelegate) =>
       oldDelegate.layout.range != layout.range ||
       oldDelegate.expectedNote != expectedNote ||
       oldDelegate.detectedNote != detectedNote;
