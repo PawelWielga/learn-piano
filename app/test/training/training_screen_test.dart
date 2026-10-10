@@ -207,6 +207,57 @@ Future<void> startExercise(WidgetTester tester, TrainingAudioFake fake) async {
 }
 
 void main() {
+  testWidgets('MIDI preview plays on schedule without scoring practice', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(844, 390);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final microphone = TrainingAudioFake();
+    final speaker = TrainingNoteOutputFake();
+    await launch(tester, microphone, noteOutput: speaker);
+
+    await tester.tap(find.byKey(const Key('training-auto-play')));
+    await tester.pump();
+    expect(speaker.started, [60]);
+    expect(microphone.starts, 0);
+    expect(find.text('Odsłuch MIDI'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(speaker.released, [60]);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(speaker.started, [60, 60]);
+    await tester.pump(const Duration(milliseconds: 750));
+    expect(speaker.started, [60, 60, 64]);
+
+    await tester.tap(find.byKey(const Key('training-auto-play')));
+    await tester.pump();
+    expect(speaker.stopped, greaterThan(0));
+    expect(find.text('0 / 3 nut'), findsOneWidget);
+    expect(microphone.starts, 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('MIDI preview stops playback when the screen is removed', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(844, 390);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final microphone = TrainingAudioFake();
+    final speaker = TrainingNoteOutputFake();
+    await launch(tester, microphone, noteOutput: speaker);
+    await tester.tap(find.byKey(const Key('training-auto-play')));
+    await tester.pump();
+
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    expect(speaker.stopped, greaterThan(0));
+    expect(speaker.disposed, 1);
+    expect(microphone.starts, 0);
+  });
+
   testWidgets('touch keyboard scores notes with sound and no microphone', (
     tester,
   ) async {

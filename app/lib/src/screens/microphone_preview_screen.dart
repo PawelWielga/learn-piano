@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 
 import '../audio/audio_input.dart';
 import '../audio/audio_input_factory.dart';
-import '../audio/spectrum_analyzer.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';
 import '../instrument/instrument_range.dart';
@@ -13,7 +12,6 @@ import '../layout/landscape_gate.dart';
 import '../instrument/instrument_range_store.dart';
 import '../instrument/instrument_range_store_factory.dart';
 import '../widgets/piano_keyboard.dart';
-import '../widgets/spectrum_chart.dart';
 
 class MicrophonePreviewScreen extends StatefulWidget {
   const MicrophonePreviewScreen({super.key, this.audioInput, this.rangeStore});
@@ -35,9 +33,6 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
 
   final _detector = const PitchDetector();
   final _tracker = NoteEventTracker();
-  final _spectrumAnalyzer = SpectrumAnalyzer();
-  SpectrumSnapshot? _spectrum;
-  bool _showSpectrum = false;
   PitchEstimate? _candidate;
   NoteDetectionUpdate? _noteStatus;
   NoteEvent? _lastNoteOn;
@@ -69,8 +64,6 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
           _tracker.reset();
           _noteStatus = null;
           _lastAnalyzedAt = null;
-          _spectrumAnalyzer.reset();
-          _spectrum = null;
           _error =
               'Nasłuch został przerwany (np. zmiana karty lub '
               'odłączenie mikrofonu). Możesz go włączyć ponownie.';
@@ -109,10 +102,6 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   void _onFrame(PcmFrame frame) {
     if (!mounted || !_listening || frame.samples.isEmpty) return;
 
-    // Collect every PCM frame for FFT resolution even though UI/YIN is
-    // throttled. This work is only done while the debug plot is enabled.
-    if (_showSpectrum) _spectrumAnalyzer.addSamples(frame.samples);
-
     // Worklet timestamps use AudioContext time. Throttle analysis to about
     // 8 FPS on a 48 kHz stream; UI and YIN must not run for each audio frame.
     final last = _lastAnalyzedAt;
@@ -130,12 +119,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
     final rms = math.sqrt(sum / frame.samples.length);
     final pitch = _detector.detect(frame.samples, frame.sampleRate);
     final update = _tracker.observe(pitch, frame.capturedAt);
-    final spectrum = _showSpectrum
-        ? _spectrumAnalyzer.analyze(frame.sampleRate)
-        : null;
 
     setState(() {
-      _spectrum = spectrum;
       _sampleRate = frame.sampleRate;
       _frameSize = frame.samples.length;
       _level = rms.isFinite ? rms.clamp(0.0, 1.0) : 0;
@@ -165,8 +150,6 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
       _lastNoteOn = null;
       _noteOnCount = 0;
       _lastAnalyzedAt = null;
-      _spectrumAnalyzer.reset();
-      _spectrum = null;
     });
     try {
       await _input.start();
@@ -205,8 +188,6 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
           _tracker.reset();
           _noteStatus = null;
           _lastAnalyzedAt = null;
-          _spectrumAnalyzer.reset();
-          _spectrum = null;
         });
       }
     } catch (_) {
@@ -331,49 +312,6 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
                     key: const Key('pitch-details'),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    key: const Key('spectrum-toggle'),
-                    onPressed: () => setState(() {
-                      _showSpectrum = !_showSpectrum;
-                      _spectrumAnalyzer.reset();
-                      _spectrum = null;
-                    }),
-                    icon: Icon(
-                      _showSpectrum ? Icons.expand_less : Icons.graphic_eq,
-                    ),
-                    label: Text(
-                      _showSpectrum
-                          ? 'Ukryj widmo (debug)'
-                          : 'Pokaż widmo (debug)',
-                    ),
-                  ),
-                  if (_showSpectrum) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      'Widmo częstotliwości (FFT)',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    SpectrumChart(
-                      spectrum: _listening ? _spectrum : null,
-                      pitch: _listening ? pitch : null,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _spectrumDescription(_listening ? _spectrum : null),
-                      key: const Key('spectrum-peaks'),
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Piki pokazują składowe dźwięku i harmoniczne, nie liczbę '
-                      'wciśniętych klawiszy. Pionowa linia w kolorze akcentu '
-                      'oznacza nutę rozpoznaną przez detektor YIN. '
-                      'Oś pozioma jest logarytmiczna: C2–C6.',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
                   const SizedBox(height: 12),
                   Text(
                     'To surowy pomiar. Poniżej widać nutę potwierdzoną '
@@ -463,22 +401,6 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
       ),
     );
   }
-}
-
-String _spectrumDescription(SpectrumSnapshot? spectrum) {
-  if (spectrum == null) return 'Zbieranie próbek lub mikrofon wyłączony.';
-  if (spectrum.peaks.isEmpty) return 'Brak wyraźnych pików.';
-  final strongest = [...spectrum.peaks]
-    ..sort((a, b) => b.level.compareTo(a.level));
-  final descriptions = strongest.take(4).map((peak) {
-    final midi = (69 + 12 * math.log(peak.frequencyHz / 440) / math.ln2)
-        .round()
-        .clamp(0, 127)
-        .toInt();
-    return '${PitchEstimate.nameForMidi(midi)} '
-        '(${peak.frequencyHz.toStringAsFixed(0)} Hz)';
-  });
-  return 'Najsilniejsze piki: ${descriptions.join(' • ')}';
 }
 
 String _errorText(AudioInputFailure failure) {
