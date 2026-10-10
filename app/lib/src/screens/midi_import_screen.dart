@@ -9,6 +9,7 @@ import '../instrument/instrument_range.dart';
 import '../instrument/instrument_range_store.dart';
 import '../instrument/instrument_range_store_factory.dart';
 import 'instrument_range_screen.dart';
+import '../widgets/piano_keyboard.dart';
 
 class MidiImportScreen extends StatefulWidget {
   const MidiImportScreen({super.key, this.filePicker, this.rangeStore});
@@ -262,6 +263,18 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                                 icon: const Icon(Icons.tune),
                                 label: const Text('Dostosuj klawiaturę'),
                               ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Podgląd: pierwsza nuta melodii '
+                                '(${PitchEstimate.nameForMidi(selection.notes.first.midiNote)})',
+                                key: const Key('midi-first-note-preview'),
+                                style: theme.textTheme.titleSmall,
+                              ),
+                              const SizedBox(height: 8),
+                              PianoKeyboard(
+                                range: _instrumentRange,
+                                expectedNote: selection.notes.first.midiNote,
+                              ),
                             ],
                           ),
                         ),
@@ -394,7 +407,8 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                   const SizedBox(height: 20),
                   const Text(
                     'Po wyborze melodii możesz ustawić zakres swojej '
-                    'klawiatury. Wizualizację klawiszy i trening dodamy później.',
+                    'klawiatury. Podgląd klawiszy jest dostępny po wyborze '
+                    'melodii; trening dodamy później.',
                     key: Key('midi-next-step'),
                   ),
                 ],
