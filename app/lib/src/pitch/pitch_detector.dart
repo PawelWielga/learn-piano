@@ -17,13 +17,22 @@ class PitchEstimate {
   final double centsFromNote;
 
   static const _noteNames = [
-    'C', 'C#', 'D', 'D#', 'E', 'F',
-    'F#', 'G', 'G#', 'A', 'A#', 'B',
+    'C',
+    'C#',
+    'D',
+    'D#',
+    'E',
+    'F',
+    'F#',
+    'G',
+    'G#',
+    'A',
+    'A#',
+    'B',
   ];
 
   /// Scientific pitch notation: MIDI 60 = C4; MIDI 69 = A4.
-  String get noteName =>
-      '${_noteNames[midiNote % 12]}${midiNote ~/ 12 - 1}';
+  String get noteName => '${_noteNames[midiNote % 12]}${midiNote ~/ 12 - 1}';
 }
 
 /// YIN cumulative mean normalized difference (CMNDF) pitch estimator.

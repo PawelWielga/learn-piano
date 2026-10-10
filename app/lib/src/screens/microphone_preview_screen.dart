@@ -158,9 +158,11 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
-            child: ListView(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              children: [
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 Icon(
                   _listening ? Icons.mic : Icons.mic_none,
                   size: 72,
@@ -232,9 +234,9 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
                   pitch == null || !_listening
                       ? 'Cisza lub niejednoznaczny dźwięk'
                       : '${pitch.frequencyHz.toStringAsFixed(1)} Hz  •  '
-                          'pewność ${(pitch.confidence * 100).toStringAsFixed(0)}%  •  '
-                          '${pitch.centsFromNote >= 0 ? '+' : ''}'
-                          '${pitch.centsFromNote.toStringAsFixed(0)} centów',
+                            'pewność ${(pitch.confidence * 100).toStringAsFixed(0)}%  •  '
+                            '${pitch.centsFromNote >= 0 ? '+' : ''}'
+                            '${pitch.centsFromNote.toStringAsFixed(0)} centów',
                   key: const Key('pitch-details'),
                   textAlign: TextAlign.center,
                 ),
@@ -268,7 +270,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
                   'Akordy i hałas mogą dawać niepewne wyniki.',
                   style: theme.textTheme.bodySmall,
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
