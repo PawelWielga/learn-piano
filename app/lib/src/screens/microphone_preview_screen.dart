@@ -71,8 +71,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
 
   Future<void> _loadInstrumentRange() async {
     try {
-      final saved =
-          await (widget.rangeStore ?? createInstrumentRangeStore()).load();
+      final saved = await (widget.rangeStore ?? createInstrumentRangeStore())
+          .load();
       if (mounted && saved != null) {
         setState(() => _instrumentRange = saved);
       }
