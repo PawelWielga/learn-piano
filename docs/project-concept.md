@@ -5,7 +5,7 @@
 - Repozytorium: [PawelWielga/learn-piano](https://github.com/PawelWielga/learn-piano)
 - Docelowy URL: https://pawelwielga.github.io/learn-piano/
 - Backlog wydania: [issue #18](https://github.com/PawelWielga/learn-piano/issues/18)
-- Status: rozpoczęto M0; mikrofon i trening nie są jeszcze zaimplementowane.
+- Status: M0 ukończono. Rozpoczęto M1: lokalny nasłuch mikrofonu i podgląd parametrów PCM jest w PR #20; detekcja nut i trening nie są jeszcze gotowe.
 
 ## Problem i odbiorcy
 
