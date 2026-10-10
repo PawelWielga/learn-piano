@@ -65,8 +65,12 @@ void main() {
     await tester.scrollUntilVisible(
       find.byKey(const Key('melody-part-0-0')),
       150,
+    );
+    await Scrollable.ensureVisible(
+      tester.element(find.byKey(const Key('melody-part-0-0'))),
       alignment: 0.5,
     );
+    await tester.pumpAndSettle();
     expect(find.text('Piano'), findsOneWidget);
     expect(find.textContaining('C4'), findsWidgets);
   });
