@@ -1,6 +1,6 @@
 # Learn Piano Web
 
-Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn/NoteOff events now derive from successive pitch estimates; MIDI import now reads local SMF type 0/1 files; melody selection validates one track/channel for single-note practice; physical keyboard range validation now prevents unplayable melody selection; the physical keyboard preview now renders key geometry and highlights (#11); the stationary falling-note preview now covers #12; microphone-controlled training remains #13–#14.
+Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn/NoteOff events now derive from successive pitch estimates; MIDI import now reads local SMF type 0/1 files; melody selection validates one track/channel for single-note practice; physical keyboard range validation now prevents unplayable melody selection; the physical keyboard preview now renders key geometry and highlights (#11); the stationary falling-note preview now covers #12; a deterministic Wait for Note core now covers #13; the microphone-connected training screen remains #14.
 
 ## Prerequisites
 
@@ -71,6 +71,18 @@ Przyciski **Poprzednia** i **Następna** przesuwają tylko numer oczekiwanej nut
 Oś czasu ma maksymalną skalę 88 px/s, ale przy długich pauzach pomniejsza ją na podstawie pięciu kolejnych początków nut, żeby były widoczne. Jedna skala obowiązuje zarówno przesunięcia, jak i długości bloków. Dla bardzo długich nut górna część może być ucięta w oknie podglądu. Renderer tworzy figury tylko dla nut, które przecinają bieżące okno czasu, zamiast rysować cały długi utwór. Jeśli wybrana melodia wykracza poza fizyczny zakres, użytkownik widzi ostrzeżenie i klawiaturę zamiast częściowo pominiętych bloków.
 
 Testy: `test/midi/falling_notes_view_test.dart` sprawdza mapowanie czasu/długości/pauz i osi X, dopasowywanie skali, zerowe długości, przewijanie oraz culling przy długich utworach; `test/midi/falling_notes_import_test.dart` sprawdza zmiany pozycji po zaimportowaniu melodii. Testy automatyczne nie zastępują ręcznego sprawdzenia płynności w przeglądarce mobilnej.
+
+## Silnik ćwiczenia „Wait for Note” (#13)
+
+`lib/src/training/wait_for_note_engine.dart` to niezależny od Fluttera, mikrofonu i zegara automat stanu. Konstruktor przyjmuje `MelodySelection` z jednogłosowej partii oraz obowiązujący `InstrumentRange`. Nieprawidłowa, pusta, perkusyjna, wielogłosowa lub niegrywalna melodia daje stan `error` z komunikatem, zamiast startu niemożliwego ćwiczenia.
+
+Stany: `ready` → `running` ↔ `paused` → `completed` oraz `error` dla niepoprawnego wejścia. Dostępne są `start()`, `pause()`, `resume()`, `reset()` i `onNoteEvent(NoteEvent)`. Silnik przyjmuje **wyłącznie stabilne zdarzenia NoteOn/NoteOff** ze strumienia `NoteEventTracker`, nie chwilowe kandydaty częstotliwości ani same dane PCM. Każdy poprawny NoteOn przesuwa indeks o **jedną** nutę MIDI (łącznie z oktawą), błędny NoteOn go nie zmienia. Wynik pojedynczego zdarzenia jest rozróżniony jako `correct`, `incorrect` lub `ignored`. Migotanie, cisza i `NoteOff` nie zaliczają kroków. Pauzy z pliku MIDI nie opóźniają ćwiczenia, a widok w #12 może pobierać `snapshot.currentIndex` i `snapshot.expectedMidiNote` bez osobnego zegara.
+
+Silnik śledzi aktualnie brzmiące wysokości. Drugie `NoteOn` bez `NoteOff` tej samej wysokości **nie zalicza** kolejnej nuty, nawet przy zdublowanych komunikatach. Zdarzenia trafiające do silnika podczas pauzy i przed startem nie dają punktów, ale wciąż aktualizują informację o trzymanych klawiszach. Reset czyści progres, lecz zachowuje tę informację: aby po resecie zagrać ten sam dźwięk, trzeba go najpierw zwolnić. Po ukończeniu utworu nie ma następnej oczekiwanej nuty i nowy start wymaga resetu.
+
+**Granica #13 / #14:** obecnie jest to sam silnik i automatyczne testy bez mikrofonu. Integracja ekranu treningu, przycisków, obsługi zatrzymania strumienia oraz przekazywania każdej aktualizacji `NoteEventTracker` (w tym `NoteOff`) do `WaitForNoteEngine` jest osobnym issue #14. Po przerwaniu mikrofonu UI musi bezpiecznie zatrzymać ćwiczenie i wyczyścić stan trackera. Mikrofon nie pozwala niezawodnie rozpoznać ponownego uderzenia tej samej wysokości bez słyszalnej przerwy; silnik nie zgaduje takich uderzeń.
+
+Testy `test/training/wait_for_note_engine_test.dart` obejmują poprawne i błędne nuty/oktawy, C4-C4-C4, pauzę i wznowienie, reset w trakcie trzymania klawisza, koniec utworu i błędne partie. `test/training/wait_for_note_pipeline_test.dart` łączy prawdziwe fixtury MIDI z selektorem partii, trackerem pitch i silnikiem przy deterministycznej sekwencji nut.
 
 ## Browser microphone capture (#4)
 
