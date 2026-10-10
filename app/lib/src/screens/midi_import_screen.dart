@@ -227,7 +227,9 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                             if (track.notes.isEmpty)
                               const Padding(
                                 padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
-                                child: Text('Pusta ścieżka: brak nut do nauki.'),
+                                child: Text(
+                                  'Pusta ścieżka: brak nut do nauki.',
+                                ),
                               ),
                             for (final part in _parts.where(
                               (part) => part.trackIndex == track.index,
@@ -251,16 +253,21 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                                       : null,
                                   child: Padding(
                                     padding: const EdgeInsets.fromLTRB(
-                                      16, 10, 16, 14,
+                                      16,
+                                      10,
+                                      16,
+                                      14,
                                     ),
                                     child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Icon(
                                           part.canPractice
                                               ? selection?.part == part
-                                                  ? Icons.check_circle
-                                                  : Icons.radio_button_unchecked
+                                                    ? Icons.check_circle
+                                                    : Icons
+                                                          .radio_button_unchecked
                                               : Icons.block,
                                           color: part.canPractice
                                               ? theme.colorScheme.primary
@@ -275,7 +282,8 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                                               Text(
                                                 'Kanał ${part.channel + 1} • '
                                                 '${part.notes.length} nut',
-                                                style: theme.textTheme.titleSmall,
+                                                style:
+                                                    theme.textTheme.titleSmall,
                                               ),
                                               Text(
                                                 'Zakres: '
@@ -288,10 +296,10 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                                                 part.isPercussion
                                                     ? 'Perkusja: nieobsługiwana w nauce nut.'
                                                     : part.overlapCount > 0
-                                                        ? 'Akordy/nakładające się nuty: '
+                                                    ? 'Akordy/nakładające się nuty: '
                                                           '${part.overlapCount}. '
                                                           'Ta partia nie nadaje się do treningu.'
-                                                        : 'Melodia jednogłosowa. Dotknij, aby wybrać.',
+                                                    : 'Melodia jednogłosowa. Dotknij, aby wybrać.',
                                                 key: Key(
                                                   'melody-status-${part.trackIndex}-${part.channel}',
                                                 ),
