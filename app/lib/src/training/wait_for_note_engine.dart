@@ -82,9 +82,7 @@ class WaitForNoteEngine {
     phase: _phase,
     currentIndex: _index,
     totalNotes: _notes.length,
-    expectedMidiNote: _index < _notes.length
-        ? _notes[_index].midiNote
-        : null,
+    expectedMidiNote: _index < _notes.length ? _notes[_index].midiNote : null,
     lastPlayedMidiNote: _lastPlayedMidiNote,
     lastAttempt: _lastAttempt,
     errorMessage: _errorMessage,
@@ -146,8 +144,7 @@ class WaitForNoteEngine {
     // Duplicate NoteOn from the same held key is not another key press.
     // This also protects consecutive equal notes when downstream events
     // are duplicated or arrive while paused.
-    if (!_pressedNotes.add(event.midiNote) ||
-        _phase != TrainingPhase.running) {
+    if (!_pressedNotes.add(event.midiNote) || _phase != TrainingPhase.running) {
       return TrainingEventUpdate(
         snapshot: snapshot,
         attempt: TrainingAttempt.ignored,
