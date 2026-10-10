@@ -54,6 +54,17 @@ Manifest zainstalowanej PWA sugeruje orientację poziomą, ale zwykła karta
 mobilnej przeglądarki (szczególnie Safari iOS) nie udostępnia niezawodnego
 wymuszenia fizycznego obrotu. Można też poszerzyć okno na desktopie.
 
+## Trening na telefonie w poziomie
+
+Na niskich ekranach w orientacji poziomej (wysokość poniżej 560 pikseli
+logicznych) trening przechodzi w układ kompaktowy. Nad klawiaturą widoczne są:
+stan mikrofonu, oczekiwana i wykryta nuta, komunikat o trafieniu oraz postęp.
+Pianino i podgląd kolejnych nut dopasowują wysokość do dostępnego miejsca,
+a Start/Pauza i Reset pozostają na ekranie bez przewijania całej strony.
+Zakres klawiatury nadal można przesuwać poziomo. Na większych ekranach
+pozostaje pełny widok treningu. W wyjątkowo niskim oknie sam podgląd
+może przewijać się pionowo.
+
 ## CI i GitHub Pages
 
 - **Pull request do `main`:** `.github/workflows/ci.yml` uruchamia format, analizę, testy oraz release build. Nie publikuje strony.
