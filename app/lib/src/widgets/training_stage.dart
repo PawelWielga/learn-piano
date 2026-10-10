@@ -1,10 +1,12 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../instrument/instrument_range.dart';
 import '../midi/midi_parser.dart';
 import '../pitch/pitch_detector.dart';
+import '../training/training_input_mode.dart';
 import '../training/wait_for_note_engine.dart';
 import 'falling_notes_view.dart';
 import 'piano_keyboard.dart';
@@ -27,6 +29,10 @@ class TrainingStage extends StatefulWidget {
     required this.songTitle,
     required this.listening,
     required this.busy,
+    required this.inputMode,
+    required this.onInputModeChanged,
+    required this.onNoteDown,
+    required this.onNoteUp,
     required this.onBack,
     required this.onPrimary,
     required this.onReset,
@@ -46,6 +52,10 @@ class TrainingStage extends StatefulWidget {
   final String songTitle;
   final bool listening;
   final bool busy;
+  final TrainingInputMode inputMode;
+  final ValueChanged<TrainingInputMode> onInputModeChanged;
+  final ValueChanged<int> onNoteDown;
+  final ValueChanged<int> onNoteUp;
   final String? error;
   final VoidCallback onBack;
   final VoidCallback? onPrimary;
@@ -61,10 +71,56 @@ class _TrainingStageState extends State<TrainingStage> {
   int? _lastFocus;
   InstrumentRange? _lastRange;
   double? _lastWidth;
+  final Map<int, int> _pointerNotes = <int, int>{};
+  PianoKeyboardLayout? _activeKeyboard;
+  double _activeRollHeight = 0;
+
+  bool get _touchEnabled =>
+      widget.inputMode == TrainingInputMode.keyboard &&
+      (widget.phase == TrainingPhase.ready ||
+          widget.phase == TrainingPhase.running) &&
+      !widget.busy;
+
+  void _onPointerDown(PointerDownEvent event) {
+    if (!_touchEnabled || _pointerNotes.containsKey(event.pointer)) return;
+    final note = _hitTest(event.localPosition);
+    if (note == null) return;
+    final alreadyPressed = _pointerNotes.containsValue(note);
+    setState(() => _pointerNotes[event.pointer] = note);
+    if (!alreadyPressed) widget.onNoteDown(note);
+  }
+
+  int? _hitTest(Offset position) {
+    if (position.dy < _activeRollHeight) return null;
+    return _activeKeyboard?.noteAt(
+      Offset(position.dx, position.dy - _activeRollHeight),
+    );
+  }
+
+  void _onPointerMove(PointerMoveEvent event) {
+    final heldNote = _pointerNotes[event.pointer];
+    if (heldNote != null && _hitTest(event.localPosition) != heldNote) {
+      _releasePointer(event.pointer);
+    }
+  }
+
+  void _releasePointer(int pointer) {
+    final note = _pointerNotes.remove(pointer);
+    if (note == null) return;
+    if (mounted) setState(() {});
+    if (!_pointerNotes.containsValue(note)) widget.onNoteUp(note);
+  }
 
   @override
   void didUpdateWidget(TrainingStage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // The parent releases active notes when stopping or changing the source.
+    // Forget captured pointer IDs so a later pointer-up cannot retrigger notes.
+    if (oldWidget.inputMode != widget.inputMode ||
+        (widget.phase != TrainingPhase.ready &&
+            widget.phase != TrainingPhase.running)) {
+      _pointerNotes.clear();
+    }
     if (oldWidget.phase != widget.phase) {
       if (widget.phase == TrainingPhase.running) {
         _showControls = false;
@@ -127,6 +183,8 @@ class _TrainingStageState extends State<TrainingStage> {
           height: keyboardHeight,
         );
         final rollHeight = height - keyboardHeight;
+        _activeKeyboard = keyboard;
+        _activeRollHeight = rollHeight;
         _focus(keyboard, width);
         final focusedIndex = widget.notes.isEmpty
             ? 0
@@ -152,14 +210,22 @@ class _TrainingStageState extends State<TrainingStage> {
                   child: SizedBox(
                     width: math.max(width, keyboard.width),
                     height: height,
-                    child: CustomPaint(
-                      key: const Key('training-stage-canvas'),
-                      painter: _TrainingStagePainter(
-                        keyboard: keyboard,
-                        roll: completed ? null : roll,
-                        expectedNote: widget.expectedNote,
-                        detectedNote: widget.detectedNote,
-                        rollHeight: rollHeight,
+                    child: Listener(
+                      behavior: HitTestBehavior.opaque,
+                      onPointerDown: _onPointerDown,
+                      onPointerMove: _onPointerMove,
+                      onPointerUp: (event) => _releasePointer(event.pointer),
+                      onPointerCancel: (event) => _releasePointer(event.pointer),
+                      child: CustomPaint(
+                        key: const Key('training-stage-canvas'),
+                        painter: _TrainingStagePainter(
+                          keyboard: keyboard,
+                          roll: completed ? null : roll,
+                          expectedNote: widget.expectedNote,
+                          detectedNote: widget.detectedNote,
+                          pressedNotes: _pointerNotes.values.toSet(),
+                          rollHeight: rollHeight,
+                        ),
                       ),
                     ),
                   ),
@@ -219,12 +285,33 @@ class _TrainingStageState extends State<TrainingStage> {
                           : const Color(0xFF77727B),
                     ),
                     IconButton(
+                      key: const Key('training-input-toggle'),
+                      tooltip: widget.inputMode == TrainingInputMode.microphone
+                          ? 'Przełącz na klawiaturę ekranową'
+                          : 'Przełącz na mikrofon',
+                      onPressed: widget.busy
+                          ? null
+                          : () => widget.onInputModeChanged(
+                              widget.inputMode == TrainingInputMode.microphone
+                                  ? TrainingInputMode.keyboard
+                                  : TrainingInputMode.microphone,
+                            ),
+                      color: foreground,
+                      icon: Icon(
+                        widget.inputMode == TrainingInputMode.microphone
+                            ? Icons.mic
+                            : Icons.piano,
+                      ),
+                    ),
+                    IconButton(
                       key: const Key('training-primary'),
                       tooltip: widget.phase == TrainingPhase.running
                           ? 'Pauza'
                           : widget.phase == TrainingPhase.paused
                           ? 'Wznów'
-                          : 'Start i mikrofon',
+                          : widget.inputMode == TrainingInputMode.microphone
+                          ? 'Start i mikrofon'
+                          : 'Start i klawiatura',
                       onPressed: widget.busy ? null : widget.onPrimary,
                       color: foreground,
                       icon: Icon(
@@ -290,7 +377,9 @@ class _TrainingStageState extends State<TrainingStage> {
                       const SizedBox(width: 14),
                       Flexible(
                         child: Text(
-                          widget.listening
+                          widget.inputMode == TrainingInputMode.keyboard
+                              ? 'Gra na ekranie. Dotykaj klawiszy.'
+                              : widget.listening
                               ? 'Mikrofon aktywny. Dźwięk jest analizowany lokalnie.'
                               : 'Mikrofon wyłączony. Dźwięk nie jest wysyłany na serwer.',
                           key: const Key('training-microphone-status'),
@@ -330,18 +419,29 @@ class _TrainingStageState extends State<TrainingStage> {
                         child: Row(
                           children: [
                             TextButton.icon(
-                              key: const Key('training-mic-control'),
-                              onPressed: widget.busy ? null : widget.onPrimary,
+                              key: const Key('training-input-control'),
+                              onPressed: widget.busy
+                                  ? null
+                                  : () => widget.onInputModeChanged(
+                                      widget.inputMode ==
+                                              TrainingInputMode.microphone
+                                          ? TrainingInputMode.keyboard
+                                          : TrainingInputMode.microphone,
+                                    ),
                               icon: Icon(
-                                widget.listening ? Icons.mic : Icons.mic_none,
+                                widget.inputMode == TrainingInputMode.microphone
+                                    ? Icons.mic
+                                    : Icons.piano,
                               ),
-                              label: Text(widget.listening ? 'Mic ON' : 'Mic'),
+                              label: Text(
+                                widget.inputMode == TrainingInputMode.microphone
+                                    ? 'Mikrofon'
+                                    : 'Klawisze',
+                              ),
                               style: TextButton.styleFrom(
-                                minimumSize: const Size(68, 44),
+                                minimumSize: const Size(90, 44),
                                 foregroundColor: foreground,
-                                backgroundColor: widget.listening
-                                    ? const Color(0xFF7B258F)
-                                    : const Color(0xFF392341),
+                                backgroundColor: const Color(0xFF392341),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -516,6 +616,7 @@ class _TrainingStagePainter extends CustomPainter {
     required this.roll,
     required this.expectedNote,
     required this.detectedNote,
+    required this.pressedNotes,
     required this.rollHeight,
   });
 
@@ -523,6 +624,7 @@ class _TrainingStagePainter extends CustomPainter {
   final FallingNotesLayout? roll;
   final int? expectedNote;
   final int? detectedNote;
+  final Set<int> pressedNotes;
   final double rollHeight;
 
   @override
@@ -600,18 +702,22 @@ class _TrainingStagePainter extends CustomPainter {
       shape,
       Paint()..color = key.isBlack ? const Color(0xFF050505) : Colors.white,
     );
-    if (isExpected || isDetected) {
+    if (isExpected || isDetected || pressedNotes.contains(key.midiNote)) {
       canvas.drawRRect(
         shape,
         Paint()
-          ..color = isExpected
+          ..color = pressedNotes.contains(key.midiNote)
+              ? const Color(0x8800BE9C)
+              : isExpected
               ? const Color(0x55D547E9)
               : const Color(0x6600BE9C),
       );
       canvas.drawRRect(
         shape,
         Paint()
-          ..color = isExpected
+          ..color = pressedNotes.contains(key.midiNote)
+              ? const Color(0xFF00BE9C)
+              : isExpected
               ? const Color(0xFFD547E9)
               : const Color(0xFF00BE9C)
           ..strokeWidth = 2.5
@@ -664,6 +770,7 @@ class _TrainingStagePainter extends CustomPainter {
       oldDelegate.keyboard.height != keyboard.height ||
       oldDelegate.expectedNote != expectedNote ||
       oldDelegate.detectedNote != detectedNote ||
+      !setEquals(oldDelegate.pressedNotes, pressedNotes) ||
       oldDelegate.roll?.currentIndex != roll?.currentIndex ||
       oldDelegate.roll?.notes != roll?.notes ||
       oldDelegate.rollHeight != rollHeight;
