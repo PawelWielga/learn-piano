@@ -136,9 +136,9 @@ void main() {
     await tester.pump();
     expect(input.starts, 1);
     expect(
-      tester.widget<FilledButton>(
-        find.byKey(const Key('microphone-toggle')),
-      ).onPressed,
+      tester
+          .widget<FilledButton>(find.byKey(const Key('microphone-toggle')))
+          .onPressed,
       isNull,
     );
 

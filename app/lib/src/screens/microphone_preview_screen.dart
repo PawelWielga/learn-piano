@@ -41,7 +41,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
         setState(() {
           _listening = false;
           _level = 0;
-          _error = 'Nasłuch został przerwany (np. zmiana karty lub '
+          _error =
+              'Nasłuch został przerwany (np. zmiana karty lub '
               'odłączenie mikrofonu). Możesz go włączyć ponownie.';
         });
       }
@@ -84,8 +85,11 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
       if (mounted) setState(() => _error = _errorText(error.failure));
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Nie udało się uruchomić mikrofonu. '
-            'Sprawdź uprawnienia i spróbuj ponownie.');
+        setState(
+          () => _error =
+              'Nie udało się uruchomić mikrofonu. '
+              'Sprawdź uprawnienia i spróbuj ponownie.',
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -105,8 +109,11 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
       }
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Nie udało się poprawnie zatrzymać '
-            'mikrofonu. Spróbuj zamknąć tę kartę.');
+        setState(
+          () => _error =
+              'Nie udało się poprawnie zatrzymać '
+              'mikrofonu. Spróbuj zamknąć tę kartę.',
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -160,11 +167,13 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
                   key: const Key('microphone-toggle'),
                   onPressed: _busy ? null : (_listening ? _stop : _start),
                   icon: Icon(_listening ? Icons.stop : Icons.mic),
-                  label: Text(_busy
-                      ? 'Trwa zmiana stanu…'
-                      : _listening
-                          ? 'Wyłącz mikrofon'
-                          : 'Włącz mikrofon'),
+                  label: Text(
+                    _busy
+                        ? 'Trwa zmiana stanu…'
+                        : _listening
+                        ? 'Wyłącz mikrofon'
+                        : 'Włącz mikrofon',
+                  ),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(56),
                   ),
@@ -221,8 +230,7 @@ String _errorText(AudioInputFailure failure) {
           'witryny/przeglądarki i spróbuj ponownie.',
     AudioInputFailure.noDevice =>
       'Nie znaleziono mikrofonu. Podłącz urządzenie i spróbuj ponownie.',
-    AudioInputFailure.deviceBusy =>
-      'Nie można odczytać mikrofonu. Sprawdź, czy inne aplikacje go nie blokują.',
+    AudioInputFailure.deviceBusy => 'Nie można odczytać mikrofonu. Sprawdź, czy inne aplikacje go nie blokują.',
     AudioInputFailure.insecureContext =>
       'Mikrofon wymaga połączenia HTTPS lub adresu localhost.',
     AudioInputFailure.unsupported =>
