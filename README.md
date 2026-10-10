@@ -1,20 +1,60 @@
 # Learn Piano: Play & Train
 
-Darmowa aplikacja do nauki gry na prawdziwym pianinie lub keyboardzie, nawet bez wyjścia MIDI. Telefon lub przeglądarka korzysta z mikrofonu, by rozpoznawać grane nuty. Użytkownik może importować własne pliki MIDI, ćwiczyć z wizualizacją spadających nut i docelowo nagrywać melodię z mikrofonu do MIDI.
+Darmowa aplikacja do nauki na **fizycznym pianinie lub keyboardzie, także bez wyjścia MIDI**. Docelowo użytkownik otwiera stronę, importuje własną monofoniczną melodię MIDI i ćwiczy; mikrofon pozwala aplikacji przejść do kolejnej nuty dopiero po jej poprawnym zagraniu.
 
-## Platformy i kierunek technologiczny
+## MVP 1: najpierw Web
 
-- **Android, iOS i Web:** Flutter / Dart (planowane).
-- **Landing page:** Jaspr / Dart (planowane, pod SEO).
-- **Organizacja:** jedno repozytorium, wspólny silnik muzyczny i interfejs aplikacji, osobna część landing page.
-- **Działanie:** lokalnie, bez konta, płatnego abonamentu i backendu na start.
+Pierwszym celem jest **Flutter Web na GitHub Pages**, nie Android APK. Docelowy adres po włączeniu publikacji:
 
-## Dokumentacja projektu
+**https://pawelwielga.github.io/learn-piano/**
 
-[Pełna koncepcja, MVP, architektura, ryzyka i kolejność prac](docs/project-concept.md).
+Aplikacja przetwarza dźwięk i pliki MIDI **lokalnie w przeglądarce**. Bez backendu, logowania, płatności i wysyłania nagrań na serwer.
 
-## Status
+### Plan prac
 
-**Koncepcja / przygotowanie dokumentacji.** Repozytorium docelowe już istnieje, ale implementacja nie została rozpoczęta. Struktura aplikacji i wybór konkretnych bibliotek audio pozostają do zweryfikowania eksperymentem z rozpoznawaniem nut.
+| Etap | Funkcjonalność | Issues |
+| --- | --- | --- |
+| M0 | Projekt Flutter Web, testy CI, deployment Pages, dokumentacja | [#1–#3](https://github.com/PawelWielga/learn-piano/issues/18), [#17](https://github.com/PawelWielga/learn-piano/issues/17) |
+| M1 | Mikrofon, rozpoznawanie i stabilizacja pojedynczych nut, publiczny tester | [#4–#7](https://github.com/PawelWielga/learn-piano/issues/18) |
+| M2 | Lokalny import MIDI, wybór partii, zakres pianinka, klawiatura, spadające nuty | [#8–#12](https://github.com/PawelWielga/learn-piano/issues/18) |
+| M3 | Wait for Note, pełny ekran treningu, testy end-to-end i UX | [#13–#16](https://github.com/PawelWielga/learn-piano/issues/18) |
 
-Ogólny wpis w katalogu pomysłów: [PawelWielga/ideas](https://github.com/PawelWielga/ideas/blob/main/ideas/piano-midi-trainer.md).
+Szczegółowy backlog i kryteria wydania: **[MVP 1, issue #18](https://github.com/PawelWielga/learn-piano/issues/18)**.
+
+## Uruchomienie lokalne
+
+Wymagany Flutter **3.47.7** (stable) z Dart 3.13.5 oraz Chrome.
+
+```sh
+cd app
+flutter pub get
+flutter run -d chrome
+```
+
+Weryfikacja używana również przez GitHub Actions:
+
+```sh
+cd app
+dart format --output=none --set-exit-if-changed .
+flutter analyze
+flutter test
+flutter build web --release --base-href /learn-piano/
+```
+
+Więcej: [app/README.md](app/README.md).
+
+## CI i GitHub Pages
+
+- **Pull request do `main`:** `.github/workflows/ci.yml` uruchamia format, analizę, testy oraz release build. Nie publikuje strony.
+- **Merge/push do `main`:** `.github/workflows/deploy-pages.yml` powtarza kontrole, buduje projekt z `--base-href /learn-piano/` i publikuje `app/build/web` przez oficjalne akcje GitHub Pages.
+- **Jednorazowa konfiguracja repozytorium:** `Settings → Pages → Build and deployment → Source: GitHub Actions`. Bez tego ustawienia workflow nie gwarantuje publicznego wdrożenia. Jeśli środowisko `github-pages` jest chronione, może wymagać zatwierdzenia.
+
+Link do Pages to **adres docelowy**, a nie potwierdzenie dostępności przed pierwszym udanym wdrożeniem.
+
+## Poza MVP 1
+
+Landing page Jaspr, natywne Android/iOS, akordy, nagrywanie melodii do MIDI, gotowe utwory, konta, statystyki, transpozycja i płatności. Pomysły na później opisuje [koncepcja projektu](docs/project-concept.md).
+
+## Aktualny stan
+
+Rozpoczęto M0. Początkowy projekt zawiera ekran startowy i przygotowawczy widok testera; **jeszcze nie nagrywa ani nie rozpoznaje dźwięku**. Nie uznajemy zgodności z telefonami ani skuteczności detekcji, dopóki nie wykonamy testów na fizycznym instrumencie.
