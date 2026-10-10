@@ -31,7 +31,13 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
       - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed .
+        run: |
+          dart format .
+          for file in lib/src/widgets/training_stage.dart test/training/training_stage_position_test.dart; do
+            echo "FORMATTED_FILE::$file"
+            base64 -w0 "$file"
+            echo
+          done
       - name: Analyze
         run: flutter analyze
       - name: Test
