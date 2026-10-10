@@ -32,7 +32,10 @@ void main() {
   test('range validates MIDI limits and octave-independent key count', () {
     expect(InstrumentRange.tryCreate(0, 127)?.keyCount, 128);
     expect(InstrumentRange.tryCreate(0, 0)?.keyCount, 1);
-    expect(InstrumentRange.tryCreate(127, 127), const InstrumentRange(127, 127));
+    expect(
+      InstrumentRange.tryCreate(127, 127),
+      const InstrumentRange(127, 127),
+    );
     expect(InstrumentRange.tryCreate(-1, 127), isNull);
     expect(InstrumentRange.tryCreate(0, 128), isNull);
     expect(InstrumentRange.tryCreate(90, 80), isNull);
