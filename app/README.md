@@ -1,6 +1,6 @@
 # Learn Piano Web
 
-Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn/NoteOff events now derive from successive pitch estimates; MIDI import now reads local SMF type 0/1 files; melody selection validates one track/channel for single-note practice; physical keyboard range validation now prevents unplayable melody selection; full keyboard rendering and training remain follow-up issues.
+Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn/NoteOff events now derive from successive pitch estimates; MIDI import now reads local SMF type 0/1 files; melody selection validates one track/channel for single-note practice; physical keyboard range validation now prevents unplayable melody selection; the physical keyboard preview now renders key geometry and highlights (#11); falling notes and training remain follow-up issues.
 
 ## Prerequisites
 
@@ -128,3 +128,15 @@ References:
 - https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
 - https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet
 - https://dart.dev/interop/js-interop
+
+## Wirtualna klawiatura (#11)
+
+W ustawieniach zakresu widać na bieżąco rzeczywisty układ klawiszy od najniższej do najwyższej wybranej nuty. Po wyborze jednogłosowej partii MIDI podświetlona jest **pierwsza nuta melodii** (tylko podgląd, jeszcze nie trening). Tester mikrofonu podświetla **stabilną** nutę, a nie surowego kandydata; mikrofon nadal uruchamia się wyłącznie po kliknięciu przycisku.
+
+- Zielono-turkusowy oznacza nutę oczekiwaną, pomarańczowy wykrytą. Jeśli obie są takie same, klawisz jest dwukolorowy. Nazwy nut są dostępne nad klawiaturą; oznaczenia C i klawiszy skrajnych widnieją też na białych klawiszach.
+- Wąskie ekrany przewijają się **poziomo**. Początkowy widok ustawia się wokół aktywnej nuty (najpierw oczekiwanej, w przeciwnym razie wykrytej). Zmiana nuty ustawia podgląd ponownie; inne odświeżenia nie odbierają użytkownikowi przewinięcia.
+- Układ jest liczony bezpośrednio z `InstrumentRange` oraz numerów MIDI. Fragmenty zaczynające/kończące się na czarnym klawiszu nie są zastępowane pełną oktawą; żaden dźwięk poza ustawionym zakresem nie jest po cichu pokazywany jako dostępny.
+- Grafika korzysta z `CustomPainter`, który maluje klawisze w kolejności białe → czarne. Przerysowanie zależy od zakresu lub oznaczonych nut, a tester ogranicza częstotliwość aktualizacji wyników audio (obecnie około 8 FPS).
+- Testy jednostkowe sprawdzają geometrię pełnej oktawy, częściowy zakres czarnych klawiszy i pojedynczy klawisz. Widget testy sprawdzają oba oznaczenia oraz przewijanie do aktywnej nuty.
+
+Klawiatura nie odtwarza dźwięków. Spadające nuty i przechodzenie do kolejnej nuty MIDI należą do #12–#14. Nie przeprowadzono jeszcze ręcznych pomiarów wydajności i rozpoznawania na wszystkich przeglądarkach mobilnych.

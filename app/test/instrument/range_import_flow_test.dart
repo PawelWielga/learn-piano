@@ -38,8 +38,16 @@ class RangeStoreFake implements InstrumentRangeStore {
   }
 }
 
-Future<void> reveal(WidgetTester tester, Finder finder) async {
-  await tester.scrollUntilVisible(finder, 160);
+Future<void> reveal(
+  WidgetTester tester,
+  Finder finder, {
+  double delta = 160,
+}) async {
+  await tester.scrollUntilVisible(
+    finder,
+    delta,
+    scrollable: find.byType(Scrollable).first,
+  );
   await Scrollable.ensureVisible(tester.element(finder), alignment: 0.5);
   await tester.pumpAndSettle();
 }
@@ -77,7 +85,7 @@ void main() {
     expect(find.textContaining('C4'), findsWidgets);
     expect(find.textContaining('G#5'), findsWidgets);
 
-    await reveal(tester, find.byKey(const Key('range-preset-88')));
+    await reveal(tester, find.byKey(const Key('range-preset-88')), delta: -160);
     await tester.tap(find.byKey(const Key('range-preset-88')));
     await tester.pump();
     await reveal(tester, find.byKey(const Key('range-playable')));

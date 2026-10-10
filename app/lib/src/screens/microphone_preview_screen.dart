@@ -7,12 +7,17 @@ import '../audio/audio_input.dart';
 import '../audio/audio_input_factory.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';
+import '../instrument/instrument_range.dart';
+import '../instrument/instrument_range_store.dart';
+import '../instrument/instrument_range_store_factory.dart';
+import '../widgets/piano_keyboard.dart';
 
 class MicrophonePreviewScreen extends StatefulWidget {
-  const MicrophonePreviewScreen({super.key, this.audioInput});
+  const MicrophonePreviewScreen({super.key, this.audioInput, this.rangeStore});
 
   /// Allows widget tests to inject a fake rather than opening a real device.
   final AudioInput? audioInput;
+  final InstrumentRangeStore? rangeStore;
 
   @override
   State<MicrophonePreviewScreen> createState() =>
@@ -21,6 +26,7 @@ class MicrophonePreviewScreen extends StatefulWidget {
 
 class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   late final AudioInput _input;
+  InstrumentRange _instrumentRange = InstrumentRange.defaultRange;
   StreamSubscription<PcmFrame>? _frameSubscription;
   StreamSubscription<AudioInputStatus>? _statusSubscription;
 
@@ -43,6 +49,7 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   void initState() {
     super.initState();
     _input = widget.audioInput ?? createAudioInput();
+    _loadInstrumentRange();
     _frameSubscription = _input.frames.listen(_onFrame);
     _statusSubscription = _input.statuses.listen((status) {
       if (!mounted) return;
@@ -60,6 +67,18 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
         });
       }
     });
+  }
+
+  Future<void> _loadInstrumentRange() async {
+    try {
+      final saved = await (widget.rangeStore ?? createInstrumentRangeStore())
+          .load();
+      if (mounted && saved != null) {
+        setState(() => _instrumentRange = saved);
+      }
+    } catch (_) {
+      // Unavailable browser storage does not prevent the microphone test.
+    }
   }
 
   void _onFrame(PcmFrame frame) {
@@ -316,6 +335,16 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
                     'przerwy w dźwięku.',
                     style: theme.textTheme.bodySmall,
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Podgląd klawiatury',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  PianoKeyboard(
+                    range: _instrumentRange,
+                    detectedNote: _listening ? stableNote : null,
                   ),
                   const SizedBox(height: 32),
                   Text('Poziom wejścia', style: theme.textTheme.titleMedium),
