@@ -38,7 +38,11 @@ class RangeStoreFake implements InstrumentRangeStore {
   }
 }
 
-Future<void> reveal(WidgetTester tester, Finder finder, {double delta = 160}) async {
+Future<void> reveal(
+  WidgetTester tester,
+  Finder finder, {
+  double delta = 160,
+}) async {
   await tester.scrollUntilVisible(
     finder,
     delta,
