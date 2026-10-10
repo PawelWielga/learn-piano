@@ -66,6 +66,18 @@ class PianoKeyboardLayout {
 
   PianoKeyGeometry? keyForMidi(int note) =>
       range.contains(note) ? keys[note - range.low] : null;
+
+  /// Hit-test positions relative to the keyboard (not the falling-note roll).
+  /// Black keys must win where they overlap their white neighbours.
+  int? noteAt(Offset position) {
+    for (final key in keys.where((key) => key.isBlack)) {
+      if (key.rect.contains(position)) return key.midiNote;
+    }
+    for (final key in keys.where((key) => !key.isBlack)) {
+      if (key.rect.contains(position)) return key.midiNote;
+    }
+    return null;
+  }
 }
 
 /// Reusable view for MIDI preview, microphone tester and future training.
