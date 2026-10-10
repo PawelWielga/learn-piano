@@ -376,6 +376,7 @@ class _TrainingStageState extends State<TrainingStage> {
                 ),
               ),
             if (showOverlay &&
+                height >= 340 &&
                 widget.phase != TrainingPhase.running &&
                 widget.phase != TrainingPhase.error &&
                 !completed)
