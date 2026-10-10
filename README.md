@@ -58,4 +58,4 @@ Landing page Jaspr, natywne Android/iOS, akordy, nagrywanie melodii do MIDI, got
 
 ## Aktualny stan
 
-M0 jest zrealizowane. W M1 tester uruchamia mikrofon, wyświetla poziom wejścia oraz **kandydacką nutę, oktawę, częstotliwość i pewność detekcji YIN**. Nie rozpoznaje jeszcze osobnych uderzeń (NoteOn), nie importuje MIDI i nie zapisuje nagrań. Przed potwierdzeniem jakości rozpoznawania na fizycznym pianinku wymagane są próby sprzętowe. Szczegóły: [app/README.md](app/README.md).
+M0 jest zrealizowane. W M1 tester mikrofonu wykrywa kandydackie nuty (YIN) oraz stabilizuje zdarzenia NoteOn/NoteOff. W M2 można lokalnie importować MIDI typu 0/1, wybierać jednogłosową partię, ustawić zakres fizycznego instrumentu i obejrzeć podświetlane klawisze (#11). Animacja spadających nut i trening Wait for Note to kolejne zadania (#12–#14). Rzeczywista jakość detekcji i wydajność wymagają testów na pianinie i przeglądarkach mobilnych. Szczegóły: [app/README.md](app/README.md).
