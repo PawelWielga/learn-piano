@@ -26,7 +26,11 @@ class TestRangeStore implements InstrumentRangeStore {
   }
 }
 
-Future<void> visible(WidgetTester tester, Finder target, {double delta = 160}) async {
+Future<void> visible(
+  WidgetTester tester,
+  Finder target, {
+  double delta = 160,
+}) async {
   await tester.scrollUntilVisible(
     target,
     delta,
