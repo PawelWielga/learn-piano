@@ -377,5 +377,4 @@ void main() {
       expect(fake.stops, 1);
     },
   );
-
 }
