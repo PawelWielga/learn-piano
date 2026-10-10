@@ -254,6 +254,288 @@ class _TrainingScreenState extends State<TrainingScreen> {
     super.dispose();
   }
 
+  /// A short landscape viewport has no room for the desktop's long scroll.
+  /// Keep progress, audio state, piano roll and actions on screen together.
+  Widget _buildCompactScaffold(
+    BuildContext context, {
+    required TrainingPhase phase,
+    required String phaseLabel,
+    required String attemptLabel,
+    required int? expected,
+    required int? detected,
+  }) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 44,
+        title: Text('Trening', style: theme.textTheme.titleMedium),
+        actions: [
+          TextButton(
+            key: const Key('training-change-song'),
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Zmień utwór'),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: _buildCompactBody(
+          context,
+          phase: phase,
+          phaseLabel: phaseLabel,
+          attemptLabel: attemptLabel,
+          expected: expected,
+          detected: detected,
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 4, 10, 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  key: const Key('training-primary'),
+                  onPressed: _busy
+                      ? null
+                      : switch (phase) {
+                          TrainingPhase.ready => () => _start(),
+                          TrainingPhase.running => _pause,
+                          TrainingPhase.paused => () => _start(resume: true),
+                          _ => null,
+                        },
+                  icon: Icon(
+                    phase == TrainingPhase.running
+                        ? Icons.pause
+                        : Icons.play_arrow,
+                  ),
+                  label: Text(switch (phase) {
+                    TrainingPhase.ready => 'Start i mikrofon',
+                    TrainingPhase.running => 'Pauza',
+                    TrainingPhase.paused => 'Wznów',
+                    _ => 'Zakończono',
+                  }),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  key: const Key('training-reset'),
+                  onPressed: _busy || phase == TrainingPhase.error
+                      ? null
+                      : _reset,
+                  icon: const Icon(Icons.restart_alt),
+                  label: const Text('Reset'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactBody(
+    BuildContext context, {
+    required TrainingPhase phase,
+    required String phaseLabel,
+    required String attemptLabel,
+    required int? expected,
+    required int? detected,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final microphoneLabel = _listening
+        ? 'Mikrofon aktywny'
+        : 'Mikrofon wyłączony';
+    final compactPhaseLabel = phase == TrainingPhase.running && _awaitingSilence
+        ? 'Czekam na ciszę'
+        : phaseLabel;
+    final feedbackLabel = switch (_snapshot.lastAttempt) {
+      TrainingAttempt.ignored => null,
+      TrainingAttempt.correct => 'Poprawnie',
+      TrainingAttempt.incorrect => 'Błędna nuta',
+    };
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        compactPhaseLabel,
+                        key: const Key('training-phase'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    _listening ? Icons.mic : Icons.mic_off,
+                    size: 16,
+                    color: _listening
+                        ? scheme.primary
+                        : scheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    microphoneLabel,
+                    key: const Key('training-microphone-status'),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${_snapshot.completedNotes} / ${_snapshot.totalNotes} nut',
+                    key: const Key('training-progress-label'),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: Text(
+                      'Oczekiwana: ${expected == null ? '—' : PitchEstimate.nameForMidi(expected)}',
+                      key: const Key('training-expected'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: scheme.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'Wykryta: ${detected == null ? '—' : PitchEstimate.nameForMidi(detected)}',
+                      key: const Key('training-detected'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (feedbackLabel != null) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 3,
+                      child: Semantics(
+                        liveRegion: true,
+                        label: attemptLabel,
+                        child: Text(
+                          feedbackLabel,
+                          key: const Key('training-feedback'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color:
+                                _snapshot.lastAttempt ==
+                                    TrainingAttempt.incorrect
+                                ? scheme.error
+                                : scheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 5),
+              LinearProgressIndicator(
+                key: const Key('training-progress'),
+                value: _snapshot.progress,
+                minHeight: 4,
+                semanticsLabel: 'Postęp ćwiczenia',
+              ),
+            ],
+          ),
+        ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                _error!,
+                key: const Key('training-microphone-error'),
+                style: TextStyle(color: scheme.error, fontSize: 12),
+              ),
+            ),
+          ),
+        Expanded(
+          child: switch (phase) {
+            TrainingPhase.completed => Center(
+              child: Column(
+                key: const Key('training-completed'),
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_circle, color: scheme.primary, size: 32),
+                  const SizedBox(height: 4),
+                  const Text('Ukończono wszystkie nuty!'),
+                  const Text('Wybierz Reset, aby zagrać ponownie.'),
+                ],
+              ),
+            ),
+            TrainingPhase.error => Center(
+              child: Text(
+                _snapshot.errorMessage ?? 'Niepoprawna melodia.',
+                style: TextStyle(color: scheme.error),
+              ),
+            ),
+            _ => LayoutBuilder(
+              builder: (context, constraints) {
+                // Very short split-screen windows need a small vertical scroll.
+                if (constraints.maxHeight < 125) {
+                  return SingleChildScrollView(
+                    child: FallingNotesView(
+                      notes: widget.selection.notes,
+                      range: widget.instrumentRange,
+                      currentIndex: _snapshot.currentIndex,
+                      detectedNote: detected,
+                      compact: true,
+                      rollHeight: 54,
+                      keyboardHeight: 72,
+                    ),
+                  );
+                }
+                final keyboardHeight = (constraints.maxHeight * 0.60).clamp(
+                  68.0,
+                  154.0,
+                );
+                return FallingNotesView(
+                  notes: widget.selection.notes,
+                  range: widget.instrumentRange,
+                  currentIndex: _snapshot.currentIndex,
+                  detectedNote: detected,
+                  compact: true,
+                  rollHeight: constraints.maxHeight - keyboardHeight,
+                  keyboardHeight: keyboardHeight,
+                );
+              },
+            ),
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final phase = _snapshot.phase;
@@ -276,6 +558,17 @@ class _TrainingScreenState extends State<TrainingScreen> {
       TrainingAttempt.correct => 'Dobrze! Przejdź do kolejnej nuty.',
       TrainingAttempt.incorrect => 'Inna nuta. Spróbuj ponownie.',
     };
+    final viewport = MediaQuery.sizeOf(context);
+    if (viewport.width > viewport.height && viewport.height < 560) {
+      return _buildCompactScaffold(
+        context,
+        phase: phase,
+        phaseLabel: phaseLabel,
+        attemptLabel: attemptLabel,
+        expected: expected,
+        detected: detected,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
