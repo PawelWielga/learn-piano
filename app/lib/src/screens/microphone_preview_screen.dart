@@ -472,7 +472,8 @@ String _spectrumDescription(SpectrumSnapshot? spectrum) {
     final midi = (69 +
             12 * math.log(peak.frequencyHz / 440) / math.ln2)
         .round()
-        .clamp(0, 127);
+        .clamp(0, 127)
+        .toInt();
     return PitchEstimate.nameForMidi(midi) +
         ' (' + peak.frequencyHz.toStringAsFixed(0) + ' Hz)';
   });
