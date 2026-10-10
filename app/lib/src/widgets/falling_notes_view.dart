@@ -15,30 +15,33 @@ class FallingNoteBlock {
   final Rect rect;
 }
 
-/// Pure geometry: current MIDI note starts at the "teraz" line; later notes
-/// appear above it. The caller owns progress, so time never advances on its own.
+/// Pure geometry using a stable scale for the whole song. [playhead] can
+/// move continuously; without it, the current note stays on the hit line.
 class FallingNotesLayout {
   FallingNotesLayout({
     required this.notes,
     required this.keyboard,
     required this.currentIndex,
+    this.playhead,
     this.height = 260,
   }) : assert(notes.isNotEmpty),
        assert(currentIndex >= 0 && currentIndex < notes.length),
        assert(height > 48) {
-    final anchorMicros = notes[currentIndex].start.inMicroseconds;
+    final anchorMicros = (playhead ?? notes[currentIndex].start).inMicroseconds;
     // Keep up to five upcoming note starts in view even across long rests.
     // One scale applies to both start offsets and durations.
-    final lookAhead = math.min(currentIndex + 5, notes.length - 1);
+    final lookAhead = math.min(5, notes.length - 1);
     final lookAheadMicros =
-        notes[lookAhead].start.inMicroseconds - anchorMicros;
+        notes[lookAhead].start.inMicroseconds - notes.first.start.inMicroseconds;
     pixelsPerSecond = math.min(
       88.0,
       (nowLineY - 24) * 1000000 / math.max(1, lookAheadMicros),
     );
 
     final blocks = <FallingNoteBlock>[];
-    for (var i = currentIndex; i < notes.length; i++) {
+    // Include the just-played note while its tail moves past the hit line.
+    final firstIndex = playhead == null ? currentIndex : math.max(0, currentIndex - 1);
+    for (var i = firstIndex; i < notes.length; i++) {
       final note = notes[i];
       final key = keyboard.keyForMidi(note.midiNote);
       if (key == null) continue;
@@ -70,6 +73,7 @@ class FallingNotesLayout {
   final List<MidiNote> notes;
   final PianoKeyboardLayout keyboard;
   final int currentIndex;
+  final Duration? playhead;
   final double height;
   late final double pixelsPerSecond;
   late final List<FallingNoteBlock> visibleBlocks;

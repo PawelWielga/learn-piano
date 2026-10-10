@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -8,6 +9,7 @@ import '../audio/note_output.dart';
 import '../audio/note_output_factory.dart';
 import '../instrument/instrument_range.dart';
 import '../layout/landscape_gate.dart';
+import '../midi/midi_parser.dart';
 import '../midi/melody_part_analyzer.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';
@@ -44,11 +46,17 @@ class TrainingScreen extends StatefulWidget {
   State<TrainingScreen> createState() => _TrainingScreenState();
 }
 
-class _TrainingScreenState extends State<TrainingScreen> {
+class _TrainingScreenState extends State<TrainingScreen>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AudioInput _input;
   late final NoteOutput _output;
   late final WaitForNoteEngine _engine;
   late TrainingSnapshot _snapshot;
+  late final AnimationController _autoClock;
+  bool _autoPlaying = false;
+  int _autoNextIndex = 0;
+  int? _autoActiveIndex;
+  Duration? _autoPlayhead;
 
   final PitchDetector _detector = const PitchDetector();
   final NoteEventTracker _tracker = NoteEventTracker();
@@ -78,6 +86,14 @@ class _TrainingScreenState extends State<TrainingScreen> {
     _snapshot = _engine.snapshot;
     _input = widget.audioInput ?? createAudioInput();
     _output = widget.noteOutput ?? createNoteOutput();
+    _autoClock = AnimationController(vsync: this)
+      ..addListener(_onAutoFrame)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed && _autoPlaying) {
+          _stopAuto();
+        }
+      });
+    WidgetsBinding.instance.addObserver(this);
     _frames = _input.frames.listen(_onFrame);
     _statuses = _input.statuses.listen(_onAudioStatus);
   }
@@ -91,6 +107,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _startRequestId++;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || !_landscapeBlocked) return;
+        _stopAuto();
         _releaseKeyboardNotes();
         if (_snapshot.phase == TrainingPhase.running) {
           setState(() => _snapshot = _engine.pause());
@@ -99,6 +116,102 @@ class _TrainingScreenState extends State<TrainingScreen> {
       });
     }
     _landscapeBlocked = blocked;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) _stopAuto();
+  }
+
+  /// Start on the first MIDI onset so the browser can unlock audio within the
+  /// button gesture. Later events follow their original MIDI timestamps.
+  void _toggleAuto() {
+    if (_autoPlaying) {
+      _stopAuto();
+      return;
+    }
+    if (_busy || _landscapeBlocked ||
+        _snapshot.phase == TrainingPhase.error ||
+        widget.selection.notes.isEmpty) {
+      return;
+    }
+    _startRequestId++;
+    _releaseKeyboardNotes();
+    if (_listening) unawaited(_stopCapture());
+
+    final notes = widget.selection.notes;
+    if (!_output.noteOn(notes.first.midiNote)) {
+      setState(() => _error = 'Nie można odtworzyć MIDI w tej przeglądarce.');
+      return;
+    }
+    final end = notes.last.start + notes.last.duration;
+    final total = end - notes.first.start;
+    _autoClock.duration = total > Duration.zero
+        ? total
+        : const Duration(milliseconds: 1);
+    setState(() {
+      _snapshot = _engine.pause();
+      _autoPlaying = true;
+      _autoNextIndex = 1;
+      _autoActiveIndex = 0;
+      _autoPlayhead = notes.first.start;
+      _error = null;
+    });
+    _autoClock.forward(from: 0);
+  }
+
+  void _onAutoFrame() {
+    if (!mounted || !_autoPlaying) return;
+    final notes = widget.selection.notes;
+    final duration = _autoClock.duration!;
+    final playhead = notes.first.start +
+        Duration(microseconds:
+            (duration.inMicroseconds * _autoClock.value).round());
+
+    void releaseActive() {
+      final index = _autoActiveIndex;
+      if (index == null) return;
+      _output.noteOff(notes[index].midiNote);
+      _autoActiveIndex = null;
+    }
+
+    if (_autoActiveIndex case final index?) {
+      if (notes[index].start + notes[index].duration <= playhead) {
+        releaseActive();
+      }
+    }
+    while (_autoNextIndex < notes.length &&
+        notes[_autoNextIndex].start <= playhead) {
+      releaseActive();
+      final next = notes[_autoNextIndex++];
+      if (!_output.noteOn(next.midiNote)) {
+        _stopAuto();
+        if (mounted) {
+          setState(() => _error = 'Odtwarzanie MIDI zostało przerwane.');
+        }
+        return;
+      }
+      _autoActiveIndex = _autoNextIndex - 1;
+      if (next.duration == Duration.zero ||
+          next.start + next.duration <= playhead) {
+        releaseActive();
+      }
+    }
+    setState(() => _autoPlayhead = playhead);
+  }
+
+  void _stopAuto() {
+    if (!_autoPlaying) return;
+    _autoPlaying = false;
+    _autoClock.stop();
+    _output.stopAll();
+    if (mounted) {
+      setState(() {
+        _autoActiveIndex = null;
+        _autoNextIndex = 0;
+        _autoPlayhead = null;
+      });
+    }
   }
 
   void _onAudioStatus(AudioInputStatus status) {
@@ -128,6 +241,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         _mode != TrainingInputMode.microphone ||
         !_listening ||
         _busy ||
+        _autoPlaying ||
         frame.samples.isEmpty) {
       return;
     }
@@ -180,6 +294,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   /// used by microphone pitch tracking, without synthetic audio feedback.
   void _onKeyboardDown(int note) {
     if (_mode != TrainingInputMode.keyboard ||
+        _autoPlaying ||
         _landscapeBlocked ||
         _busy ||
         _snapshot.isCompleted ||
@@ -237,7 +352,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   Future<void> _switchInputMode(TrainingInputMode mode) async {
-    if (_busy || _landscapeBlocked || _mode == mode) return;
+    if (_busy || _autoPlaying || _landscapeBlocked || _mode == mode) return;
     _startRequestId++;
     _releaseKeyboardNotes();
     if (_mode == TrainingInputMode.microphone) {
@@ -255,6 +370,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   Future<void> _start({bool resume = false}) async {
     if (_busy ||
+        _autoPlaying ||
         _listening ||
         _landscapeBlocked ||
         _snapshot.phase == TrainingPhase.error) {
@@ -333,14 +449,14 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   Future<void> _pause() async {
-    if (_busy || _snapshot.phase != TrainingPhase.running) return;
+    if (_busy || _autoPlaying || _snapshot.phase != TrainingPhase.running) return;
     _releaseKeyboardNotes();
     setState(() => _snapshot = _engine.pause());
     if (_listening) await _stopCapture();
   }
 
   Future<void> _reset() async {
-    if (_busy) return;
+    if (_busy || _autoPlaying) return;
     _releaseKeyboardNotes();
     setState(() {
       _snapshot = _engine.reset();
@@ -352,6 +468,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _autoPlaying = false;
+    _autoClock.dispose();
     _releaseKeyboardNotes();
     _output.dispose();
     unawaited(_frames?.cancel());
@@ -364,7 +483,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
   @override
   Widget build(BuildContext context) {
     final phase = _snapshot.phase;
-    final phaseLabel = switch (phase) {
+    final phaseLabel = _autoPlaying
+        ? 'Odsłuch wybranej partii MIDI'
+        : switch (phase) {
       TrainingPhase.ready => 'Gotowe do ćwiczenia',
       TrainingPhase.running =>
         _mode == TrainingInputMode.keyboard
@@ -389,25 +510,40 @@ class _TrainingScreenState extends State<TrainingScreen> {
           notes: widget.selection.notes,
           range: widget.instrumentRange,
           phase: phase,
-          currentIndex: _snapshot.currentIndex,
-          progress: _snapshot.progress,
-          expectedNote: _snapshot.expectedMidiNote,
-          detectedNote: _mode == TrainingInputMode.keyboard
-              ? _keyboardNote
-              : _stableNote,
-          lastAttempt: _snapshot.lastAttempt,
+          currentIndex: _autoPlaying
+              ? math.max(0, _autoNextIndex - 1)
+              : _snapshot.currentIndex,
+          progress: _autoPlaying ? _autoClock.value : _snapshot.progress,
+          expectedNote: _autoPlaying
+              ? _autoActiveIndex == null
+                  ? null
+                  : widget.selection.notes[_autoActiveIndex!].midiNote
+              : _snapshot.expectedMidiNote,
+          detectedNote: _autoPlaying
+              ? null
+              : _mode == TrainingInputMode.keyboard
+                  ? _keyboardNote
+                  : _stableNote,
+          lastAttempt: _autoPlaying
+              ? TrainingAttempt.ignored
+              : _snapshot.lastAttempt,
           phaseLabel: phaseLabel,
-          attemptLabel: attemptLabel,
+          attemptLabel: _autoPlaying
+              ? 'Odtwarzanie MIDI bez oceniania Twojej gry.'
+              : attemptLabel,
           songTitle: widget.songTitle ?? widget.selection.part.displayName,
           listening: _listening,
           busy: _busy,
           inputMode: _mode,
+          autoPlaying: _autoPlaying,
+          playhead: _autoPlayhead,
+          onAutoPlay: _toggleAuto,
           onInputModeChanged: _switchInputMode,
           onNoteDown: _onKeyboardDown,
           onNoteUp: _onKeyboardUp,
           error: _error ?? _snapshot.errorMessage,
           onBack: () => Navigator.of(context).pop(),
-          onPrimary: _busy
+          onPrimary: _busy || _autoPlaying
               ? null
               : switch (phase) {
                   TrainingPhase.ready => () => _start(),
@@ -415,7 +551,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   TrainingPhase.paused => () => _start(resume: true),
                   _ => null,
                 },
-          onReset: _busy || phase == TrainingPhase.error ? null : _reset,
+          onReset: _busy || _autoPlaying || phase == TrainingPhase.error
+              ? null : _reset,
         ),
       ),
     );

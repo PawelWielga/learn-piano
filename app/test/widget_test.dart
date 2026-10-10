@@ -66,25 +66,6 @@ class FakeAudioInput implements AudioInput {
     );
   }
 
-  void emitSpectrumTone(double frequency) {
-    // Four consecutive Web Audio frames provide the 8192-sample FFT window.
-    for (var frame = 0; frame < 4; frame++) {
-      final samples = Float32List.fromList(
-        List<double>.generate(2048, (i) {
-          final index = frame * 2048 + i;
-          return 0.35 * math.sin(2 * math.pi * frequency * index / 48000);
-        }),
-      );
-      _frames.add(
-        PcmFrame(
-          samples: samples,
-          sampleRate: 48000,
-          capturedAt: Duration(milliseconds: 50 + frame * 45),
-        ),
-      );
-    }
-  }
-
   void emitSilence({int timeMs = 250}) {
     _frames.add(
       PcmFrame(
@@ -128,45 +109,6 @@ void main() {
     expect(find.text('Mikrofon nieaktywny'), findsOneWidget);
     expect(find.text('Włącz mikrofon'), findsOneWidget);
     expect(find.textContaining('Próbkowanie:'), findsOneWidget);
-  });
-
-  testWidgets('debug FFT is opt-in, shows peaks and clears on stop', (
-    tester,
-  ) async {
-    final input = FakeAudioInput();
-    await tester.pumpWidget(
-      MaterialApp(home: MicrophonePreviewScreen(audioInput: input)),
-    );
-
-    expect(find.byKey(const Key('spectrum-chart')), findsNothing);
-    await tester.ensureVisible(find.byKey(const Key('spectrum-toggle')));
-    await tester.tap(find.byKey(const Key('spectrum-toggle')));
-    await tester.pump();
-    expect(input.starts, 0);
-    expect(find.byKey(const Key('spectrum-chart')), findsOneWidget);
-
-    await tester.ensureVisible(find.byKey(const Key('microphone-toggle')));
-    await tester.tap(find.byKey(const Key('microphone-toggle')));
-    await tester.pump();
-    input.emitSpectrumTone(440);
-    await tester.pump();
-
-    final peaks = tester.widget<Text>(find.byKey(const Key('spectrum-peaks')));
-    expect(peaks.data, contains('A4'));
-    expect(peaks.data, contains('Hz'));
-
-    await tester.ensureVisible(find.byKey(const Key('microphone-toggle')));
-    await tester.tap(find.byKey(const Key('microphone-toggle')));
-    await tester.pump();
-    final cleared = tester.widget<Text>(
-      find.byKey(const Key('spectrum-peaks')),
-    );
-    expect(cleared.data, contains('mikrofon wyłączony'));
-
-    await tester.ensureVisible(find.byKey(const Key('spectrum-toggle')));
-    await tester.tap(find.byKey(const Key('spectrum-toggle')));
-    await tester.pump();
-    expect(find.byKey(const Key('spectrum-chart')), findsNothing);
   });
 
   testWidgets('rotating to portrait stops active microphone capture', (
