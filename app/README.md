@@ -82,11 +82,13 @@ Defaults (all configurable in the constructor):
 | Setting | Value | Why |
 | --- | --- | --- |
 | Mono analysis buffer | 2048 float samples | About 42.7 ms at 48 kHz or 46.4 ms at 44.1 kHz |
-| Supported frequency | 90–1500 Hz | Approximately F#2–F#6; outside this range is unsupported |
+| Supported frequency | 60–1500 Hz | Covers C2 (65.4 Hz) through C6, with detuning margin; lower frequencies remain unsupported |
 | Minimum RMS | 0.015 | Suppress silence and faint ambient sound |
 | YIN dip threshold | 0.18 | Search for a clear periodicity |
-| Minimum confidence | 0.93 | Reject ambiguous/noisy candidates; may need tuning on a real instrument |
+| Minimum confidence | 0.94 | Reject ambiguous/noisy candidates; may need tuning on a real instrument |
 | UI + analysis rate | ≤ roughly 8 times/s | Analyze at most one received frame per 120 ms, rather than every buffer |
+
+**Low-key fix (#27):** A previous 90 Hz cutoff rejected C2–F2 outright and caused the first reliably detected note to be F#2. The new default is 60 Hz. Deterministic tests verify C2, C#2, D2, D#2, E2 and F2 at 44.1/48 kHz, including harmonic-rich synthetic piano tones, without enlarging the 2048-sample buffer or changing analysis rate. YIN also rejects a candidate at the last tested lag (which cannot be confirmed as a local minimum), and slightly tightens the minimum confidence to 0.94 to preserve rejection of two competing notes. This is a software-range correction, **not proof** that every phone microphone captures bass fundamentals accurately. On an actual C2–C6 instrument, check the raw and stable candidates in the microphone tester for each low note. If low notes are still missed or recognized one octave too high, record the microphone model, sample rate, input level and the frequency/confidence shown. Smartphone microphone and driver processing may suppress low frequencies; we may need an adaptive buffer or a different low-frequency strategy after measurements.
 
 The AudioWorklet keeps producing PCM while the Dart UI is throttled. On a mobile device the worst perceived update delay includes the worklet buffer duration and sampling/throttle interval; no end-to-end latency measurement has been performed. `PitchDetector` rejects short/invalid buffers, silence, noise and insufficient periodicity by returning null. It uses the **actual** Web Audio sample rate (not a hard-coded 44.1/48 kHz).
 

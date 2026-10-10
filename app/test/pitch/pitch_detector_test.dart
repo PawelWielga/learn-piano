@@ -28,6 +28,13 @@ void main() {
   test('recognizes MIDI pitch and octave at 44.1 and 48 kHz', () {
     for (final sampleRate in [44100, 48000]) {
       final expected = <int, double>{
+        36: 65.4064, // C2 - lowest supported instrument note
+        37: 69.2957, // C#2
+        38: 73.4162, // D2
+        39: 77.7817, // D#2
+        40: 82.4069, // E2
+        41: 87.3071, // F2
+        42: 92.4986, // F#2
         45: 110.0, // A2
         48: 130.8128, // C3
         60: 261.6256, // C4
@@ -69,6 +76,31 @@ void main() {
     expect(result.frequencyHz, closeTo(220, 1));
   });
 
+  test('C2 through F2 survive piano-style overtones at both sample rates', () {
+    for (final sampleRate in [44100, 48000]) {
+      for (final midiNote in [36, 37, 38, 39, 40, 41]) {
+        final frequency = 440 * math.pow(2, (midiNote - 69) / 12);
+        final result = detector.detect(
+          tone(
+            frequency.toDouble(),
+            sampleRate: sampleRate,
+            gain: 0.12,
+            secondHarmonic: 0.55,
+            thirdHarmonic: 0.26,
+          ),
+          sampleRate,
+        );
+        expect(
+          result,
+          isNotNull,
+          reason: 'Missing low piano note $midiNote at $sampleRate Hz',
+        );
+        expect(result!.midiNote, midiNote);
+        expect(result.frequencyHz, closeTo(frequency, frequency * 0.005));
+      }
+    }
+  });
+
   test('rejects silence, very quiet sound and short buffers', () {
     expect(detector.detect(Float32List(2048), 48000), isNull);
     expect(detector.detect(tone(440, gain: 0.001), 48000), isNull);
@@ -77,6 +109,7 @@ void main() {
 
   test('rejects unsupported ranges and invalid samples', () {
     expect(detector.detect(tone(55), 48000), isNull);
+    expect(detector.detect(tone(58.2705), 48000), isNull);
     expect(detector.detect(tone(440), 0), isNull);
     final corrupt = tone(440)..[8] = double.nan;
     expect(detector.detect(corrupt, 48000), isNull);
