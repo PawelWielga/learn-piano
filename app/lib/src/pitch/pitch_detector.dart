@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 /// A single unfiltered pitch candidate. This is NOT a NoteOn event.
-/// Stable note events and repeated-key detection belong to issue #6.
+/// Use NoteEventTracker to obtain stable key-on/key-off events.
 class PitchEstimate {
   const PitchEstimate({
     required this.frequencyHz,
@@ -32,7 +32,10 @@ class PitchEstimate {
   ];
 
   /// Scientific pitch notation: MIDI 60 = C4; MIDI 69 = A4.
-  String get noteName => '${_noteNames[midiNote % 12]}${midiNote ~/ 12 - 1}';
+  String get noteName => nameForMidi(midiNote);
+
+  static String nameForMidi(int note) =>
+      '${_noteNames[note % 12]}${note ~/ 12 - 1}';
 }
 
 /// YIN cumulative mean normalized difference (CMNDF) pitch estimator.

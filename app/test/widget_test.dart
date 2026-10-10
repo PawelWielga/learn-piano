@@ -137,7 +137,10 @@ void main() {
       MaterialApp(home: MicrophonePreviewScreen(audioInput: input)),
     );
 
-    expect(find.text('—'), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('detected-note'))).data,
+      '—',
+    );
     await tester.tap(find.text('Włącz mikrofon'));
     await tester.pump();
 
@@ -159,7 +162,62 @@ void main() {
     await tester.pump();
     expect(find.text('A4'), findsNothing);
     expect(find.text('C4'), findsNothing);
-    expect(find.text('—'), findsOneWidget);
+    expect(
+      tester.widget<Text>(find.byKey(const Key('detected-note'))).data,
+      '—',
+    );
+  });
+
+  testWidgets('confirms separate NoteOn events only after stable re-strikes', (
+    tester,
+  ) async {
+    final input = FakeAudioInput();
+    await tester.pumpWidget(
+      MaterialApp(home: MicrophonePreviewScreen(audioInput: input)),
+    );
+    await tester.tap(find.text('Włącz mikrofon'));
+    await tester.pump();
+
+    input.emitTone(440, timeMs: 50);
+    input.emitTone(440, timeMs: 180);
+    await tester.pump();
+    expect(find.text('Zdarzenia NoteOn: 0'), findsOneWidget);
+
+    input.emitTone(440, timeMs: 310);
+    await tester.pump();
+    expect(
+      tester.widget<Text>(find.byKey(const Key('stable-note'))).data,
+      'A4',
+    );
+    expect(find.text('Zdarzenia NoteOn: 1'), findsOneWidget);
+
+    // One tiny dropout and a continuing ring must not create a new onset.
+    input.emitSilence(timeMs: 440);
+    input.emitTone(440, timeMs: 570);
+    input.emitTone(440, timeMs: 700);
+    await tester.pump();
+    expect(find.text('Zdarzenia NoteOn: 1'), findsOneWidget);
+
+    input.emitSilence(timeMs: 830);
+    input.emitSilence(timeMs: 960);
+    input.emitSilence(timeMs: 1090);
+    await tester.pump();
+    expect(tester.widget<Text>(find.byKey(const Key('stable-note'))).data, '—');
+
+    input.emitTone(440, timeMs: 1220);
+    input.emitTone(440, timeMs: 1350);
+    input.emitTone(440, timeMs: 1480);
+    await tester.pump();
+    expect(find.text('Zdarzenia NoteOn: 2'), findsOneWidget);
+    expect(find.text('Ostatnie uderzenie: A4'), findsOneWidget);
+
+    await tester.tap(find.text('Wyłącz mikrofon'));
+    await tester.pump();
+    expect(tester.widget<Text>(find.byKey(const Key('stable-note'))).data, '—');
+
+    await tester.tap(find.text('Włącz mikrofon'));
+    await tester.pump();
+    expect(find.text('Zdarzenia NoteOn: 0'), findsOneWidget);
   });
 
   testWidgets('permission rejection reports error and allows retry', (
