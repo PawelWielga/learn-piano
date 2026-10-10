@@ -33,10 +33,9 @@ class MelodyPart {
   bool get isMonophonic => overlapCount == 0;
   bool get canPractice => !isPercussion && notes.isNotEmpty && isMonophonic;
 
-  String get displayName =>
-      trackName?.trim().isNotEmpty == true
-          ? trackName!.trim()
-          : 'Ścieżka ${trackIndex + 1}';
+  String get displayName => trackName?.trim().isNotEmpty == true
+      ? trackName!.trim()
+      : 'Ścieżka ${trackIndex + 1}';
 }
 
 class MelodySelection {
