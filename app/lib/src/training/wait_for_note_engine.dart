@@ -125,6 +125,15 @@ class WaitForNoteEngine {
     return snapshot;
   }
 
+  /// Clears remembered held pitches only after the input adapter has observed
+  /// a continuous quiet period following a new capture session.
+  ///
+  /// Do not call this on pause or reset: those operations alone do not prove
+  /// that a physical key was released.
+  void releaseHeldNotesAfterSilence() {
+    _pressedNotes.clear();
+  }
+
   TrainingEventUpdate onNoteEvent(NoteEvent event) {
     if (event.midiNote < 0 || event.midiNote > 127) {
       return TrainingEventUpdate(
