@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../audio/audio_input.dart';
 import '../audio/audio_input_factory.dart';
+import '../audio/note_output.dart';
+import '../audio/note_output_factory.dart';
 import '../instrument/instrument_range.dart';
 import '../layout/landscape_gate.dart';
 import '../midi/melody_part_analyzer.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';
+import '../training/training_input_mode.dart';
 import '../training/wait_for_note_engine.dart';
 import '../widgets/training_stage.dart';
 
@@ -24,6 +27,7 @@ class TrainingScreen extends StatefulWidget {
     required this.instrumentRange,
     this.songTitle,
     this.audioInput,
+    this.noteOutput,
   });
 
   final MelodySelection selection;
@@ -33,12 +37,16 @@ class TrainingScreen extends StatefulWidget {
   /// Injected by widget tests; production uses the Web Audio adapter.
   final AudioInput? audioInput;
 
+  /// Injectable for tests; web playback is initialized on the first key press.
+  final NoteOutput? noteOutput;
+
   @override
   State<TrainingScreen> createState() => _TrainingScreenState();
 }
 
 class _TrainingScreenState extends State<TrainingScreen> {
   late final AudioInput _input;
+  late final NoteOutput _output;
   late final WaitForNoteEngine _engine;
   late TrainingSnapshot _snapshot;
 
@@ -55,6 +63,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
   Duration? _quietSince;
   Duration? _lastAnalyzedAt;
   int? _stableNote;
+  int? _keyboardNote;
+  final Set<int> _heldKeyboardNotes = <int>{};
+  TrainingInputMode _mode = TrainingInputMode.microphone;
   String? _error;
 
   @override
@@ -66,6 +77,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     );
     _snapshot = _engine.snapshot;
     _input = widget.audioInput ?? createAudioInput();
+    _output = widget.noteOutput ?? createNoteOutput();
     _frames = _input.frames.listen(_onFrame);
     _statuses = _input.statuses.listen(_onAudioStatus);
   }
@@ -79,6 +91,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _startRequestId++;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || !_landscapeBlocked) return;
+        _releaseKeyboardNotes();
         if (_snapshot.phase == TrainingPhase.running) {
           setState(() => _snapshot = _engine.pause());
         }
@@ -111,7 +124,13 @@ class _TrainingScreenState extends State<TrainingScreen> {
   }
 
   void _onFrame(PcmFrame frame) {
-    if (!mounted || !_listening || _busy || frame.samples.isEmpty) return;
+    if (!mounted ||
+        _mode != TrainingInputMode.microphone ||
+        !_listening ||
+        _busy ||
+        frame.samples.isEmpty) {
+      return;
+    }
 
     final previous = _lastAnalyzedAt;
     if (previous != null &&
@@ -157,11 +176,95 @@ class _TrainingScreenState extends State<TrainingScreen> {
     }
   }
 
+  /// Translate actual key down/up events into the same Wait for Note engine
+  /// used by microphone pitch tracking, without synthetic audio feedback.
+  void _onKeyboardDown(int note) {
+    if (_mode != TrainingInputMode.keyboard ||
+        _landscapeBlocked ||
+        _busy ||
+        _snapshot.isCompleted ||
+        _snapshot.phase == TrainingPhase.error ||
+        !_heldKeyboardNotes.add(note)) {
+      return;
+    }
+    final audible = _output.noteOn(note);
+    _engine.onNoteEvent(
+      NoteEvent(type: NoteEventType.noteOn, midiNote: note, at: Duration.zero),
+    );
+    setState(() {
+      _keyboardNote = note;
+      _snapshot = _engine.snapshot;
+      if (!audible) {
+        _error =
+            'Przeglądarka nie może odtworzyć dźwięku. '
+            'Sprawdź ustawienia audio i spróbuj ponownie.';
+      } else {
+        _error = null;
+      }
+    });
+  }
+
+  void _onKeyboardUp(int note) {
+    if (!_heldKeyboardNotes.remove(note)) return;
+    _output.noteOff(note);
+    _engine.onNoteEvent(
+      NoteEvent(type: NoteEventType.noteOff, midiNote: note, at: Duration.zero),
+    );
+    if (mounted) {
+      setState(() {
+        _keyboardNote = _heldKeyboardNotes.isEmpty
+            ? null
+            : _heldKeyboardNotes.last;
+      });
+    }
+  }
+
+  /// Stop all synthesizer voices and release the engine's held-key gate.
+  /// Called before changing mode, pausing, resetting or leaving the screen.
+  void _releaseKeyboardNotes() {
+    for (final note in _heldKeyboardNotes) {
+      _engine.onNoteEvent(
+        NoteEvent(
+          type: NoteEventType.noteOff,
+          midiNote: note,
+          at: Duration.zero,
+        ),
+      );
+    }
+    _heldKeyboardNotes.clear();
+    _keyboardNote = null;
+    _output.stopAll();
+  }
+
+  Future<void> _switchInputMode(TrainingInputMode mode) async {
+    if (_busy || _landscapeBlocked || _mode == mode) return;
+    _startRequestId++;
+    _releaseKeyboardNotes();
+    if (_mode == TrainingInputMode.microphone) {
+      // Cross-source held notes are not real key presses on the new source.
+      _engine.releaseHeldNotesAfterSilence();
+    }
+    setState(() {
+      _snapshot = _engine.pause();
+      _mode = mode;
+      _stableNote = null;
+      _error = null;
+    });
+    if (_listening) await _stopCapture();
+  }
+
   Future<void> _start({bool resume = false}) async {
     if (_busy ||
         _listening ||
         _landscapeBlocked ||
         _snapshot.phase == TrainingPhase.error) {
+      return;
+    }
+    if (_mode == TrainingInputMode.keyboard) {
+      setState(() {
+        _snapshot = resume ? _engine.resume() : _engine.start();
+        _error = null;
+      });
       return;
     }
     final requestId = ++_startRequestId;
@@ -231,21 +334,26 @@ class _TrainingScreenState extends State<TrainingScreen> {
 
   Future<void> _pause() async {
     if (_busy || _snapshot.phase != TrainingPhase.running) return;
+    _releaseKeyboardNotes();
     setState(() => _snapshot = _engine.pause());
-    await _stopCapture();
+    if (_listening) await _stopCapture();
   }
 
   Future<void> _reset() async {
     if (_busy) return;
+    _releaseKeyboardNotes();
     setState(() {
       _snapshot = _engine.reset();
       _error = null;
+      _stableNote = null;
     });
-    await _stopCapture();
+    if (_listening) await _stopCapture();
   }
 
   @override
   void dispose() {
+    _releaseKeyboardNotes();
+    _output.dispose();
     unawaited(_frames?.cancel());
     unawaited(_statuses?.cancel());
     // dispose() stops MediaStreamTracks and closes the AudioContext.
@@ -259,7 +367,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
     final phaseLabel = switch (phase) {
       TrainingPhase.ready => 'Gotowe do ćwiczenia',
       TrainingPhase.running =>
-        _awaitingSilence
+        _mode == TrainingInputMode.keyboard
+            ? 'Graj na klawiaturze ekranowej'
+            : _awaitingSilence
             ? 'Poczekaj na ciszę i zagraj pierwszą nutę'
             : 'Słucham Twojego pianinka',
       TrainingPhase.paused => 'Ćwiczenie wstrzymane',
@@ -282,13 +392,19 @@ class _TrainingScreenState extends State<TrainingScreen> {
           currentIndex: _snapshot.currentIndex,
           progress: _snapshot.progress,
           expectedNote: _snapshot.expectedMidiNote,
-          detectedNote: _stableNote,
+          detectedNote: _mode == TrainingInputMode.keyboard
+              ? _keyboardNote
+              : _stableNote,
           lastAttempt: _snapshot.lastAttempt,
           phaseLabel: phaseLabel,
           attemptLabel: attemptLabel,
           songTitle: widget.songTitle ?? widget.selection.part.displayName,
           listening: _listening,
           busy: _busy,
+          inputMode: _mode,
+          onInputModeChanged: _switchInputMode,
+          onNoteDown: _onKeyboardDown,
+          onNoteUp: _onKeyboardUp,
           error: _error ?? _snapshot.errorMessage,
           onBack: () => Navigator.of(context).pop(),
           onPrimary: _busy

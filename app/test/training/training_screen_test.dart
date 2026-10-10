@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:learn_piano/src/audio/audio_input.dart';
+import 'package:learn_piano/src/audio/note_output.dart';
+import 'package:learn_piano/src/widgets/piano_keyboard.dart';
 import 'package:learn_piano/src/instrument/instrument_range.dart';
 import 'package:learn_piano/src/midi/melody_part_analyzer.dart';
 import 'package:learn_piano/src/midi/midi_file_picker.dart';
@@ -95,6 +97,28 @@ class TrainingAudioFake implements AudioInput {
   }
 }
 
+class TrainingNoteOutputFake implements NoteOutput {
+  final List<int> started = <int>[];
+  final List<int> released = <int>[];
+  int stopped = 0;
+  int disposed = 0;
+
+  @override
+  bool noteOn(int note) {
+    started.add(note);
+    return true;
+  }
+
+  @override
+  void noteOff(int note) => released.add(note);
+
+  @override
+  void stopAll() => stopped++;
+
+  @override
+  void dispose() => disposed++;
+}
+
 class TrainingMidiPickerFake implements MidiFilePicker {
   @override
   Future<PickedMidiFile?> pick() async => PickedMidiFile(
@@ -136,16 +160,42 @@ MelodySelection selection() {
   return MelodySelection(const MelodyPartAnalyzer().analyze(midi).single);
 }
 
-Future<void> launch(WidgetTester tester, TrainingAudioFake fake) async {
+Future<void> launch(
+  WidgetTester tester,
+  TrainingAudioFake fake, {
+  NoteOutput? noteOutput,
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       home: TrainingScreen(
         selection: selection(),
         instrumentRange: const InstrumentRange(48, 72),
         audioInput: fake,
+        noteOutput: noteOutput,
       ),
     ),
   );
+}
+
+/// Start a pointer on the actual painted key (after any horizontal scrolling).
+Future<TestGesture> pressKey(WidgetTester tester, int note) async {
+  await tester.pumpAndSettle();
+  final rect = tester.getRect(find.byKey(const Key('training-stage-canvas')));
+  final height = rect.height;
+  final keyboard = PianoKeyboardLayout(
+    const InstrumentRange(48, 72),
+    whiteKeyWidth: math.max(
+      38.0,
+      tester.view.physicalSize.width / tester.view.devicePixelRatio / 21,
+    ),
+    height: (height * 0.32).clamp(110.0, 210.0),
+  );
+  final key = keyboard.keyForMidi(note)!;
+  final point = Offset(
+    rect.left + key.rect.center.dx,
+    rect.top + height - keyboard.height + key.rect.height * 0.35,
+  );
+  return tester.startGesture(point);
 }
 
 Future<void> startExercise(WidgetTester tester, TrainingAudioFake fake) async {
@@ -157,6 +207,112 @@ Future<void> startExercise(WidgetTester tester, TrainingAudioFake fake) async {
 }
 
 void main() {
+  testWidgets('touch keyboard scores notes with sound and no microphone', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(844, 390);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final microphone = TrainingAudioFake()
+      ..failure = AudioInputFailure.permissionDenied;
+    final speaker = TrainingNoteOutputFake();
+    await launch(tester, microphone, noteOutput: speaker);
+
+    await tester.tap(find.byKey(const Key('training-input-toggle')));
+    await tester.pump();
+    expect(find.textContaining('Gra na ekranie'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('training-primary')));
+    await tester.pump();
+    expect(find.text('Graj na klawiaturze ekranowej'), findsOneWidget);
+    expect(microphone.starts, 0);
+
+    // Black C#4 is above its white neighbours and must not score as C4.
+    final black = await pressKey(tester, 61);
+    await tester.pump();
+    expect(find.text('0 / 3 nut'), findsOneWidget);
+    expect(find.text('Inna nuta. Spróbuj ponownie.'), findsOneWidget);
+    expect(speaker.started, contains(61));
+    await black.up();
+    await tester.pump();
+
+    final first = await pressKey(tester, 60);
+    await tester.pump();
+    expect(find.text('1 / 3 nut'), findsOneWidget);
+    expect(speaker.started.last, 60);
+
+    // A second finger on a held pitch must not score a second C4.
+    final secondFinger = await pressKey(tester, 60);
+    await tester.pump();
+    expect(find.text('1 / 3 nut'), findsOneWidget);
+    await first.up();
+    await tester.pump();
+    expect(speaker.released, isNot(contains(60)));
+    await secondFinger.up();
+    await tester.pump();
+    expect(speaker.released, contains(60));
+
+    final second = await pressKey(tester, 60);
+    await tester.pump();
+    expect(find.text('2 / 3 nut'), findsOneWidget);
+    await second.up();
+    await tester.pump();
+
+    final third = await pressKey(tester, 64);
+    await tester.pump();
+    expect(find.text('3 / 3 nut'), findsOneWidget);
+    expect(find.byKey(const Key('training-completed')), findsOneWidget);
+    await third.up();
+    await tester.pump();
+    expect(speaker.released, contains(64));
+    expect(microphone.starts, 0);
+  });
+
+  testWidgets('touch pause, reset and mode switch stop synthesizer', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(844, 390);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final microphone = TrainingAudioFake();
+    final speaker = TrainingNoteOutputFake();
+    await launch(tester, microphone, noteOutput: speaker);
+    await tester.tap(find.byKey(const Key('training-input-toggle')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('training-primary')));
+    await tester.pump();
+
+    final held = await pressKey(tester, 60);
+    await tester.pump();
+    expect(find.text('1 / 3 nut'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('training-primary')));
+    await tester.pump();
+    expect(find.text('Ćwiczenie wstrzymane'), findsOneWidget);
+    expect(speaker.stopped, greaterThan(0));
+    await held.up();
+
+    await tester.tap(find.byKey(const Key('training-primary')));
+    await tester.pump();
+    final again = await pressKey(tester, 60);
+    await tester.pump();
+    expect(find.text('2 / 3 nut'), findsOneWidget);
+    await again.up();
+    await tester.tap(find.byKey(const Key('training-reset')));
+    await tester.pump();
+    expect(find.text('0 / 3 nut'), findsOneWidget);
+    expect(microphone.starts, 0);
+
+    await tester.tap(find.byKey(const Key('training-input-toggle')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('training-primary')));
+    await tester.pump();
+    expect(microphone.starts, 1);
+    expect(speaker.disposed, 0);
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    expect(speaker.disposed, 1);
+  });
+
   testWidgets('landscape training uses a full stage and overlay controls', (
     tester,
   ) async {
@@ -175,7 +331,7 @@ void main() {
     expect(find.text('0 / 3 nut'), findsOneWidget);
     expect(fake.starts, 0);
 
-    // Exercise colors belong to Learn Piano rather than the layout reference.
+    // Keep Learn Piano's palette independent of the reference layout.
     final progress = tester.widget<LinearProgressIndicator>(
       find.byKey(const Key('training-progress')),
     );

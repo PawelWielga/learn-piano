@@ -65,6 +65,24 @@ Zakres klawiatury nadal można przesuwać poziomo. Na większych ekranach
 pozostaje pełny widok treningu. W wyjątkowo niskim oknie sam podgląd
 może przewijać się pionowo.
 
+## Gra na ekranowej klawiaturze (#41)
+
+Na ekranie treningu przycisk **mikrofonu / pianina** w górnym pasku
+przełącza sposób gry. Wybierz **klawiaturę ekranową**, a następnie **Start**.
+Dotykaj białych i czarnych klawiszy na dole ekranu: przeglądarka odtwarza
+odpowiednie wysokości MIDI przez głośnik i zalicza poprawne naciśnięcia.
+Mikrofon nie jest potrzebny ani uruchamiany w tym trybie. Nutę trzeba puścić,
+zanim ponownie naciśnie się ten sam klawisz. Błędne nuty brzmią, ale nie
+przesuwają ćwiczenia.
+
+Przy przełączeniu źródła, pauzie, resecie i wyjściu z treningu aktywne
+dźwięki są wyciszane. Na ekranie używany jest prosty syntezator Web Audio,
+więc barwa jest przybliżeniem pianina, nie nagraniem prawdziwego instrumentu.
+Przeglądarka musi obsługiwać Web Audio i zezwalać na odtwarzanie dźwięku
+po interakcji użytkownika. Na fizycznym telefonie warto sprawdzić głośność,
+opóźnienie i zachowanie przewijania. Gra z mikrofonu działa nadal jako
+oddzielny tryb, aby głośnik nie powodował przypadkowego naliczania nut.
+
 ## CI i GitHub Pages
 
 - **Pull request do `main`:** `.github/workflows/ci.yml` uruchamia format, analizę, testy oraz release build. Nie publikuje strony.
