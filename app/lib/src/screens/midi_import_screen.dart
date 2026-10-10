@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../midi/midi_file_picker.dart';
 import '../midi/midi_file_picker_factory.dart';
 import '../midi/midi_parser.dart';
+import '../midi/melody_part_analyzer.dart';
 import '../pitch/pitch_detector.dart';
 
 class MidiImportScreen extends StatefulWidget {
@@ -18,8 +19,11 @@ class MidiImportScreen extends StatefulWidget {
 class _MidiImportScreenState extends State<MidiImportScreen> {
   late final MidiFilePicker _picker;
   final MidiParser _parser = const MidiParser();
+  final MelodyPartAnalyzer _analyzer = const MelodyPartAnalyzer();
 
   MidiFile? _midi;
+  List<MelodyPart> _parts = const [];
+  MelodySelection? _selection;
   String? _fileName;
   String? _error;
   bool _busy = false;
@@ -51,12 +55,16 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
       if (!mounted) return;
       setState(() {
         _midi = midi;
+        _parts = _analyzer.analyze(midi);
+        _selection = null;
         _fileName = selected.name;
       });
     } on MidiFormatException catch (error) {
       if (mounted) {
         setState(() {
           _midi = null;
+          _parts = const [];
+          _selection = null;
           _fileName = null;
           _error = error.message;
         });
@@ -76,6 +84,7 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final midi = _midi;
+    final selection = _selection;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Import MIDI')),
@@ -156,41 +165,137 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                     'Zmiany tempa: ${midi.tempoChanges.length}',
                   ),
                   const SizedBox(height: 20),
-                  Text('Ścieżki', style: theme.textTheme.titleMedium),
+                  if (selection != null)
+                    Semantics(
+                      liveRegion: true,
+                      child: Card(
+                        key: const Key('selected-melody'),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Wybrana melodia',
+                                style: theme.textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                '${selection.part.displayName} • '
+                                'kanał ${selection.part.channel + 1}',
+                              ),
+                              Text(
+                                '${selection.notes.length} nut: '
+                                '${PitchEstimate.nameForMidi(selection.part.minMidiNote)}–'
+                                '${PitchEstimate.nameForMidi(selection.part.maxMidiNote)}',
+                                key: const Key('selected-melody-range'),
+                              ),
+                              const Text(
+                                'Partia jednogłosowa. Gotowa do następnego '
+                                'etapu: konfiguracji zakresu instrumentu.',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    const Text(
+                      'Wybierz jedną z partii jednogłosowych poniżej. '
+                      'Akordy oraz perkusja nie są obsługiwane w treningu.',
+                      key: Key('melody-selection-hint'),
+                    ),
+                  const SizedBox(height: 20),
+                  Text('Ścieżki i kanały', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
                   for (final track in midi.tracks)
                     Card(
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(
-                              track.name?.isNotEmpty == true
-                                  ? track.name!
-                                  : 'Ścieżka ${track.index + 1}',
-                              style: theme.textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${track.notes.length} nut • '
-                              '${track.notes.map((n) => n.channel).toSet().length} kanałów',
-                            ),
-                            if (track.notes.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                'Pierwsze nuty: '
-                                '${track.notes.take(10).map((n) => PitchEstimate.nameForMidi(n.midiNote)).join(', ')}',
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                              child: Text(
+                                track.name?.trim().isNotEmpty == true
+                                    ? track.name!.trim()
+                                    : 'Ścieżka ${track.index + 1}',
+                                style: theme.textTheme.titleMedium,
                               ),
-                            ],
+                            ),
+                            if (track.notes.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
+                                child: Text('Pusta ścieżka: brak nut do nauki.'),
+                              ),
+                            for (final part in _parts.where(
+                              (part) => part.trackIndex == track.index,
+                            ))
+                              ListTile(
+                                key: Key(
+                                  'melody-part-${part.trackIndex}-${part.channel}',
+                                ),
+                                enabled: part.canPractice,
+                                selected: selection?.part == part,
+                                onTap: part.canPractice
+                                    ? () => setState(() {
+                                        _selection = _analyzer.select(
+                                          _parts,
+                                          trackIndex: part.trackIndex,
+                                          channel: part.channel,
+                                        );
+                                      })
+                                    : null,
+                                leading: Icon(
+                                  part.canPractice
+                                      ? selection?.part == part
+                                          ? Icons.check_circle
+                                          : Icons.radio_button_unchecked
+                                      : Icons.block,
+                                ),
+                                title: Text(
+                                  'Kanał ${part.channel + 1} • '
+                                  '${part.notes.length} nut',
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Zakres: '
+                                      '${PitchEstimate.nameForMidi(part.minMidiNote)}–'
+                                      '${PitchEstimate.nameForMidi(part.maxMidiNote)} • '
+                                      '${(part.duration.inMilliseconds / 1000).toStringAsFixed(1)} s',
+                                    ),
+                                    Text(
+                                      part.isPercussion
+                                          ? 'Perkusja: nieobsługiwana w nauce nut.'
+                                          : part.overlapCount > 0
+                                              ? 'Akordy/nakładające się nuty: '
+                                                '${part.overlapCount}. '
+                                                'Ta partia nie nadaje się do treningu.'
+                                              : 'Melodia jednogłosowa. Dotknij, aby wybrać.',
+                                      key: Key(
+                                        'melody-status-${part.trackIndex}-${part.channel}',
+                                      ),
+                                    ),
+                                    if (part.canPractice)
+                                      Text(
+                                        'Pierwsze nuty: '
+                                        '${part.notes.take(6).map((n) => PitchEstimate.nameForMidi(n.midiNote)).join(', ')}',
+                                      ),
+                                  ],
+                                ),
+                                isThreeLine: true,
+                              ),
                           ],
                         ),
                       ),
                     ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Import jest gotowy. Wybór partii do treningu i '
-                    'sprawdzanie akordów dodamy w następnym kroku.',
+                    'Po wyborze melodii następnym krokiem będzie ustawienie '
+                    'zakresu fizycznej klawiatury. Trening dodamy później.',
                     key: Key('midi-next-step'),
                   ),
                 ],
