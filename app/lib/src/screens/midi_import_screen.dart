@@ -5,12 +5,17 @@ import '../midi/midi_file_picker_factory.dart';
 import '../midi/midi_parser.dart';
 import '../midi/melody_part_analyzer.dart';
 import '../pitch/pitch_detector.dart';
+import '../instrument/instrument_range.dart';
+import '../instrument/instrument_range_store.dart';
+import '../instrument/instrument_range_store_factory.dart';
+import 'instrument_range_screen.dart';
 
 class MidiImportScreen extends StatefulWidget {
-  const MidiImportScreen({super.key, this.filePicker});
+  const MidiImportScreen({super.key, this.filePicker, this.rangeStore});
 
   /// Injectable so tests never open a native browser file dialog.
   final MidiFilePicker? filePicker;
+  final InstrumentRangeStore? rangeStore;
 
   @override
   State<MidiImportScreen> createState() => _MidiImportScreenState();
@@ -20,6 +25,8 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
   late final MidiFilePicker _picker;
   final MidiParser _parser = const MidiParser();
   final MelodyPartAnalyzer _analyzer = const MelodyPartAnalyzer();
+  late final InstrumentRangeStore _rangeStore;
+  InstrumentRange _instrumentRange = InstrumentRange.defaultRange;
 
   MidiFile? _midi;
   List<MelodyPart> _parts = const [];
@@ -32,6 +39,34 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
   void initState() {
     super.initState();
     _picker = widget.filePicker ?? createMidiFilePicker();
+    _rangeStore = widget.rangeStore ?? createInstrumentRangeStore();
+    _loadInstrumentRange();
+  }
+
+  Future<void> _loadInstrumentRange() async {
+    try {
+      final saved = await _rangeStore.load();
+      if (mounted && saved != null) {
+        setState(() => _instrumentRange = saved);
+      }
+    } catch (_) {
+      // A blocked localStorage must not prevent local file import.
+    }
+  }
+
+  Future<void> _openRangeSettings() async {
+    final result = await Navigator.of(context).push<InstrumentRange>(
+      MaterialPageRoute(
+        builder: (_) => InstrumentRangeScreen(
+          initialRange: _instrumentRange,
+          selection: _selection,
+          rangeStore: _rangeStore,
+        ),
+      ),
+    );
+    if (mounted && result != null) {
+      setState(() => _instrumentRange = result);
+    }
   }
 
   Future<void> _import() async {
@@ -85,6 +120,9 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
     final theme = Theme.of(context);
     final midi = _midi;
     final selection = _selection;
+    final rangeCheck = selection == null
+        ? null
+        : _instrumentRange.checkNotes(selection.notes.map((note) => note.midiNote));
 
     return Scaffold(
       appBar: AppBar(title: const Text('Import MIDI')),
@@ -190,9 +228,37 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                                 '${PitchEstimate.nameForMidi(selection.part.maxMidiNote)}',
                                 key: const Key('selected-melody-range'),
                               ),
-                              const Text(
-                                'Partia jednogłosowa. Gotowa do następnego '
-                                'etapu: konfiguracji zakresu instrumentu.',
+                              const SizedBox(height: 10),
+                              Text(
+                                'Twój zakres: '
+                                '${PitchEstimate.nameForMidi(_instrumentRange.low)}–'
+                                '${PitchEstimate.nameForMidi(_instrumentRange.high)}',
+                                key: const Key('selected-instrument-range'),
+                              ),
+                              const SizedBox(height: 5),
+                              if (rangeCheck!.canPractice)
+                                const Text(
+                                  'Wszystkie nuty mieszczą się w zakresie. '
+                                  'Melodia jest gotowa do kolejnego etapu.',
+                                  key: Key('selected-range-ok'),
+                                )
+                              else
+                                Text(
+                                  'Poza zakresem instrumentu: '
+                                  '${rangeCheck.outsideCount} nut. '
+                                  'Zmień ustawienia klawiatury. '
+                                  'Ta melodia jest na razie niegrywalna.',
+                                  key: const Key('selected-range-blocked'),
+                                  style: TextStyle(
+                                    color: theme.colorScheme.error,
+                                  ),
+                                ),
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                key: const Key('selected-open-range'),
+                                onPressed: _openRangeSettings,
+                                icon: const Icon(Icons.tune),
+                                label: const Text('Dostosuj klawiaturę'),
                               ),
                             ],
                           ),
@@ -325,8 +391,8 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                     ),
                   const SizedBox(height: 20),
                   const Text(
-                    'Po wyborze melodii następnym krokiem będzie ustawienie '
-                    'zakresu fizycznej klawiatury. Trening dodamy później.',
+                    'Po wyborze melodii możesz ustawić zakres swojej '
+                    'klawiatury. Wizualizację klawiszy i trening dodamy później.',
                     key: Key('midi-next-step'),
                   ),
                 ],
