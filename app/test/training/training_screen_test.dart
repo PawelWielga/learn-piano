@@ -316,6 +316,6 @@ void main() {
     await tester.tap(find.byKey(const Key('training-change-song')));
     await tester.pumpAndSettle();
     expect(fake.disposes, 1);
-    expect(find.byKey(const Key('selected-melody')), findsWidgets);
+    expect(find.text('Import MIDI'), findsOneWidget);
   });
 }
