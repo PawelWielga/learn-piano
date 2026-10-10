@@ -13,7 +13,11 @@ class MelodyPickerFake implements MidiFilePicker {
 }
 
 Future<void> reveal(WidgetTester tester, Finder finder, double delta) async {
-  await tester.scrollUntilVisible(finder, delta);
+  await tester.scrollUntilVisible(
+    finder,
+    delta,
+    scrollable: find.byType(Scrollable).first,
+  );
   await Scrollable.ensureVisible(tester.element(finder), alignment: 0.5);
   await tester.pumpAndSettle();
 }
