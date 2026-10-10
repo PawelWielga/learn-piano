@@ -109,12 +109,14 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(
-              width: 230,
-              child: FallingNotesView(
-                notes: notes,
-                range: const InstrumentRange(36, 96),
-                currentIndex: index,
+            body: SingleChildScrollView(
+              child: SizedBox(
+                width: 230,
+                child: FallingNotesView(
+                  notes: notes,
+                  range: const InstrumentRange(36, 96),
+                  currentIndex: index,
+                ),
               ),
             ),
           ),
