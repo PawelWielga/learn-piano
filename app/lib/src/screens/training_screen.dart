@@ -10,8 +10,7 @@ import '../midi/melody_part_analyzer.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';
 import '../training/wait_for_note_engine.dart';
-import '../widgets/falling_notes_view.dart';
-import '../widgets/piano_keyboard.dart';
+import '../widgets/training_stage.dart';
 
 /// Exercises one validated monophonic MIDI part against acoustic NoteOn events.
 ///
@@ -257,10 +256,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
   @override
   Widget build(BuildContext context) {
     final phase = _snapshot.phase;
-    final expected = _snapshot.expectedMidiNote;
-    final detected = _stableNote;
-    final theme = Theme.of(context);
-
     final phaseLabel = switch (phase) {
       TrainingPhase.ready => 'Gotowe do ćwiczenia',
       TrainingPhase.running =>
@@ -278,191 +273,33 @@ class _TrainingScreenState extends State<TrainingScreen> {
     };
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trening'),
-        actions: [
-          TextButton(
-            key: const Key('training-change-song'),
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Zmień utwór'),
-          ),
-        ],
-      ),
+      backgroundColor: Colors.black,
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 680),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-              children: [
-                Text(
-                  widget.songTitle ?? widget.selection.part.displayName,
-                  key: const Key('training-song-title'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    phaseLabel,
-                    key: const Key('training-phase'),
-                    style: theme.textTheme.titleLarge,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  key: const Key('training-progress'),
-                  value: _snapshot.progress,
-                  minHeight: 8,
-                  semanticsLabel: 'Postęp ćwiczenia',
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${_snapshot.completedNotes} / ${_snapshot.totalNotes} nut',
-                  key: const Key('training-progress-label'),
-                ),
-                Text(
-                  _listening
-                      ? 'Mikrofon aktywny. Dźwięk jest analizowany lokalnie.'
-                      : 'Mikrofon wyłączony. Dźwięk nie jest wysyłany na serwer.',
-                  key: const Key('training-microphone-status'),
-                  style: theme.textTheme.bodySmall,
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 8),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      _error!,
-                      key: const Key('training-microphone-error'),
-                      style: TextStyle(color: theme.colorScheme.error),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                if (phase == TrainingPhase.completed) ...[
-                  Card(
-                    key: const Key('training-completed'),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            size: 64,
-                            color: theme.colorScheme.primary,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Ukończono wszystkie nuty!',
-                            style: theme.textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 8),
-                          const Text('Wybierz Reset, aby zagrać ponownie.'),
-                        ],
-                      ),
-                    ),
-                  ),
-                ] else if (phase == TrainingPhase.error) ...[
-                  Text(
-                    _snapshot.errorMessage ?? 'Niepoprawna melodia.',
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
-                ] else ...[
-                  Text(
-                    'Oczekiwana: ${expected == null ? '—' : PitchEstimate.nameForMidi(expected)}',
-                    key: const Key('training-expected'),
-                    style: theme.textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Wykryta: ${detected == null ? '—' : PitchEstimate.nameForMidi(detected)}',
-                    key: const Key('training-detected'),
-                  ),
-                  const SizedBox(height: 6),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      attemptLabel,
-                      key: const Key('training-feedback'),
-                      style: TextStyle(
-                        color:
-                            _snapshot.lastAttempt == TrainingAttempt.incorrect
-                            ? theme.colorScheme.error
-                            : null,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  FallingNotesView(
-                    notes: widget.selection.notes,
-                    range: widget.instrumentRange,
-                    currentIndex: _snapshot.currentIndex,
-                    detectedNote: detected,
-                  ),
-                ],
-                const SizedBox(height: 12),
-                if (phase == TrainingPhase.completed)
-                  PianoKeyboard(
-                    range: widget.instrumentRange,
-                    showRangeLabel: false,
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  key: const Key('training-primary'),
-                  onPressed: _busy
-                      ? null
-                      : switch (phase) {
-                          TrainingPhase.ready => () => _start(),
-                          TrainingPhase.running => _pause,
-                          TrainingPhase.paused => () => _start(resume: true),
-                          _ => null,
-                        },
-                  icon: Icon(
-                    phase == TrainingPhase.running
-                        ? Icons.pause
-                        : Icons.play_arrow,
-                  ),
-                  label: Text(switch (phase) {
-                    TrainingPhase.ready => 'Start i mikrofon',
-                    TrainingPhase.running => 'Pauza',
-                    TrainingPhase.paused => 'Wznów',
-                    _ => 'Zakończono',
-                  }),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  key: const Key('training-reset'),
-                  onPressed: _busy || phase == TrainingPhase.error
-                      ? null
-                      : _reset,
-                  icon: const Icon(Icons.restart_alt),
-                  label: const Text('Reset'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                  ),
-                ),
-              ),
-            ],
-          ),
+        child: TrainingStage(
+          notes: widget.selection.notes,
+          range: widget.instrumentRange,
+          phase: phase,
+          currentIndex: _snapshot.currentIndex,
+          progress: _snapshot.progress,
+          expectedNote: _snapshot.expectedMidiNote,
+          detectedNote: _stableNote,
+          lastAttempt: _snapshot.lastAttempt,
+          phaseLabel: phaseLabel,
+          attemptLabel: attemptLabel,
+          songTitle: widget.songTitle ?? widget.selection.part.displayName,
+          listening: _listening,
+          busy: _busy,
+          error: _error ?? _snapshot.errorMessage,
+          onBack: () => Navigator.of(context).pop(),
+          onPrimary: _busy
+              ? null
+              : switch (phase) {
+                  TrainingPhase.ready => () => _start(),
+                  TrainingPhase.running => _pause,
+                  TrainingPhase.paused => () => _start(resume: true),
+                  _ => null,
+                },
+          onReset: _busy || phase == TrainingPhase.error ? null : _reset,
         ),
       ),
     );
