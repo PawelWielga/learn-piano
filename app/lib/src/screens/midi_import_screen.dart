@@ -232,61 +232,84 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                             for (final part in _parts.where(
                               (part) => part.trackIndex == track.index,
                             ))
-                              ListTile(
-                                key: Key(
-                                  'melody-part-${part.trackIndex}-${part.channel}',
-                                ),
+                              Semantics(
+                                button: part.canPractice,
                                 enabled: part.canPractice,
                                 selected: selection?.part == part,
-                                onTap: part.canPractice
-                                    ? () => setState(() {
-                                        _selection = _analyzer.select(
-                                          _parts,
-                                          trackIndex: part.trackIndex,
-                                          channel: part.channel,
-                                        );
-                                      })
-                                    : null,
-                                leading: Icon(
-                                  part.canPractice
-                                      ? selection?.part == part
-                                          ? Icons.check_circle
-                                          : Icons.radio_button_unchecked
-                                      : Icons.block,
-                                ),
-                                title: Text(
-                                  'Kanał ${part.channel + 1} • '
-                                  '${part.notes.length} nut',
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Zakres: '
-                                      '${PitchEstimate.nameForMidi(part.minMidiNote)}–'
-                                      '${PitchEstimate.nameForMidi(part.maxMidiNote)} • '
-                                      '${(part.duration.inMilliseconds / 1000).toStringAsFixed(1)} s',
+                                child: InkWell(
+                                  key: Key(
+                                    'melody-part-${part.trackIndex}-${part.channel}',
+                                  ),
+                                  onTap: part.canPractice
+                                      ? () => setState(() {
+                                          _selection = _analyzer.select(
+                                            _parts,
+                                            trackIndex: part.trackIndex,
+                                            channel: part.channel,
+                                          );
+                                        })
+                                      : null,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16, 10, 16, 14,
                                     ),
-                                    Text(
-                                      part.isPercussion
-                                          ? 'Perkusja: nieobsługiwana w nauce nut.'
-                                          : part.overlapCount > 0
-                                              ? 'Akordy/nakładające się nuty: '
-                                                '${part.overlapCount}. '
-                                                'Ta partia nie nadaje się do treningu.'
-                                              : 'Melodia jednogłosowa. Dotknij, aby wybrać.',
-                                      key: Key(
-                                        'melody-status-${part.trackIndex}-${part.channel}',
-                                      ),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Icon(
+                                          part.canPractice
+                                              ? selection?.part == part
+                                                  ? Icons.check_circle
+                                                  : Icons.radio_button_unchecked
+                                              : Icons.block,
+                                          color: part.canPractice
+                                              ? theme.colorScheme.primary
+                                              : theme.colorScheme.error,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Kanał ${part.channel + 1} • '
+                                                '${part.notes.length} nut',
+                                                style: theme.textTheme.titleSmall,
+                                              ),
+                                              Text(
+                                                'Zakres: '
+                                                '${PitchEstimate.nameForMidi(part.minMidiNote)}–'
+                                                '${PitchEstimate.nameForMidi(part.maxMidiNote)} • '
+                                                '${(part.duration.inMilliseconds / 1000).toStringAsFixed(1)} s',
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                part.isPercussion
+                                                    ? 'Perkusja: nieobsługiwana w nauce nut.'
+                                                    : part.overlapCount > 0
+                                                        ? 'Akordy/nakładające się nuty: '
+                                                          '${part.overlapCount}. '
+                                                          'Ta partia nie nadaje się do treningu.'
+                                                        : 'Melodia jednogłosowa. Dotknij, aby wybrać.',
+                                                key: Key(
+                                                  'melody-status-${part.trackIndex}-${part.channel}',
+                                                ),
+                                              ),
+                                              if (part.canPractice) ...[
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Pierwsze nuty: '
+                                                  '${part.notes.take(6).map((n) => PitchEstimate.nameForMidi(n.midiNote)).join(', ')}',
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    if (part.canPractice)
-                                      Text(
-                                        'Pierwsze nuty: '
-                                        '${part.notes.take(6).map((n) => PitchEstimate.nameForMidi(n.midiNote)).join(', ')}',
-                                      ),
-                                  ],
+                                  ),
                                 ),
-                                isThreeLine: true,
                               ),
                           ],
                         ),
