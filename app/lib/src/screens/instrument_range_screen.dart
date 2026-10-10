@@ -221,7 +221,7 @@ class _InstrumentRangeScreenState extends State<InstrumentRangeScreen> {
                   ),
                 if (range != null) ...[
                   const SizedBox(height: 16),
-                  PianoKeyboard(range: range),
+                  PianoKeyboard(range: range, showRangeLabel: false),
                 ],
                 const SizedBox(height: 18),
                 if (selection != null && range != null) ...[
