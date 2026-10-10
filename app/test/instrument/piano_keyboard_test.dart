@@ -127,10 +127,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: PianoKeyboard(
-            range: InstrumentRange(48, 72),
-            expectedNote: 36,
-          ),
+          body: PianoKeyboard(range: InstrumentRange(48, 72), expectedNote: 36),
         ),
       ),
     );
