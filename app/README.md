@@ -29,4 +29,4 @@ The build outputs `app/build/web`. The base href must match the GitHub Pages rep
 
 This scaffold does **not** request microphone permission yet and does not upload audio or MIDI. No backend or authentication is needed.
 
-> The initial scaffold was prepared without a local Flutter SDK. Run `flutter pub get` with the pinned version and commit the generated `pubspec.lock` before considering issue #1 fully complete. The GitHub Actions workflows validate the remaining steps.
+The dependency versions are pinned in `pubspec.lock`, generated with Flutter 3.47.7. After changing `pubspec.yaml`, run `flutter pub get` and review the lockfile diff.

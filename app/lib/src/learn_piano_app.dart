@@ -12,9 +12,7 @@ class LearnPianoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF087E77),
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF087E77)),
       ),
       home: const HomeScreen(),
     );

@@ -19,11 +19,7 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               children: [
                 const SizedBox(height: 24),
-                Icon(
-                  Icons.piano,
-                  size: 72,
-                  color: theme.colorScheme.primary,
-                ),
+                Icon(Icons.piano, size: 72, color: theme.colorScheme.primary),
                 const SizedBox(height: 24),
                 Text(
                   'Ucz się na swoim pianinku',

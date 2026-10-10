@@ -26,14 +26,6 @@ jobs:
           cache: true
       - name: Resolve dependencies
         run: flutter pub get
-      - name: Bootstrap generated files for initial check-in
-        run: |
-          dart format --output=write lib test
-          for f in lib/src/learn_piano_app.dart lib/src/screens/home_screen.dart test/widget_test.dart pubspec.lock; do
-            echo ">>> START_FILE:${f}"
-            cat "${f}"
-            echo ">>> END_FILE:${f}"
-          done
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
       - name: Analyze

@@ -7,18 +7,12 @@ void main() {
     await tester.pumpWidget(const LearnPianoApp());
 
     expect(find.text('Ucz się na swoim pianinku'), findsOneWidget);
-    expect(
-      find.byKey(const Key('training-coming-soon')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('training-coming-soon')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('open-microphone-preview')));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('Tester mikrofonu jest w przygotowaniu'),
-      findsOneWidget,
-    );
+    expect(find.text('Tester mikrofonu jest w przygotowaniu'), findsOneWidget);
 
     await tester.tap(find.text('Wróć'));
     await tester.pumpAndSettle();
