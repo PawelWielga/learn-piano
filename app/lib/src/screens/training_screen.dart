@@ -195,7 +195,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
       _keyboardNote = note;
       _snapshot = _engine.snapshot;
       if (!audible) {
-        _error = 'Przeglądarka nie może odtworzyć dźwięku. '
+        _error =
+            'Przeglądarka nie może odtworzyć dźwięku. '
             'Sprawdź ustawienia audio i spróbuj ponownie.';
       } else {
         _error = null;
@@ -223,7 +224,11 @@ class _TrainingScreenState extends State<TrainingScreen> {
   void _releaseKeyboardNotes() {
     for (final note in _heldKeyboardNotes) {
       _engine.onNoteEvent(
-        NoteEvent(type: NoteEventType.noteOff, midiNote: note, at: Duration.zero),
+        NoteEvent(
+          type: NoteEventType.noteOff,
+          midiNote: note,
+          at: Duration.zero,
+        ),
       );
     }
     _heldKeyboardNotes.clear();
