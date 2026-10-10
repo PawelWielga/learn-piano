@@ -104,7 +104,7 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
           _midi = null;
           _parts = const [];
           _selection = null;
-        _previewIndex = 0;
+          _previewIndex = 0;
           _fileName = null;
           _error = error.message;
         });
@@ -298,7 +298,8 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                                     FilledButton.icon(
                                       key: const Key('midi-preview-next'),
                                       onPressed:
-                                          _previewIndex == selection.notes.length - 1
+                                          _previewIndex ==
+                                              selection.notes.length - 1
                                           ? null
                                           : () => setState(() {
                                               _previewIndex++;
