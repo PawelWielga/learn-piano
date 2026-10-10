@@ -78,8 +78,6 @@ enum KeyboardPreset {
   final int keys;
   final int defaultLow;
 
-  InstrumentRange get range => InstrumentRange(
-    defaultLow,
-    defaultLow + keys - 1,
-  );
+  InstrumentRange get range =>
+      InstrumentRange(defaultLow, defaultLow + keys - 1);
 }
