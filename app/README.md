@@ -101,8 +101,13 @@ do poziomu **nie** wznawia mikrofonu bez działania użytkownika.
 
 `web/manifest.json` deklaruje `orientation: landscape` dla przeglądarek
 obsługujących tę wskazówkę po instalacji PWA. W zwykłej karcie, zwłaszcza
-Safari na iOS, nie ma niezawodnego programowego blokowania orientacji, więc
-pokazujemy instrukcję zamiast zakładać sukces `screen.orientation.lock()`.
+Safari na iOS, nie ma niezawodnego programowego blokowania orientacji.
+Przycisk **Włącz poziomy ekran** na komunikacie próbuje po kliknięciu
+przejść w tryb pełnoekranowy i wykonać `screen.orientation.lock('landscape')`.
+Jeśli przeglądarka nie obsługuje tego API albo odmówi, pokazuje instrukcję
+ręcznego obrotu i wyłączenia blokady systemowej. Gdy blokada nie powiedzie
+się po wejściu w pełny ekran, przycisk próbuje z niego wyjść. Testy
+`test_js/orientation_lock.test.cjs` obejmują sukces, brak API i odmowę.
 Pionowe okna desktopowe również widzą wskazówkę o poszerzeniu okna.
 
 Widget tests: `test/layout/landscape_gate_test.dart` i testy zmiany

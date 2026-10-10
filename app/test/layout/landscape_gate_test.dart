@@ -3,6 +3,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:learn_piano/src/learn_piano_app.dart';
 
 void main() {
+  testWidgets('failed orientation lock offers manual rotation', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const LearnPianoApp());
+    expect(find.byKey(const Key('request-landscape-lock')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('request-landscape-lock')));
+    await tester.pumpAndSettle();
+
+    // Widget tests use the no-browser adapter, which reports unsupported.
+    expect(find.byKey(const Key('landscape-lock-unavailable')), findsOneWidget);
+  });
+
   testWidgets('portrait blocks interaction but preserves the navigator', (
     tester,
   ) async {

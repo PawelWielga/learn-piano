@@ -65,7 +65,7 @@ Jeśli moduły audio, MIDI lub treningu trzeba rozdzielić, preferuj na począte
 6. Import MIDI musi respektować `note on/off` (w tym `note on` z velocity 0), ticks/PPQ, tempo i jego zmiany, czasy nut oraz strukturę ścieżek/kanałów. Obsłuż poprawne pliki typu 0/1 w granicach MVP i błędy danych bez crasha.
 7. W treningu wybieramy pojedynczą monofoniczną partię. Wykryte akordy/nachodzące nuty oraz nuty poza zakresem fizycznej klawiatury zgłaszamy czytelnie, bez ukrytej transpozycji, automatycznego wybierania dowolnej nuty akordu lub cichego usuwania zdarzeń.
 8. **Wait for Note** porównuje zdarzenia z detektora do oczekiwanej nuty MIDI. Błędna nuta nie przesuwa postępu; pauza/reset nie zaliczają zdarzeń; postęp i animacja wynikają z tego samego stanu treningu, nie z autonomicznego zegara odtwarzania.
-9. Projektuj **mobile-first**: czytelne klawisze, duże przyciski dotykowe, zrozumiałe komunikaty i obsługa pionowego ekranu. Pokaż status mikrofonu oraz stan rozpoznawania; unikaj migotania UI.
+9. Projektuj **mobile-first w orientacji poziomej**: czytelne klawisze, duże przyciski dotykowe i zrozumiałe komunikaty. W pionie pokaż ekran z prośbą o obrót, zachowaj stan nawigacji i ćwiczenia, a aktywny nasłuch wstrzymaj bez automatycznego wznowienia. Pokaż status mikrofonu oraz stan rozpoznawania; unikaj migotania UI.
 10. Dodawaj zależności tylko wtedy, gdy są potrzebne do bieżącego issue. Sprawdzaj wsparcie Flutter Web, aktualność, licencję i koszt rozmiaru aplikacji; nie wprowadzaj rozbudowanych frameworków bez wyraźnego powodu.
 
 ## 5. Mikrofon, bezpieczeństwo i prywatność
