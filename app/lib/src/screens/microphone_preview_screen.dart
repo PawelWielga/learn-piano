@@ -350,7 +350,10 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
                   ),
                   if (_showSpectrum) ...[
                     const SizedBox(height: 12),
-                    Text('Widmo częstotliwości (FFT)', style: theme.textTheme.titleMedium),
+                    Text(
+                      'Widmo częstotliwości (FFT)',
+                      style: theme.textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 8),
                     SpectrumChart(
                       spectrum: _listening ? _spectrum : null,
@@ -462,20 +465,20 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   }
 }
 
-
 String _spectrumDescription(SpectrumSnapshot? spectrum) {
   if (spectrum == null) return 'Zbieranie próbek lub mikrofon wyłączony.';
   if (spectrum.peaks.isEmpty) return 'Brak wyraźnych pików.';
   final strongest = [...spectrum.peaks]
     ..sort((a, b) => b.level.compareTo(a.level));
   final descriptions = strongest.take(4).map((peak) {
-    final midi = (69 +
-            12 * math.log(peak.frequencyHz / 440) / math.ln2)
+    final midi = (69 + 12 * math.log(peak.frequencyHz / 440) / math.ln2)
         .round()
         .clamp(0, 127)
         .toInt();
     return PitchEstimate.nameForMidi(midi) +
-        ' (' + peak.frequencyHz.toStringAsFixed(0) + ' Hz)';
+        ' (' +
+        peak.frequencyHz.toStringAsFixed(0) +
+        ' Hz)';
   });
   return 'Najsilniejsze piki: ' + descriptions.join(' • ');
 }
