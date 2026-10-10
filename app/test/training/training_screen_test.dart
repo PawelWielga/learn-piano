@@ -310,8 +310,10 @@ void main() {
     final controls = tester.getRect(find.byKey(const Key('training-primary')));
     expect(roll.height, greaterThan(48));
     expect(roll.bottom, lessThan(controls.top));
-    expect(tester.getRect(find.byKey(const Key('training-reset'))).bottom,
-        lessThanOrEqualTo(300));
+    expect(
+      tester.getRect(find.byKey(const Key('training-reset'))).bottom,
+      lessThanOrEqualTo(300),
+    );
     expect(tester.takeException(), isNull);
   });
 
