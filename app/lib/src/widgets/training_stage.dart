@@ -114,11 +114,13 @@ class _TrainingStageState extends State<TrainingStage> {
   @override
   void didUpdateWidget(TrainingStage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // The parent releases active notes when stopping or changing the source.
-    // Forget captured pointer IDs so a later pointer-up cannot retrigger notes.
+    // A completed final note must still be released by its pointer-up.
+    // The parent stops voices when pausing, resetting or changing sources.
     if (oldWidget.inputMode != widget.inputMode ||
-        (widget.phase != TrainingPhase.ready &&
-            widget.phase != TrainingPhase.running)) {
+        (oldWidget.phase != widget.phase &&
+            (widget.phase == TrainingPhase.ready ||
+                widget.phase == TrainingPhase.paused ||
+                widget.phase == TrainingPhase.error))) {
       _pointerNotes.clear();
     }
     if (oldWidget.phase != widget.phase) {
