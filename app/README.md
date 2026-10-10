@@ -1,6 +1,6 @@
 # Learn Piano Web
 
-Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn/NoteOff events now derive from successive pitch estimates; MIDI import now reads local SMF type 0/1 files; melody selection validates one track/channel for single-note practice; physical keyboard range validation and training remain follow-up issues.
+Web-only Flutter application for the first MVP. The microphone tester now shows live pitch candidates (note and octave), frequency, confidence, audio level, sample rate and PCM buffer size. Stable NoteOn/NoteOff events now derive from successive pitch estimates; MIDI import now reads local SMF type 0/1 files; melody selection validates one track/channel for single-note practice; physical keyboard range validation now prevents unplayable melody selection; full keyboard rendering and training remain follow-up issues.
 
 ## Prerequisites
 
@@ -33,7 +33,7 @@ The dependency versions are pinned in `pubspec.lock`, generated with Flutter 3.4
 
 ## Import MIDI z urządzenia (#8)
 
-Na ekranie głównym kliknij **Importuj plik MIDI** i wybierz lokalny plik `.mid` lub `.midi`. Wyświetlą się typ pliku, PPQ, czas utworu, liczba nut, zmiany tempa, nazwy ścieżek i podgląd pierwszych nut. Po imporcie wybierasz pojedynczą partię jednogłosową (ścieżka i kanał), a aplikacja ostrzega o akordach. Ustawienie zakresu klawiatury i trening są osobnymi zadaniami #10–#14.
+Na ekranie głównym kliknij **Importuj plik MIDI** i wybierz lokalny plik `.mid` lub `.midi`. Wyświetlą się typ pliku, PPQ, czas utworu, liczba nut, zmiany tempa, nazwy ścieżek i podgląd pierwszych nut. Po imporcie wybierasz pojedynczą partię jednogłosową (ścieżka i kanał), a aplikacja ostrzega o akordach. Możesz ustawić zakres fizycznej klawiatury i sprawdzić, czy wybrane nuty da się zagrać; wizualizację klawiszy i trening dodamy w #11–#14.
 
 - `lib/src/midi/midi_parser.dart` to czysty Dart bez dodatkowych bibliotek. Obsługuje nagłówki SMF typu 0 i 1, wiele ścieżek i kanałów, delta ticks i PPQ, globalne zmiany tempa, running status, SysEx, meta events, nuty NoteOn/NoteOff (także NoteOn velocity=0), długości nut i pauzy.
 - `web/midi_file_input.js` otwiera systemowe okno wyboru, odczytuje `File.arrayBuffer()` i przekazuje bajty do Darta przez JS interop. Dane nie są wysyłane ani zapisywane, nie używamy backendu ani analityki.
@@ -48,9 +48,19 @@ Po wczytaniu MIDI aplikacja dzieli każdą ścieżkę na osobne kanały MIDI, r�
 - **Jednogłosowość:** dwa `NoteOn` o identycznym ticku albo początek kolejnej nuty wcześniejszy niż koniec poprzedniej oznaczają nakładanie się nut. Dotyczy to również powtórzonego tego samego dźwięku. Dokładnie stykające się nuty i pauzy są dozwolone.
 - **Akordy/polifonia:** status z liczbą wykrytych nakładających się nut i brak możliwości wyboru. Nie próbujemy wyciągać pojedynczego głosu z akordu.
 - **Perkusja:** kanał 10 MIDI (indeks 9) jest pokazany jako nieobsługiwany. Ścieżki bez nut są prezentowane jako puste i nie można ich wybrać.
-- **Granica etapu:** wybór partii nie uruchamia mikrofonu ani treningu. W #10 trzeba jeszcze skonfigurować zakres fizycznej klawiatury i sprawdzić, czy wszystkie nuty się w nim mieszczą.
+- **Granica etapu:** wybór partii nie uruchamia mikrofonu ani treningu. W #10 można skonfigurować zakres fizycznej klawiatury i zobaczyć liczbę nut poza zakresem. Klawiatura graficzna i trening pozostają etapami #11–#14.
 
 Deterministyczne testy walidatora obejmują wiele ścieżek, typ 0 z kilkoma kanałami, puste partie, perkusję, identyczne początki, powtarzane dźwięki, nakładanie i pauzy. Testy widgetowe obejmują wybór, blokadę akordów i zmianę pliku.
+
+## Zakres fizycznej klawiatury (#10)
+
+Wybierz **Ustaw zakres klawiatury** na ekranie głównym lub **Dostosuj klawiaturę** po wybraniu melodii MIDI. Możesz wybrać typowe zakresy 37 (C3–C6), 49 (C3–C7), 61 (C2–C7) albo 88 (A0–C8) klawiszy, a także zmienić samodzielnie najniższą i najwyższą nutę (MIDI 0–127) poprzez wybór nuty lub przyciski ± półton. **Domyślny zakres to 61 klawiszy C2–C7**; jest to tylko ustawienie startowe, nie detekcja modelu instrumentu.
+
+`lib/src/instrument/instrument_range.dart` jest pojedynczym modelem zakresu dla walidatora melodii, przyszłej klawiatury graficznej (#11) i silnika treningu (#13). Obie granice są **włącznie**. `checkNotes` liczy każde wystąpienie nuty spoza zakresu (także powtórzenia) i pokazuje przykładowe unikatowe wysokości. Partia zawierająca choć jedną niedostępną nutę nie jest gotowa do ćwiczenia. MIDI nie jest transponowane ani przycinane. Po zmianie ustawień status wybranej melodii jest ponownie wyliczany.
+
+Preferencja `v1:LOW:HIGH` jest zapisywana **wyłącznie w przeglądarce** przez `web/instrument_range.js` i `localStorage`. Nie zapisujemy plików MIDI ani dźwięku. Uszkodzona wartość jest ignorowana; niedostępne localStorage nie blokuje importu, a ekran ustawień pozwala użyć zakresu w aktualnej sesji bez trwałego zapisu. Android/iOS nie używają tego adaptera w MVP Web.
+
+Testy obejmują granice 0/127, wartości niepoprawne, presety, powtarzane nuty poza zakresem, błędy zapisu, integrację z wyborem MIDI i lokalną warstwę JS. **Pełna wizualizacja klawiatury jest w #11**: w #10 pokazujemy tylko wartości i zgodność partii, bez grafiki klawiszy. Brak możliwości rozpoczęcia treningu jest zachowany, ponieważ tryb ćwiczenia jeszcze nie istnieje.
 
 ## Browser microphone capture (#4)
 
