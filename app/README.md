@@ -124,7 +124,12 @@ silnika Wait for Note co mikrofon. Zwolnienie klawisza generuje NoteOff.
 Błędne nuty nie przesuwają treningu, powtarzane nuty wymagają oddzielnego
 naciśnięcia, a kilka palców może przytrzymywać niezależne dźwięki.
 Przewijanie klawiatury pozostaje możliwe; przesunięcie palca poza
-naciśnięty klawisz kończy tę nutę.
+naciśnięty klawisz kończy tę nutę. Po wejściu do treningu wspólna oś
+klawiatury i spadających nut jest ustawiana raz na podstawie zakresu
+melodii (lub pierwszej nuty, gdy cały zakres nie mieści się na ekranie).
+Nie ma już automatycznego śledzenia oczekiwanej ani wykrytej nuty.
+Ręczne przesunięcie pozostaje na swoim miejscu także po pauzie,
+wznowieniu, ukończeniu i resecie ćwiczenia.
 
 Adapter `lib/src/audio/note_output.dart` i `web/note_output.js` używa
 Web Audio API (lokalne oscylatory z obwiednią). Nie pobiera próbek,
