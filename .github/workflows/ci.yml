@@ -31,7 +31,10 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
       - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed .
+        run: |
+          dart format .
+          git --no-pager diff -- lib/src/midi/midi_parser.dart lib/src/screens/midi_import_screen.dart test/midi/midi_import_screen_test.dart test/midi/midi_parser_test.dart
+          git diff --exit-code
       - name: Analyze
         run: flutter analyze
       - name: Test
