@@ -5,6 +5,7 @@ import '../instrument/instrument_range_store.dart';
 import '../instrument/instrument_range_store_factory.dart';
 import '../midi/melody_part_analyzer.dart';
 import '../pitch/pitch_detector.dart';
+import '../widgets/piano_keyboard.dart';
 
 /// Configures the physical instrument independently of the MIDI player.
 class InstrumentRangeScreen extends StatefulWidget {
@@ -218,6 +219,10 @@ class _InstrumentRangeScreenState extends State<InstrumentRangeScreen> {
                     key: const Key('range-summary'),
                     style: theme.textTheme.titleMedium,
                   ),
+                if (range != null) ...[
+                  const SizedBox(height: 16),
+                  PianoKeyboard(range: range),
+                ],
                 const SizedBox(height: 18),
                 if (selection != null && range != null) ...[
                   Text(
