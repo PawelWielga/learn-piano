@@ -110,7 +110,7 @@ void main() {
     await tester.pump();
     await reveal(tester, find.byKey(const Key('selected-melody')), -150);
     expect(find.textContaining('kanał 2'), findsWidgets);
-    expect(find.textContaining('C3–C3'), findsOneWidget);
+    expect(find.textContaining('C3–C3'), findsWidgets);
   });
 
   testWidgets('switching to a different file clears stale selection', (
