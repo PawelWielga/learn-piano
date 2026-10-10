@@ -156,6 +156,74 @@ Future<void> startExercise(WidgetTester tester, TrainingAudioFake fake) async {
 }
 
 void main() {
+  testWidgets('landscape training uses a full stage and overlay controls', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(844, 390);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final fake = TrainingAudioFake();
+    await launch(tester, fake);
+
+    expect(find.byKey(const Key('training-stage-canvas')), findsOneWidget);
+    expect(find.byKey(const Key('training-stage-scroll')), findsOneWidget);
+    expect(find.byType(ListView), findsNothing);
+    expect(find.text('Wait Mode'), findsOneWidget);
+    expect(find.text('0 / 3 nut'), findsOneWidget);
+    expect(fake.starts, 0);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byKey(const Key('training-center-play')));
+    await tester.pump();
+    expect(fake.starts, 1);
+    expect(find.text('Wait Mode'), findsNothing);
+
+    fake.quietGate();
+    await tester.pump();
+    expect(find.text('Słucham Twojego pianinka'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byKey(const Key('training-controls-toggle')));
+    await tester.pump();
+    expect(find.text('Wait Mode'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('training-primary')));
+    await tester.pump();
+    expect(fake.stops, 1);
+    expect(find.text('Ćwiczenie wstrzymane'), findsOneWidget);
+    expect(find.text('Wznów'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('very short landscape keeps essential actions usable', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(600, 300);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final fake = TrainingAudioFake();
+    await launch(tester, fake);
+
+    expect(find.byKey(const Key('training-stage-canvas')), findsOneWidget);
+    expect(find.byKey(const Key('training-center-play')), findsNothing);
+    expect(find.byKey(const Key('training-primary')), findsOneWidget);
+    expect(find.byType(ListView), findsNothing);
+    expect(
+      tester.getRect(find.byKey(const Key('training-reset'))).bottom,
+      lessThanOrEqualTo(300),
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byKey(const Key('training-primary')));
+    await tester.pump();
+    expect(fake.starts, 1);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('requires a user gesture and confirms silence before scoring', (
     tester,
   ) async {
@@ -253,68 +321,6 @@ void main() {
     expect(fake.stops, 2);
     expect(find.text('Gotowe do ćwiczenia'), findsOneWidget);
     expect(find.text('0 / 3 nut'), findsOneWidget);
-  });
-
-  testWidgets('landscape phone keeps the piano and controls visible', (
-    tester,
-  ) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(844, 390);
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    final fake = TrainingAudioFake();
-    await launch(tester, fake);
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const Key('training-progress-label')), findsOneWidget);
-    expect(find.text('Oczekiwana: C4'), findsOneWidget);
-    expect(find.byKey(const Key('falling-notes-canvas')), findsOneWidget);
-    expect(find.byType(ListView), findsNothing);
-
-    final roll = tester.getRect(find.byKey(const Key('falling-notes-scroll')));
-    final controls = tester.getRect(find.byKey(const Key('training-primary')));
-    final reset = tester.getRect(find.byKey(const Key('training-reset')));
-    expect(roll.top, greaterThanOrEqualTo(0));
-    expect(roll.bottom, lessThanOrEqualTo(controls.top));
-    expect(reset.bottom, lessThanOrEqualTo(390));
-    expect(tester.takeException(), isNull);
-
-    await startExercise(tester, fake);
-    expect(find.text('Mikrofon aktywny'), findsOneWidget);
-    fake.strike(64, startMs: 440);
-    await tester.pump();
-    expect(find.text('Błędna nuta'), findsOneWidget);
-    expect(find.text('0 / 3 nut'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-
-    await tester.tap(find.byKey(const Key('training-primary')));
-    await tester.pump();
-    expect(find.text('Ćwiczenie wstrzymane'), findsOneWidget);
-    expect(fake.stops, 1);
-  });
-
-  testWidgets('short landscape viewport adapts piano roll heights', (
-    tester,
-  ) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(600, 300);
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    final fake = TrainingAudioFake();
-    await launch(tester, fake);
-    await tester.pumpAndSettle();
-
-    final roll = tester.getRect(find.byKey(const Key('falling-notes-canvas')));
-    final controls = tester.getRect(find.byKey(const Key('training-primary')));
-    expect(roll.height, greaterThan(48));
-    expect(roll.bottom, lessThan(controls.top));
-    expect(
-      tester.getRect(find.byKey(const Key('training-reset'))).bottom,
-      lessThanOrEqualTo(300),
-    );
-    expect(tester.takeException(), isNull);
   });
 
   testWidgets('portrait suspends listening without losing training progress', (
