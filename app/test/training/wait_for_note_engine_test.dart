@@ -163,10 +163,8 @@ void main() {
   });
 
   test('only confirmed silence of a new session can clear held keys', () {
-    final engine = engineFor([
-      midiNote(60, 0, 100),
-      midiNote(60, 200, 300),
-    ])..start();
+    final engine = engineFor([midiNote(60, 0, 100), midiNote(60, 200, 300)])
+      ..start();
     expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.correct);
     engine.pause();
     engine.resume();
