@@ -97,6 +97,7 @@ class FallingNotesView extends StatefulWidget {
   final InstrumentRange range;
   final int currentIndex;
   final int? detectedNote;
+
   /// Hide explanatory labels when the parent provides a compact status bar.
   final bool compact;
   final double rollHeight;
