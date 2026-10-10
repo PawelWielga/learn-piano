@@ -364,7 +364,9 @@ class _TrainingStageState extends State<TrainingStage> {
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
                         color: TrainingStagePalette.panel,
-                        border: Border.all(color: TrainingStagePalette.panelBorder),
+                        border: Border.all(
+                          color: TrainingStagePalette.panelBorder,
+                        ),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: SingleChildScrollView(
@@ -527,7 +529,10 @@ class _TrainingStageState extends State<TrainingStage> {
                 key: const Key('training-song-title'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: TrainingStagePalette.secondaryText, fontSize: 10),
+                style: const TextStyle(
+                  color: TrainingStagePalette.secondaryText,
+                  fontSize: 10,
+                ),
               ),
             ),
           ],
@@ -553,7 +558,10 @@ class _UnavailableControl extends StatelessWidget {
     ),
     child: Text(
       label,
-      style: const TextStyle(color: TrainingStagePalette.disabledText, fontSize: 12),
+      style: const TextStyle(
+        color: TrainingStagePalette.disabledText,
+        fontSize: 12,
+      ),
     ),
   );
 }
@@ -579,7 +587,11 @@ class _TrainingStagePainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [TrainingStagePalette.sky, TrainingStagePalette.deepSea, TrainingStagePalette.charcoal],
+        colors: [
+          TrainingStagePalette.sky,
+          TrainingStagePalette.deepSea,
+          TrainingStagePalette.charcoal,
+        ],
       ).createShader(Offset.zero & size);
     canvas.drawRect(Offset.zero & size, background);
 
@@ -646,7 +658,10 @@ class _TrainingStagePainter extends CustomPainter {
     final isDetected = key.midiNote == detectedNote;
     canvas.drawRRect(
       shape,
-      Paint()..color = key.isBlack ? TrainingStagePalette.darkKey : TrainingStagePalette.lightKey,
+      Paint()
+        ..color = key.isBlack
+            ? TrainingStagePalette.darkKey
+            : TrainingStagePalette.lightKey,
     );
     if (isExpected || isDetected) {
       canvas.drawRRect(
