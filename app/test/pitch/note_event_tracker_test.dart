@@ -2,16 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:learn_piano/src/pitch/note_event_tracker.dart';
 import 'package:learn_piano/src/pitch/pitch_detector.dart';
 
-PitchEstimate pitch(
-  int midi, {
-  double confidence = 0.99,
-  double cents = 0,
-}) => PitchEstimate(
-  frequencyHz: 440,
-  midiNote: midi,
-  confidence: confidence,
-  centsFromNote: cents,
-);
+PitchEstimate pitch(int midi, {double confidence = 0.99, double cents = 0}) =>
+    PitchEstimate(
+      frequencyHz: 440,
+      midiNote: midi,
+      confidence: confidence,
+      centsFromNote: cents,
+    );
 
 Duration ms(int time) => Duration(milliseconds: time);
 
@@ -36,10 +33,9 @@ void main() {
     final tracker = NoteEventTracker();
     final allEvents = <NoteEvent>[];
     void feed(int? note, int time) {
-      allEvents.addAll(tracker.observe(
-        note == null ? null : pitch(note),
-        ms(time),
-      ).events);
+      allEvents.addAll(
+        tracker.observe(note == null ? null : pitch(note), ms(time)).events,
+      );
     }
 
     for (final time in [0, 120, 240, 360]) {
@@ -57,16 +53,13 @@ void main() {
     for (final time in [1680, 1800, 1920, 2040]) {
       feed(60, time);
     }
-    expect(
-      allEvents.map((event) => event.type).toList(),
-      [
-        NoteEventType.noteOn,
-        NoteEventType.noteOff,
-        NoteEventType.noteOn,
-        NoteEventType.noteOff,
-        NoteEventType.noteOn,
-      ],
-    );
+    expect(allEvents.map((event) => event.type).toList(), [
+      NoteEventType.noteOn,
+      NoteEventType.noteOff,
+      NoteEventType.noteOn,
+      NoteEventType.noteOff,
+      NoteEventType.noteOn,
+    ]);
     expect(allEvents.map((event) => event.midiNote).toSet(), {60});
   });
 
@@ -74,14 +67,17 @@ void main() {
     final tracker = NoteEventTracker();
     tracker.observe(pitch(60), ms(0));
     tracker.observe(pitch(60), ms(120));
-    expect(tracker.observe(pitch(60), ms(240)).events.single.type,
-        NoteEventType.noteOn);
+    expect(
+      tracker.observe(pitch(60), ms(240)).events.single.type,
+      NoteEventType.noteOn,
+    );
 
-    expect(tracker.observe(null, ms(360)).phase,
-        NoteDetectionPhase.releasing);
+    expect(tracker.observe(null, ms(360)).phase, NoteDetectionPhase.releasing);
     expect(tracker.observe(pitch(60), ms(480)).events, isEmpty);
-    expect(tracker.observe(pitch(61), ms(600)).phase,
-        NoteDetectionPhase.candidate);
+    expect(
+      tracker.observe(pitch(61), ms(600)).phase,
+      NoteDetectionPhase.candidate,
+    );
     expect(tracker.observe(pitch(60), ms(720)).events, isEmpty);
     expect(tracker.stableNote, 60);
     expect(tracker.phase, NoteDetectionPhase.stable);
@@ -113,10 +109,7 @@ void main() {
       );
     }
     for (final time in [600, 720, 840]) {
-      expect(
-        tracker.observe(pitch(60, cents: 42), ms(time)).events,
-        isEmpty,
-      );
+      expect(tracker.observe(pitch(60, cents: 42), ms(time)).events, isEmpty);
     }
     expect(tracker.phase, NoteDetectionPhase.silent);
   });
@@ -129,8 +122,10 @@ void main() {
     expect(tracker.observe(pitch(69), ms(690)).events, isEmpty);
     expect(tracker.observe(pitch(69), ms(700)).events, isEmpty);
     expect(tracker.observe(pitch(69), ms(820)).events, isEmpty);
-    expect(tracker.observe(pitch(69), ms(940)).events.single.type,
-        NoteEventType.noteOn);
+    expect(
+      tracker.observe(pitch(69), ms(940)).events.single.type,
+      NoteEventType.noteOn,
+    );
   });
 
   test('short noise gaps cannot create repeated NoteOn', () {
@@ -158,7 +153,9 @@ void main() {
 
     tracker.observe(pitch(60), ms(0));
     tracker.observe(pitch(60), ms(120));
-    expect(tracker.observe(pitch(60), ms(240)).events.single.type,
-        NoteEventType.noteOn);
+    expect(
+      tracker.observe(pitch(60), ms(240)).events.single.type,
+      NoteEventType.noteOn,
+    );
   });
 }
