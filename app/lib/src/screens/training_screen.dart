@@ -296,6 +296,24 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   '${_snapshot.completedNotes} / ${_snapshot.totalNotes} nut',
                   key: const Key('training-progress-label'),
                 ),
+                Text(
+                  _listening
+                      ? 'Mikrofon aktywny. Dźwięk jest analizowany lokalnie.'
+                      : 'Mikrofon wyłączony. Dźwięk nie jest wysyłany na serwer.',
+                  key: const Key('training-microphone-status'),
+                  style: theme.textTheme.bodySmall,
+                ),
+                if (_error != null) ...[
+                  const SizedBox(height: 8),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      _error!,
+                      key: const Key('training-microphone-error'),
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 if (phase == TrainingPhase.completed) ...[
                   Card(
@@ -364,24 +382,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     range: widget.instrumentRange,
                     showRangeLabel: false,
                   ),
-                Text(
-                  _listening
-                      ? 'Mikrofon aktywny. Dźwięk jest analizowany lokalnie.'
-                      : 'Mikrofon wyłączony. Dźwięk nie jest wysyłany na serwer.',
-                  key: const Key('training-microphone-status'),
-                  style: theme.textTheme.bodySmall,
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 8),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      _error!,
-                      key: const Key('training-microphone-error'),
-                      style: TextStyle(color: theme.colorScheme.error),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
