@@ -72,7 +72,8 @@ class _InstrumentRangeScreenState extends State<InstrumentRangeScreen> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          _storageWarning = 'Nie udało się zapisać zakresu na tym urządzeniu. '
+          _storageWarning =
+              'Nie udało się zapisać zakresu na tym urządzeniu. '
               'Możesz użyć go tylko w tej sesji.';
         });
       }
