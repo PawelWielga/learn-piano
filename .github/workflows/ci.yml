@@ -30,6 +30,14 @@ jobs:
           node-version: '22'
       - name: Resolve dependencies
         run: flutter pub get
+      - name: Prepare formatter diagnostics (temporary)
+        run: |
+          dart format lib test
+          for f in lib/src/audio/audio_input_factory.dart lib/src/screens/microphone_preview_screen.dart test/widget_test.dart; do
+            echo ">>> START_FILE:${f}"
+            cat "${f}"
+            echo ">>> END_FILE:${f}"
+          done
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
