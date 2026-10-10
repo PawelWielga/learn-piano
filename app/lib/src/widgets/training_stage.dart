@@ -130,7 +130,7 @@ class _TrainingStageState extends State<TrainingStage> {
         _focus(keyboard, width);
         final focusedIndex = widget.notes.isEmpty
             ? 0
-            : widget.currentIndex.clamp(0, widget.notes.length - 1);
+            : widget.currentIndex.clamp(0, widget.notes.length - 1).toInt();
         final roll = widget.notes.isEmpty || rollHeight <= 48
             ? null
             : FallingNotesLayout(
@@ -190,8 +190,7 @@ class _TrainingStageState extends State<TrainingStage> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Nuta ${math.min(widget.currentIndex + 1, widget.notes.length)}'
-                      '/${widget.notes.length}',
+                      '${widget.currentIndex} / ${widget.notes.length} nut',
                       key: const Key('training-progress-label'),
                       style: const TextStyle(
                         color: foreground,
@@ -341,6 +340,7 @@ class _TrainingStageState extends State<TrainingStage> {
                                 widget.listening ? 'Mic ON' : 'Mic',
                               ),
                               style: TextButton.styleFrom(
+                                minimumSize: const Size(68, 44),
                                 foregroundColor: foreground,
                                 backgroundColor: widget.listening
                                     ? const Color(0xFF7B258F)
@@ -385,7 +385,10 @@ class _TrainingStageState extends State<TrainingStage> {
                 left: 0,
                 right: 0,
                 child: Center(
-                  child: IconButton.filled(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton.filled(
                     key: const Key('training-center-play'),
                     tooltip: widget.phase == TrainingPhase.paused
                         ? 'Wznów ćwiczenie'
@@ -398,6 +401,13 @@ class _TrainingStageState extends State<TrainingStage> {
                       minimumSize: const Size(70, 70),
                     ),
                     icon: const Icon(Icons.play_arrow),
+                      ),
+                      if (widget.phase == TrainingPhase.paused)
+                        const Text(
+                          'Wznów',
+                          style: TextStyle(color: foreground),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -668,5 +678,6 @@ class _TrainingStagePainter extends CustomPainter {
       oldDelegate.expectedNote != expectedNote ||
       oldDelegate.detectedNote != detectedNote ||
       oldDelegate.roll?.currentIndex != roll?.currentIndex ||
+      oldDelegate.roll?.notes != roll?.notes ||
       oldDelegate.rollHeight != rollHeight;
 }
