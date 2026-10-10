@@ -13,8 +13,7 @@ void addTone(
   final samples = Float32List.fromList(
     List<double>.generate(SpectrumAnalyzer.windowSize, (i) {
       final phase = 2 * math.pi * fundamental * i / sampleRate;
-      return 0.35 * math.sin(phase) +
-          secondHarmonic * math.sin(2 * phase);
+      return 0.35 * math.sin(phase) + secondHarmonic * math.sin(2 * phase);
     }),
   );
   for (var i = 0; i < samples.length; i += 2048) {
@@ -68,9 +67,7 @@ void main() {
 
   test('handles non-finite samples without contaminating later frames', () {
     final analyzer = SpectrumAnalyzer();
-    analyzer.addSamples(
-      Float32List.fromList([double.nan, double.infinity]),
-    );
+    analyzer.addSamples(Float32List.fromList([double.nan, double.infinity]));
     addTone(analyzer, 440);
     final peaks = analyzer.analyze(48000)!.peaks;
     expect(peaks.any((peak) => (peak.frequencyHz - 440).abs() < 5), isTrue);
