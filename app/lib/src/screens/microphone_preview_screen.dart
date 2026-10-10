@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../audio/audio_input.dart';
 import '../audio/audio_input_factory.dart';
+import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';
 
 class MicrophonePreviewScreen extends StatefulWidget {
@@ -24,7 +25,11 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   StreamSubscription<AudioInputStatus>? _statusSubscription;
 
   final _detector = const PitchDetector();
+  final _tracker = NoteEventTracker();
   PitchEstimate? _candidate;
+  NoteDetectionUpdate? _noteStatus;
+  NoteEvent? _lastNoteOn;
+  int _noteOnCount = 0;
   Duration? _lastAnalyzedAt;
 
   bool _busy = false;
@@ -46,6 +51,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
           _listening = false;
           _level = 0;
           _candidate = null;
+          _tracker.reset();
+          _noteStatus = null;
           _lastAnalyzedAt = null;
           _error =
               'Nasłuch został przerwany (np. zmiana karty lub '
@@ -74,12 +81,20 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
     }
     final rms = math.sqrt(sum / frame.samples.length);
     final pitch = _detector.detect(frame.samples, frame.sampleRate);
+    final update = _tracker.observe(pitch, frame.capturedAt);
 
     setState(() {
       _sampleRate = frame.sampleRate;
       _frameSize = frame.samples.length;
       _level = rms.isFinite ? rms.clamp(0.0, 1.0) : 0;
       _candidate = pitch;
+      _noteStatus = update;
+      for (final event in update.events) {
+        if (event.type == NoteEventType.noteOn) {
+          _lastNoteOn = event;
+          _noteOnCount++;
+        }
+      }
     });
   }
 
@@ -92,6 +107,10 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
       _frameSize = null;
       _level = 0;
       _candidate = null;
+      _tracker.reset();
+      _noteStatus = null;
+      _lastNoteOn = null;
+      _noteOnCount = 0;
       _lastAnalyzedAt = null;
     });
     try {
@@ -123,6 +142,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
           _listening = false;
           _level = 0;
           _candidate = null;
+          _tracker.reset();
+          _noteStatus = null;
           _lastAnalyzedAt = null;
         });
       }
@@ -152,6 +173,14 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pitch = _candidate;
+    final stableNote = _noteStatus?.stableNote;
+    final phase = _noteStatus?.phase ?? NoteDetectionPhase.silent;
+    final phaseDescription = switch (phase) {
+      NoteDetectionPhase.silent => 'Brak nuty',
+      NoteDetectionPhase.candidate => 'Sprawdzanie kandydata',
+      NoteDetectionPhase.stable => 'Nuta stabilna',
+      NoteDetectionPhase.releasing => 'Oczekiwanie na wybrzmienie',
+    };
     return Scaffold(
       appBar: AppBar(title: const Text('Test mikrofonu')),
       body: SafeArea(
@@ -242,10 +271,54 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'To pojedynczy pomiar, jeszcze bez stabilizacji i wykrywania '
-                    'osobnych naciśnięć klawisza.',
+                    'To surowy pomiar. Poniżej widać nutę potwierdzoną '
+                    'przez stabilizację i osobne zdarzenia uderzeń.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 28),
+                  Text(
+                    'Stabilna nuta',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      !_listening || stableNote == null
+                          ? '—'
+                          : PitchEstimate.nameForMidi(stableNote),
+                      key: const Key('stable-note'),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineMedium,
+                    ),
+                  ),
+                  Text(
+                    'Stan: ${_listening ? phaseDescription : 'Nieaktywny'}',
+                    key: const Key('note-phase'),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Zdarzenia NoteOn: $_noteOnCount',
+                    key: const Key('note-on-count'),
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    _lastNoteOn == null
+                        ? 'Ostatnie uderzenie: —'
+                        : 'Ostatnie uderzenie: '
+                              '${PitchEstimate.nameForMidi(_lastNoteOn!.midiNote)}',
+                    key: const Key('last-note-on'),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Jedna utrzymana nuta daje jedno zdarzenie. '
+                    'Ponowne zagranie tej samej nuty wymaga wyraźnej '
+                    'przerwy w dźwięku.',
+                    style: theme.textTheme.bodySmall,
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
                   Text('Poziom wejścia', style: theme.textTheme.titleMedium),
