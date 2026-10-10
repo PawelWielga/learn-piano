@@ -99,7 +99,7 @@ Ważne zasady:
 
 ## 7. Komendy developerskie i weryfikacja
 
-**Aktualny stan repozytorium:** na moment utworzenia tego pliku istnieją dokumenty i backlog, ale nie ma jeszcze aplikacji `app/` ani workflowów. Nie twierdź, że testy/build zakończyły się powodzeniem bez ich uruchomienia.
+**Aktualny stan repozytorium:** w ramach M0 przygotowano projekt Flutter Web w `app/` oraz workflowy CI/Pages. Ekran testera jest na razie przygotowawczy, bez uruchomionego mikrofonu. Wymagana jest weryfikacja builda i testów w GitHub Actions oraz dodanie `app/pubspec.lock` wygenerowanego przez przypięty Flutter 3.47.7. Nie twierdź, że testy/build zakończyły się powodzeniem bez ich uruchomienia.
 
 Gdy `app/` zostanie utworzony:
 
