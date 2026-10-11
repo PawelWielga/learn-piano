@@ -22,6 +22,7 @@ class PolyphonicNoteTracker {
   int? _sampleRate;
   final Float32List _buffer = Float32List(8192);
   int _received = 0;
+  int _samplesSinceAnalysis = 0;
   Duration? _lastAt;
   final Map<int, _PitchState> _states = <int, _PitchState>{};
 
@@ -64,7 +65,11 @@ class PolyphonicNoteTracker {
       );
     }
     _received = math.min(_buffer.length, _received + count);
+    _samplesSinceAnalysis += count;
     if (_received < _buffer.length) return const [];
+    // Keep all incoming PCM, but run the spectral matcher about 12 times/s.
+    if (_samplesSinceAnalysis < sampleRate ~/ 12) return const [];
+    _samplesSinceAnalysis = 0;
 
     var sum = 0.0;
     // Gate based on the newest 2048 samples, not long decaying FFT tails.
@@ -110,6 +115,7 @@ class PolyphonicNoteTracker {
     _analyzer = null;
     _sampleRate = null;
     _received = 0;
+    _samplesSinceAnalysis = 0;
     _lastAt = null;
     _buffer.fillRange(0, _buffer.length, 0);
     _states.clear();
