@@ -45,6 +45,11 @@ class Mp3NoteTranscriber {
         ? const Duration(milliseconds: 20)
         : Duration.zero;
     const release = Duration(milliseconds: 75);
+    // Reject FFT transients (often a semitone below long bass notes). A
+    // legitimate 85ms staccato note must still survive accurate mode.
+    final minNoteDuration = mode == Mp3TranscriptionMode.accurate
+        ? const Duration(milliseconds: 70)
+        : const Duration(milliseconds: 85);
     const minRetrigger = Duration(milliseconds: 110);
     const maxNotes = 8192;
     final tracks = List<_FileNoteState>.generate(
@@ -63,7 +68,7 @@ class Mp3NoteTranscriber {
       final start = state.started;
       if (start != null && notes.length < maxNotes) {
         final clipped = end > audio.duration ? audio.duration : end;
-        if (clipped > start) {
+        if (clipped - start >= minNoteDuration) {
           notes.add(
             RecordedNote(
               midiNote: pitch,

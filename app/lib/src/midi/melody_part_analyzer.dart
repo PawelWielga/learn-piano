@@ -1,6 +1,6 @@
 import 'midi_parser.dart';
 
-/// A single (track, channel) candidate for microphone-based practice.
+/// A single (track, channel) candidate for melodic or chord practice.
 ///
 /// Channel selection matters for SMF type 0 and type 1 tracks that contain
 /// several instruments. Notes from different tracks are never merged.
@@ -31,7 +31,22 @@ class MelodyPart {
 
   bool get isPercussion => channel == 9;
   bool get isMonophonic => overlapCount == 0;
-  bool get canPractice => !isPercussion && notes.isNotEmpty && isMonophonic;
+  // Two overlapping copies of the *same pitch* cannot be separately
+  // represented by real pressed-key state; do not silently count both.
+  bool get hasUnplayableRepeat {
+    final lastEndByPitch = <int, int>{};
+    for (final note in notes) {
+      final previousEnd = lastEndByPitch[note.midiNote] ?? -1;
+      if (previousEnd > note.startTick) return true;
+      if (note.endTick > previousEnd) {
+        lastEndByPitch[note.midiNote] = note.endTick;
+      }
+    }
+    return false;
+  }
+
+  bool get canPractice =>
+      !isPercussion && notes.isNotEmpty && !hasUnplayableRepeat;
 
   String get displayName => trackName?.trim().isNotEmpty == true
       ? trackName!.trim()
@@ -111,7 +126,7 @@ class MelodyPartAnalyzer {
     return List.unmodifiable(candidates);
   }
 
-  /// Returns null for missing, polyphonic or percussion candidates.
+  /// Returns null only for missing, empty, or percussion candidates.
   MelodySelection? select(
     List<MelodyPart> parts, {
     required int trackIndex,

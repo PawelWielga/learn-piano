@@ -94,8 +94,8 @@ void main() {
     final parts = analyzer.analyze(midi);
     expect(parts.single.isMonophonic, isFalse);
     expect(parts.single.overlapCount, 2);
-    expect(parts.single.canPractice, isFalse);
-    expect(analyzer.select(parts, trackIndex: 0, channel: 0), isNull);
+    expect(parts.single.canPractice, isTrue);
+    expect(analyzer.select(parts, trackIndex: 0, channel: 0), isNotNull);
   });
 
   test('overlapping notes on same pitch are rejected', () {

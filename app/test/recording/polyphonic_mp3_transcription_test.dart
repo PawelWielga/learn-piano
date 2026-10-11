@@ -225,6 +225,17 @@ void main() {
     expect(empty.notes, isEmpty);
   });
 
+  test('tiny spectral transients do not become exported MIDI notes', () async {
+    final result = await converter.transcribe(
+      pianoFixture([event(81, 350, 390)]),
+    );
+    expect(
+      result.notes.where((n) => n.midiNote == 81),
+      isEmpty,
+      reason: 'Sub-70ms impulses must not create ghost key presses.',
+    );
+  });
+
   test('quiet note accepted only when sensitivity is increased', () async {
     final reference = [event(69, 200, 980)];
     final file = pianoFixture(reference, gain: 0.010);

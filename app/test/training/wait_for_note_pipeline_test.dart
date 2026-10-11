@@ -143,8 +143,10 @@ void main() {
         isTrue,
       );
 
-      // A chord track is never silently reduced to a melody.
-      expect(analyzer.select(parts, trackIndex: 2, channel: 0), isNull);
+      // Chord tracks remain intact and can be trained as a group.
+      final chord = analyzer.select(parts, trackIndex: 2, channel: 0);
+      expect(chord, isNotNull);
+      expect(chord!.notes.map((note) => note.midiNote), [67, 71]);
       final bass = analyzer.select(parts, trackIndex: 3, channel: 1);
       expect(bass, isNotNull);
       expect(
@@ -211,7 +213,7 @@ void main() {
     },
   );
 
-  test('malformed MIDI and chord-only MIDI cannot produce a training part', () {
+  test('malformed MIDI fails while chord-only MIDI trains intact', () {
     expect(
       () => const MidiParser().parse(Uint8List.fromList([0, 1, 2, 3])),
       throwsA(isA<MidiFormatException>()),
@@ -233,7 +235,27 @@ void main() {
     final analyzer = const MelodyPartAnalyzer();
     final parts = analyzer.analyze(midi);
     expect(parts.single.overlapCount, 1);
-    expect(parts.single.canPractice, isFalse);
-    expect(analyzer.select(parts, trackIndex: 0, channel: 0), isNull);
+    expect(parts.single.canPractice, isTrue);
+    final selection = analyzer.select(parts, trackIndex: 0, channel: 0);
+    expect(selection, isNotNull);
+    final engine = WaitForNoteEngine(
+      selection!,
+      instrumentRange: const InstrumentRange(48, 72),
+    );
+    engine.start();
+    expect(engine.snapshot.expectedMidiNotes, {60, 64});
+    const first = NoteEvent(
+      type: NoteEventType.noteOn,
+      midiNote: 60,
+      at: Duration.zero,
+    );
+    const second = NoteEvent(
+      type: NoteEventType.noteOn,
+      midiNote: 64,
+      at: Duration.zero,
+    );
+    expect(engine.onNoteEvent(first).attempt, TrainingAttempt.ignored);
+    expect(engine.onNoteEvent(second).attempt, TrainingAttempt.correct);
+    expect(engine.snapshot.isCompleted, isTrue);
   });
 }

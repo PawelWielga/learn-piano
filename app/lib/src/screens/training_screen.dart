@@ -11,6 +11,7 @@ import '../instrument/instrument_range.dart';
 import '../layout/landscape_gate.dart';
 import '../midi/melody_part_analyzer.dart';
 import '../pitch/note_event_tracker.dart';
+import '../pitch/polyphonic_note_tracker.dart';
 import '../pitch/pitch_detector.dart';
 import '../pitch/detection_preferences.dart';
 import '../pitch/detection_preferences_store_factory.dart';
@@ -18,7 +19,7 @@ import '../training/training_input_mode.dart';
 import '../training/wait_for_note_engine.dart';
 import '../widgets/training_stage.dart';
 
-/// Exercises one validated monophonic MIDI part against acoustic NoteOn events.
+/// Exercises selected MIDI notes and chords using acoustic or touch NoteOn events.
 ///
 /// The imported file and captured PCM stay in the browser. A new microphone
 /// session must first observe silence so a ringing/held key cannot score as
@@ -61,10 +62,13 @@ class _TrainingScreenState extends State<TrainingScreen>
   bool _autoPlaying = false;
   int _autoNextIndex = 0;
   int? _autoActiveIndex;
+  final Set<int> _autoActiveIndices = <int>{};
   Duration? _autoPlayhead;
 
   late final PitchDetector _detector;
   late final NoteEventTracker _tracker;
+  late final PolyphonicNoteTracker _polyTracker;
+  late final double _minimumRms;
   StreamSubscription<PcmFrame>? _frames;
   StreamSubscription<AudioInputStatus>? _statuses;
 
@@ -102,6 +106,8 @@ class _TrainingScreenState extends State<TrainingScreen>
     }
     _detector = preferences.createDetector();
     _tracker = preferences.createTracker();
+    _minimumRms = preferences.minimumRms;
+    _polyTracker = PolyphonicNoteTracker(minimumRms: _minimumRms);
     _autoClock = AnimationController(vsync: this)
       ..addListener(_onAutoFrame)
       ..addStatusListener((status) {
@@ -161,7 +167,9 @@ class _TrainingScreenState extends State<TrainingScreen>
       setState(() => _error = 'Nie można odtworzyć MIDI w tej przeglądarce.');
       return;
     }
-    final end = notes.last.start + notes.last.duration;
+    final end = notes
+        .map((note) => note.start + note.duration)
+        .reduce((a, b) => a > b ? a : b);
     final total = end - notes.first.start;
     _autoClock.duration = total > Duration.zero
         ? total
@@ -171,6 +179,9 @@ class _TrainingScreenState extends State<TrainingScreen>
       _autoPlaying = true;
       _autoNextIndex = 1;
       _autoActiveIndex = 0;
+      _autoActiveIndices
+        ..clear()
+        ..add(0);
       _autoPlayhead = notes.first.start;
       _error = null;
     });
@@ -187,22 +198,19 @@ class _TrainingScreenState extends State<TrainingScreen>
           microseconds: (duration.inMicroseconds * _autoClock.value).round(),
         );
 
-    void releaseActive() {
-      final index = _autoActiveIndex;
-      if (index == null) return;
-      _output.noteOff(notes[index].midiNote);
-      _autoActiveIndex = null;
-    }
-
-    if (_autoActiveIndex case final index?) {
-      if (notes[index].start + notes[index].duration <= playhead) {
-        releaseActive();
+    // Release each MIDI voice independently. Chords and overlapping bass
+    // must never cut each other off when another note starts.
+    for (final index in _autoActiveIndices.toList()) {
+      final note = notes[index];
+      if (note.start + note.duration <= playhead) {
+        _output.noteOff(note.midiNote);
+        _autoActiveIndices.remove(index);
       }
     }
     while (_autoNextIndex < notes.length &&
         notes[_autoNextIndex].start <= playhead) {
-      releaseActive();
-      final next = notes[_autoNextIndex++];
+      final index = _autoNextIndex++;
+      final next = notes[index];
       if (!_output.noteOn(next.midiNote)) {
         _stopAuto();
         if (mounted) {
@@ -210,12 +218,16 @@ class _TrainingScreenState extends State<TrainingScreen>
         }
         return;
       }
-      _autoActiveIndex = _autoNextIndex - 1;
+      _autoActiveIndices.add(index);
       if (next.duration == Duration.zero ||
           next.start + next.duration <= playhead) {
-        releaseActive();
+        _output.noteOff(next.midiNote);
+        _autoActiveIndices.remove(index);
       }
     }
+    _autoActiveIndex = _autoActiveIndices.isEmpty
+        ? null
+        : _autoActiveIndices.first;
     setState(() => _autoPlayhead = playhead);
   }
 
@@ -227,6 +239,7 @@ class _TrainingScreenState extends State<TrainingScreen>
     if (mounted) {
       setState(() {
         _autoActiveIndex = null;
+        _autoActiveIndices.clear();
         _autoNextIndex = 0;
         _autoPlayhead = null;
       });
@@ -246,6 +259,7 @@ class _TrainingScreenState extends State<TrainingScreen>
       _quietSince = null;
       _awaitingSilence = true;
       _tracker.reset();
+      _polyTracker.reset();
       _snapshot = _engine.pause();
       _error =
           'Mikrofon został przerwany. Wznów ćwiczenie, '
@@ -266,34 +280,53 @@ class _TrainingScreenState extends State<TrainingScreen>
     }
 
     final previous = _lastAnalyzedAt;
-    if (previous != null &&
+    if (widget.selection.part.isMonophonic &&
+        previous != null &&
         frame.capturedAt >= previous &&
         frame.capturedAt - previous < const Duration(milliseconds: 120)) {
       return;
     }
     _lastAnalyzedAt = frame.capturedAt;
 
-    final pitch = _detector.detect(frame.samples, frame.sampleRate);
-    final detected = _tracker.observe(pitch, frame.capturedAt);
+    final polyphonic = !widget.selection.part.isMonophonic;
+    final pitch = polyphonic
+        ? null
+        : _detector.detect(frame.samples, frame.sampleRate);
+    final detected = polyphonic
+        ? null
+        : _tracker.observe(pitch, frame.capturedAt);
+    final events = polyphonic
+        ? _polyTracker.observe(
+            frame.samples,
+            frame.sampleRate,
+            frame.capturedAt,
+          )
+        : detected!.events;
+    var energy = 0.0;
+    for (final value in frame.samples) {
+      energy += value * value;
+    }
+    final quiet = math.sqrt(energy / frame.samples.length) < _minimumRms;
 
     if (_awaitingSilence) {
-      if (pitch == null &&
-          detected.stableNote == null &&
-          detected.candidateNote == null) {
+      if (polyphonic
+          ? quiet && _polyTracker.activeNotes.isEmpty
+          : pitch == null &&
+                detected!.stableNote == null &&
+                detected.candidateNote == null) {
         _quietSince ??= frame.capturedAt;
         if (frame.capturedAt - _quietSince! >=
             const Duration(milliseconds: 240)) {
           _awaitingSilence = false;
-          // Only measured silence releases keys retained by the engine
-          // from an earlier microphone session.
           _engine.releaseHeldNotesAfterSilence();
+          if (polyphonic) _polyTracker.reset();
         }
       } else {
         _quietSince = null;
       }
     }
 
-    for (final event in detected.events) {
+    for (final event in events) {
       if (!_awaitingSilence) {
         _engine.onNoteEvent(event);
       }
@@ -301,7 +334,11 @@ class _TrainingScreenState extends State<TrainingScreen>
 
     final updated = _engine.snapshot;
     setState(() {
-      _stableNote = detected.stableNote;
+      _stableNote = polyphonic
+          ? (_polyTracker.activeNotes.isEmpty
+                ? null
+                : _polyTracker.activeNotes.first)
+          : detected!.stableNote;
       _snapshot = updated;
     });
     if (updated.isCompleted) {
@@ -415,6 +452,7 @@ class _TrainingScreenState extends State<TrainingScreen>
         return;
       }
       _tracker.reset();
+      _polyTracker.reset();
       _lastAnalyzedAt = null;
       _quietSince = null;
       setState(() {
@@ -455,6 +493,7 @@ class _TrainingScreenState extends State<TrainingScreen>
       }
     } finally {
       _tracker.reset();
+      _polyTracker.reset();
       _lastAnalyzedAt = null;
       _quietSince = null;
       if (mounted) {
@@ -518,11 +557,13 @@ class _TrainingScreenState extends State<TrainingScreen>
             TrainingPhase.completed => 'Brawo! Melodia ukończona',
             TrainingPhase.error => 'Nie można rozpocząć treningu',
           };
-    final attemptLabel = switch (_snapshot.lastAttempt) {
-      TrainingAttempt.ignored => 'Zagraj wskazaną nutę.',
-      TrainingAttempt.correct => 'Dobrze! Przejdź do kolejnej nuty.',
-      TrainingAttempt.incorrect => 'Inna nuta. Spróbuj ponownie.',
-    };
+    final attemptLabel = _snapshot.matchedMidiNotes.isNotEmpty
+        ? 'Trzymaj wszystkie nuty akordu jednocześnie.'
+        : switch (_snapshot.lastAttempt) {
+            TrainingAttempt.ignored => 'Zagraj wskazaną nutę.',
+            TrainingAttempt.correct => 'Dobrze! Przejdź do kolejnej nuty.',
+            TrainingAttempt.incorrect => 'Inna nuta. Spróbuj ponownie.',
+          };
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -540,6 +581,18 @@ class _TrainingScreenState extends State<TrainingScreen>
                     ? null
                     : widget.selection.notes[_autoActiveIndex!].midiNote
               : _snapshot.expectedMidiNote,
+          expectedNotes: _autoPlaying
+              ? _autoActiveIndices
+                    .map((i) => widget.selection.notes[i].midiNote)
+                    .toSet()
+              : _snapshot.expectedMidiNotes,
+          detectedNotes: _autoPlaying
+              ? const <int>{}
+              : _mode == TrainingInputMode.keyboard
+              ? _heldKeyboardNotes
+              : widget.selection.part.isMonophonic
+              ? <int>{?_stableNote}
+              : _polyTracker.activeNotes,
           detectedNote: _autoPlaying
               ? null
               : _mode == TrainingInputMode.keyboard
