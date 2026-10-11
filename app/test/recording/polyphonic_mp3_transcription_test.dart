@@ -6,6 +6,7 @@ import 'package:learn_piano/src/audio/audio_file_picker.dart';
 import 'package:learn_piano/src/midi/midi_parser.dart';
 import 'package:learn_piano/src/pitch/detection_preferences.dart';
 import 'package:learn_piano/src/pitch/pitch_detector.dart';
+import 'package:learn_piano/src/pitch/note_event_tracker.dart';
 import 'package:learn_piano/src/recording/midi_recording_writer.dart';
 import 'package:learn_piano/src/recording/mp3_note_transcriber.dart';
 import 'package:learn_piano/src/recording/note_recorder.dart';
@@ -69,6 +70,55 @@ void checkMatched(
   }
 }
 
+/// Replicates the pre-fix 130ms monophonic YIN/NoteEventTracker pipeline.
+List<RecordedNote> oldMonophonicBaseline(DecodedAudioFile audio) {
+  final detector = const PitchDetector();
+  final tracker = NoteEventTracker();
+  final recorder = NoteRecorder()..start();
+  final hop = (audio.sampleRate * 0.13).round();
+  for (var start = 0;
+      start + 2048 <= audio.samples.length;
+      start += hop) {
+    final frame = Float32List.sublistView(audio.samples, start, start + 2048);
+    final at = Duration(
+        microseconds: (start * 1000000 / audio.sampleRate).round());
+    final update = tracker.observe(
+        detector.detect(frame, audio.sampleRate), at);
+    for (final event in update.events) {
+      if (event.type == NoteEventType.noteOn) {
+        recorder.noteOn(event.midiNote, event.at);
+      } else {
+        recorder.noteOff(event.midiNote, event.at);
+      }
+    }
+  }
+  recorder.stop(audio.duration);
+  return recorder.notes;
+}
+
+/// Exact-pitch matching with independent onset and offset tolerances.
+double noteF1(List<RecordedNote> expected, List<RecordedNote> found) {
+  final used = <int>{};
+  var matched = 0;
+  for (final target in expected) {
+    for (var i = 0; i < found.length; i++) {
+      if (used.contains(i)) continue;
+      final note = found[i];
+      if (note.midiNote == target.midiNote &&
+          closeTo(note.start, target.start, 130) &&
+          closeTo(note.start + note.duration,
+              target.start + target.duration, 160)) {
+        used.add(i);
+        matched++;
+        break;
+      }
+    }
+  }
+  return expected.isEmpty && found.isEmpty
+      ? 1.0
+      : 2 * matched / (expected.length + found.length);
+}
+
 void main() {
   const converter = Mp3NoteTranscriber();
 
@@ -92,6 +142,21 @@ void main() {
     expect(oldEstimate == null || oldEstimate.midiNote is int, isTrue);
     expect(result.notes.map((n) => n.midiNote).toSet(),
         containsAll(<int>[43, 71]));
+  });
+
+  test('polyphonic F1 exceeds old YIN on simultaneous melody and bass',
+      () async {
+    final reference = [
+      event(43, 200, 1050),
+      event(71, 200, 1050, velocity: 68),
+    ];
+    final file = pianoFixture(reference, gain: 0.28);
+    final previous = oldMonophonicBaseline(file);
+    final current = (await converter.transcribe(file)).notes;
+    final oldF1 = noteF1(reference, previous);
+    final newF1 = noteF1(reference, current);
+    expect(newF1, greaterThan(oldF1));
+    expect(newF1, greaterThanOrEqualTo(0.75));
   });
 
   test('triad keeps all three notes, not only the strongest voice', () async {
