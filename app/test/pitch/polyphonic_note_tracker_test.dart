@@ -17,7 +17,10 @@ void main() {
       final release = math.min(1.0, (1.10 - time) / 0.02);
       for (final midi in <int>[60, 64]) {
         final frequency = 440 * math.pow(2, (midi - 69) / 12);
-        samples[i] += 0.20 * attack * release *
+        samples[i] +=
+            0.20 *
+            attack *
+            release *
             math.sin(2 * math.pi * frequency * (time - 0.25));
       }
     }
