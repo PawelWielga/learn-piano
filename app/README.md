@@ -280,8 +280,27 @@ potwierdzenia, zakończenia i heurystykę ponownego uderzenia. Krótki
 próg RMS wyznacza przybliżone momenty ataku i zaniku. Eksport do istniejącego
 SMF typu 0 zapisuje równoczesne NoteOn/NoteOff na jednym kanale.
 Rozdzielanie ścieżek według samego rejestru byłoby niewiarygodne.
-Ekran importu MIDI pozwala obejrzeć wielogłosowe partie w podglądzie
-spadających nut, ale trening Wait for Note nadal wymaga jednej nuty naraz.
+Transkryber odrzuca nuty trwające krócej niż 70 ms (tryb dokładny)
+lub 85 ms (szybki), żeby ograniczyć krótkie błędne detekcje widma,
+w tym charakterystyczne półtonowe artefakty w basie. Może to również
+usunąć rzeczywiste bardzo krótkie uderzenia. Po poprawce należy ponownie
+przetworzyć MP3 — poprzednio wyeksportowany plik MIDI nie zmienia się sam.
+
+Ekran importu MIDI pozwala wybrać do treningu partie wielogłosowe.
+Nuty rozpoczynające się w odstępie do 65 ms tworzą jeden akord:
+trzeba wcisnąć i przytrzymać wszystkie jego klawisze jednocześnie,
+żeby przejść dalej. Niezależne głosy basu i melodii mogą się nakładać.
+Nie obsługujemy perkusji ani równoczesnych dwóch egzemplarzy tej samej
+wysokości. Wirtualna klawiatura obsługuje wielodotyk, a odsłuch MIDI
+utrzymuje oddzielne głosy, nie ucina ich przy kolejnych NoteOn.
+
+Dla monofonicznych partii detekcja mikrofonu nadal używa YIN,
+natomiast dla wielogłosowych włączany jest osobny buforowany tracker
+widmowy z podtrzymaniem NoteOn i NoteOff per wysokość. To metoda
+eksperymentalna: mikrofon laptopa może nie wykryć pełnych akordów,
+a harmoniczne, sustain i pogłos nadal generują pomyłki.
+Najpewniejsze ćwiczenie akordów to klawiatura ekranowa; na fizycznym
+pianinie trzeba zweryfikować skuteczność na rzeczywistym sprzęcie.
 
 Pliki do **12 MB / 90 sekund**, bez uploadu ani zależności od backendu.
 Postęp i anulowanie są dostępne na ekranie. Pętla oddaje sterowanie Flutterowi
