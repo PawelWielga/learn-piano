@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../audio/audio_file_picker.dart';
@@ -41,6 +43,8 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
   String? _message;
   double _progress = 0;
   bool _busy = false;
+  bool _pickerReady = true;
+  bool _pickerLoading = false;
   bool _truncated = false;
   int _request = 0;
 
@@ -49,6 +53,10 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
     super.initState();
     _picker = widget.picker ?? createAudioFilePicker();
     _exporter = widget.exporter ?? createMidiRecordingExporter();
+    if (_picker is PreparableAudioFilePicker) {
+      _pickerReady = false;
+      unawaited(_preparePicker());
+    }
     try {
       _preferences =
           widget.detectionPreferences ??
@@ -59,8 +67,30 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
     }
   }
 
+  Future<void> _preparePicker() async {
+    if (_pickerLoading || _picker is! PreparableAudioFilePicker) return;
+    setState(() {
+      _pickerLoading = true;
+      _error = null;
+    });
+    try {
+      await (_picker as PreparableAudioFilePicker).prepare();
+      if (mounted) setState(() => _pickerReady = true);
+    } on AudioFilePickException catch (exception) {
+      if (mounted) setState(() => _error = exception.message);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error = 'Nie można załadować wyboru MP3. Odśwież stronę.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _pickerLoading = false);
+    }
+  }
+
   Future<void> _chooseMp3() async {
-    if (_busy) return;
+    if (_busy || !_pickerReady) return;
     final request = ++_request;
     setState(() {
       _busy = true;
@@ -174,9 +204,21 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                   children: [
                     FilledButton.icon(
                       key: const Key('mp3-select'),
-                      onPressed: _busy ? null : _chooseMp3,
+                      onPressed: _busy || _pickerLoading
+                          ? null
+                          : _pickerReady
+                          ? _chooseMp3
+                          : _preparePicker,
                       icon: const Icon(Icons.audio_file),
-                      label: Text(_busy ? 'Analizowanie…' : 'Wybierz plik MP3'),
+                      label: Text(
+                        _pickerLoading
+                            ? 'Przygotowywanie wyboru…'
+                            : !_pickerReady
+                            ? 'Ponów przygotowanie wyboru MP3'
+                            : _busy
+                            ? 'Analizowanie…'
+                            : 'Wybierz plik MP3',
+                      ),
                     ),
                     OutlinedButton.icon(
                       key: const Key('mp3-save'),
