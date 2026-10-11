@@ -29,8 +29,10 @@ class TrainingSnapshot {
   final int currentIndex;
   final int totalNotes;
   final int? expectedMidiNote;
+
   /// All pitches in the current onset group (chord).
   final Set<int> expectedMidiNotes;
+
   /// Chord pitches currently held, awaiting the other keys.
   final Set<int> matchedMidiNotes;
   final int? lastPlayedMidiNote;
