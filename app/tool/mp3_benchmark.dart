@@ -57,9 +57,7 @@ Future<void> main(List<String> arguments) async {
     final expected = midi.tracks
         .expand((track) => track.notes)
         .where(
-          (note) =>
-              note.start + note.duration <= cutoff &&
-              note.channel != 9,
+          (note) => note.start + note.duration <= cutoff && note.channel != 9,
         )
         .toList();
     final actual = transcription.notes
@@ -80,15 +78,19 @@ Future<void> main(List<String> arguments) async {
 
     stdout.writeln('MP3 → MIDI benchmark (diagnostic; no pass threshold)');
     stdout.writeln('Audio window: ${audio.duration.inMilliseconds} ms');
-    stdout.writeln('Reference MIDI: ${midi.noteCount} total notes, '
-        '${midi.duration.inMilliseconds} ms');
+    stdout.writeln(
+      'Reference MIDI: ${midi.noteCount} total notes, '
+      '${midi.duration.inMilliseconds} ms',
+    );
     stdout.writeln('Reference notes in window: ${expected.length}');
     stdout.writeln('Detected notes in window: ${actual.length}');
     _report('Exact pitch + onset (±130ms)', onset);
     _report('Exact pitch + onset (±130ms) + offset (±160ms)', strict);
-    stdout.writeln('NOTE: Metrics assume source.mp3 and reference.mid have '
-        'the same arrangement, timing and start position. Unverified '
-        'alignment or a melody-only MIDI can make these scores misleading.');
+    stdout.writeln(
+      'NOTE: Metrics assume source.mp3 and reference.mid have '
+      'the same arrangement, timing and start position. Unverified '
+      'alignment or a melody-only MIDI can make these scores misleading.',
+    );
     if (transcription.truncated) {
       stdout.writeln('WARNING: transcription hit its note limit.');
     }
@@ -134,16 +136,11 @@ Future<void> main(List<String> arguments) async {
   return (matched: hits, expected: reference.length, actual: detected.length);
 }
 
-void _report(
-  String label,
-  ({int matched, int expected, int actual}) result,
-) {
+void _report(String label, ({int matched, int expected, int actual}) result) {
   final precision = result.actual == 0
       ? (result.expected == 0 ? 1.0 : 0.0)
       : result.matched / result.actual;
-  final recall = result.expected == 0
-      ? 1.0
-      : result.matched / result.expected;
+  final recall = result.expected == 0 ? 1.0 : result.matched / result.expected;
   final denominator = precision + recall;
   final f1 = denominator == 0 ? 0.0 : 2 * precision * recall / denominator;
   stdout.writeln(

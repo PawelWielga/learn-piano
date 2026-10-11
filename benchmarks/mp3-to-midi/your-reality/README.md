@@ -19,8 +19,14 @@ your-reality/
 Referencyjny MIDI ma **278 nut, 289,46 s**, jedną ścieżkę,
 zakres **F4–A5 (MIDI 65–81)** i **maksymalnie jedną nutę na raz**.
 Nadaje się do badania melodii, ale **nie weryfikuje polifonicznej**
-transkrypcji akordów ani basu. Nie zakładamy też, że dokładnie pokrywa się
-z wykonaniem z filmu.
+transkrypcji akordów ani basu. Plik MP3 trwa **175,54 s**, więc długość źródeł jest istotnie różna.
+Nie możemy traktować tych plików jako pary referencyjnej bez dopasowania
+aranżacji i osi czasu.
+
+Pierwszy próbny pomiar na 80 s dał F1 = **0,037** dla wysokości i początku
+nuty (4 dopasowania / 92 referencyjne, 123 rozpoznane). **Nie jest to
+wiarygodna ocena jakości algorytmu**, bo referencja nie jest zsynchronizowana
+z MP3.
 
 Importer MP3 ma limit **90 sekund**. Workflow
 [`MP3 to MIDI benchmark`](../../../.github/workflows/mp3-benchmark.yml)
