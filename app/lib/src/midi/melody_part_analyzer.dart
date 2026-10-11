@@ -31,7 +31,21 @@ class MelodyPart {
 
   bool get isPercussion => channel == 9;
   bool get isMonophonic => overlapCount == 0;
-  bool get canPractice => !isPercussion && notes.isNotEmpty;
+  // Two overlapping copies of the *same pitch* cannot be separately
+  // represented by real pressed-key state; do not silently count both.
+  bool get hasUnplayableRepeat {
+    final lastEndByPitch = <int, int>{};
+    for (final note in notes) {
+      if ((lastEndByPitch[note.midiNote] ?? -1) > note.startTick) {
+        return true;
+      }
+      lastEndByPitch[note.midiNote] = note.endTick;
+    }
+    return false;
+  }
+
+  bool get canPractice =>
+      !isPercussion && notes.isNotEmpty && !hasUnplayableRepeat;
 
   String get displayName => trackName?.trim().isNotEmpty == true
       ? trackName!.trim()
