@@ -242,8 +242,8 @@ zatrzymuje job build, więc deployment nie może wystartować.
 ## Ustawienia czułości i tolerancji strojenia
 
 Na ekranie głównym wybierz **Ustawienia mikrofonu**. Dwa niezależne
-przełączniki dotyczą wyłącznie rozpoznawania przez mikrofon w testerze
-i podczas ćwiczeń, nie gry na ekranowej klawiaturze:
+przełączniki dotyczą wyłącznie rozpoznawania przez mikrofon w testerze,
+podczas ćwiczeń i nagrywania nut, nie gry na ekranowej klawiaturze:
 
 - **Zwiększona czułość mikrofonu** zmniejsza minimalny RMS z `0.015`
   do `0.005`, aby można było wykrywać cichsze nuty.
