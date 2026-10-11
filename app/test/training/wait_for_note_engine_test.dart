@@ -89,10 +89,8 @@ void main() {
   });
 
   test('chord rejects wrong keys and reset clears partial matches', () {
-    final engine = engineFor([
-      midiNote(60, 0, 500),
-      midiNote(64, 0, 500),
-    ])..start();
+    final engine = engineFor([midiNote(60, 0, 500), midiNote(64, 0, 500)])
+      ..start();
     expect(engine.onNoteEvent(on(61)).attempt, TrainingAttempt.incorrect);
     expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.ignored);
     expect(engine.snapshot.matchedMidiNotes, {60});
