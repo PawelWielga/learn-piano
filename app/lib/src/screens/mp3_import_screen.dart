@@ -109,9 +109,7 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
       }
     } catch (_) {
       if (mounted && request == _request) {
-        setState(
-          () => _error = 'Nie udało się przeanalizować pliku MP3.',
-        );
+        setState(() => _error = 'Nie udało się przeanalizować pliku MP3.');
       }
     } finally {
       if (mounted && request == _request) {
