@@ -11,6 +11,7 @@ import 'package:learn_piano/src/instrument/instrument_range.dart';
 import 'package:learn_piano/src/midi/melody_part_analyzer.dart';
 import 'package:learn_piano/src/midi/midi_file_picker.dart';
 import 'package:learn_piano/src/midi/midi_parser.dart';
+import 'package:learn_piano/src/pitch/detection_preferences.dart';
 import 'package:learn_piano/src/screens/midi_import_screen.dart';
 import 'package:learn_piano/src/screens/training_screen.dart';
 import 'package:learn_piano/src/widgets/training_stage.dart';
@@ -54,14 +55,19 @@ class TrainingAudioFake implements AudioInput {
 
   void interrupt() => _statuses.add(AudioInputStatus.interrupted);
 
-  void tone(int midi, int timeMs) {
-    final hz = 440.0 * math.pow(2, (midi - 69) / 12);
+  void tone(
+    int midi,
+    int timeMs, {
+    double gain = 0.35,
+    double detuningCents = 0,
+  }) {
+    final hz = 440.0 * math.pow(2, (midi - 69 + detuningCents / 100) / 12);
     _frames.add(
       PcmFrame(
         samples: Float32List.fromList(
           List<double>.generate(
             2048,
-            (i) => 0.35 * math.sin(2 * math.pi * hz * i / 48000),
+            (i) => gain * math.sin(2 * math.pi * hz * i / 48000),
           ),
         ),
         sampleRate: 48000,
@@ -164,6 +170,7 @@ Future<void> launch(
   WidgetTester tester,
   TrainingAudioFake fake, {
   NoteOutput? noteOutput,
+  DetectionPreferences? detectionPreferences,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -172,6 +179,7 @@ Future<void> launch(
         instrumentRange: const InstrumentRange(48, 72),
         audioInput: fake,
         noteOutput: noteOutput,
+        detectionPreferences: detectionPreferences,
       ),
     ),
   );
@@ -207,6 +215,46 @@ Future<void> startExercise(WidgetTester tester, TrainingAudioFake fake) async {
 }
 
 void main() {
+  testWidgets('quiet notes score only with increased sensitivity', (
+    tester,
+  ) async {
+    final fake = TrainingAudioFake();
+    await launch(
+      tester,
+      fake,
+      detectionPreferences: const DetectionPreferences(
+        increasedSensitivity: true,
+      ),
+    );
+    await startExercise(tester, fake);
+
+    for (final time in [500, 630, 760]) {
+      fake.tone(60, time, gain: 0.01);
+    }
+    await tester.pump();
+    expect(find.text('1 / 3 nut'), findsOneWidget);
+  });
+
+  testWidgets('off-tune piano notes score with expanded tuning tolerance', (
+    tester,
+  ) async {
+    final fake = TrainingAudioFake();
+    await launch(
+      tester,
+      fake,
+      detectionPreferences: const DetectionPreferences(
+        widerTuningTolerance: true,
+      ),
+    );
+    await startExercise(tester, fake);
+
+    for (final time in [500, 630, 760]) {
+      fake.tone(60, time, detuningCents: 42);
+    }
+    await tester.pump();
+    expect(find.text('1 / 3 nut'), findsOneWidget);
+  });
+
   testWidgets('MIDI preview plays on schedule without scoring practice', (
     tester,
   ) async {
