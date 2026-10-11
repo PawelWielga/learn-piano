@@ -36,13 +36,11 @@ class MelodyPart {
   bool get hasUnplayableRepeat {
     final lastEndByPitch = <int, int>{};
     for (final note in notes) {
-      if ((lastEndByPitch[note.midiNote] ?? -1) > note.startTick) {
-        return true;
+      final previousEnd = lastEndByPitch[note.midiNote] ?? -1;
+      if (previousEnd > note.startTick) return true;
+      if (note.endTick > previousEnd) {
+        lastEndByPitch[note.midiNote] = note.endTick;
       }
-      lastEndByPitch[note.midiNote] =
-          note.endTick > (lastEndByPitch[note.midiNote] ?? -1)
-          ? note.endTick
-          : lastEndByPitch[note.midiNote]!;
     }
     return false;
   }
