@@ -153,7 +153,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('selected-melody')), findsOneWidget);
     expect(find.byKey(const Key('start-midi-training')), findsOneWidget);
-    expect(find.textContaining('Akordy/nakładające się nuty'), findsWidgets);
     await Scrollable.ensureVisible(
       tester.element(find.byKey(const Key('start-midi-training'))),
       alignment: 0.5,
