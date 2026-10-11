@@ -102,6 +102,11 @@ void main() {
       find.byKey(const Key('open-microphone-preview')),
       -200,
     );
+    await Scrollable.ensureVisible(
+      tester.element(find.byKey(const Key('open-microphone-preview'))),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('open-microphone-preview')));
     await tester.pumpAndSettle();
