@@ -12,6 +12,8 @@ import '../layout/landscape_gate.dart';
 import '../midi/melody_part_analyzer.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';
+import '../pitch/detection_preferences.dart';
+import '../pitch/detection_preferences_store_factory.dart';
 import '../training/training_input_mode.dart';
 import '../training/wait_for_note_engine.dart';
 import '../widgets/training_stage.dart';
@@ -29,6 +31,7 @@ class TrainingScreen extends StatefulWidget {
     this.songTitle,
     this.audioInput,
     this.noteOutput,
+    this.detectionPreferences,
   });
 
   final MelodySelection selection;
@@ -40,6 +43,9 @@ class TrainingScreen extends StatefulWidget {
 
   /// Injectable for tests; web playback is initialized on the first key press.
   final NoteOutput? noteOutput;
+
+  /// Injected by tests; otherwise loaded from browser preferences.
+  final DetectionPreferences? detectionPreferences;
 
   @override
   State<TrainingScreen> createState() => _TrainingScreenState();
@@ -57,8 +63,8 @@ class _TrainingScreenState extends State<TrainingScreen>
   int? _autoActiveIndex;
   Duration? _autoPlayhead;
 
-  final PitchDetector _detector = const PitchDetector();
-  final NoteEventTracker _tracker = NoteEventTracker();
+  late final PitchDetector _detector;
+  late final NoteEventTracker _tracker;
   StreamSubscription<PcmFrame>? _frames;
   StreamSubscription<AudioInputStatus>? _statuses;
 
@@ -85,6 +91,17 @@ class _TrainingScreenState extends State<TrainingScreen>
     _snapshot = _engine.snapshot;
     _input = widget.audioInput ?? createAudioInput();
     _output = widget.noteOutput ?? createNoteOutput();
+    DetectionPreferences preferences;
+    try {
+      preferences =
+          widget.detectionPreferences ??
+          createDetectionPreferencesStore().load() ??
+          const DetectionPreferences();
+    } catch (_) {
+      preferences = const DetectionPreferences();
+    }
+    _detector = preferences.createDetector();
+    _tracker = preferences.createTracker();
     _autoClock = AnimationController(vsync: this)
       ..addListener(_onAutoFrame)
       ..addStatusListener((status) {

@@ -7,6 +7,8 @@ import '../audio/audio_input.dart';
 import '../audio/audio_input_factory.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';
+import '../pitch/detection_preferences.dart';
+import '../pitch/detection_preferences_store_factory.dart';
 import '../instrument/instrument_range.dart';
 import '../layout/landscape_gate.dart';
 import '../instrument/instrument_range_store.dart';
@@ -14,11 +16,17 @@ import '../instrument/instrument_range_store_factory.dart';
 import '../widgets/piano_keyboard.dart';
 
 class MicrophonePreviewScreen extends StatefulWidget {
-  const MicrophonePreviewScreen({super.key, this.audioInput, this.rangeStore});
+  const MicrophonePreviewScreen({
+    super.key,
+    this.audioInput,
+    this.rangeStore,
+    this.detectionPreferences,
+  });
 
   /// Allows widget tests to inject a fake rather than opening a real device.
   final AudioInput? audioInput;
   final InstrumentRangeStore? rangeStore;
+  final DetectionPreferences? detectionPreferences;
 
   @override
   State<MicrophonePreviewScreen> createState() =>
@@ -31,8 +39,8 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   StreamSubscription<PcmFrame>? _frameSubscription;
   StreamSubscription<AudioInputStatus>? _statusSubscription;
 
-  final _detector = const PitchDetector();
-  final _tracker = NoteEventTracker();
+  late final PitchDetector _detector;
+  late final NoteEventTracker _tracker;
   PitchEstimate? _candidate;
   NoteDetectionUpdate? _noteStatus;
   NoteEvent? _lastNoteOn;
@@ -52,6 +60,17 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   void initState() {
     super.initState();
     _input = widget.audioInput ?? createAudioInput();
+    DetectionPreferences preferences;
+    try {
+      preferences =
+          widget.detectionPreferences ??
+          createDetectionPreferencesStore().load() ??
+          const DetectionPreferences();
+    } catch (_) {
+      preferences = const DetectionPreferences();
+    }
+    _detector = preferences.createDetector();
+    _tracker = preferences.createTracker();
     _loadInstrumentRange();
     _frameSubscription = _input.frames.listen(_onFrame);
     _statusSubscription = _input.statuses.listen((status) {
@@ -389,7 +408,7 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Detekcja obejmuje pojedyncze nuty (około F#2–F#6). '
+                    'Detekcja obejmuje pojedyncze nuty (około C2–F#6). '
                     'Akordy i hałas mogą dawać niepewne wyniki.',
                     style: theme.textTheme.bodySmall,
                   ),

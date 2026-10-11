@@ -238,3 +238,24 @@ Oba workflowy GitHub Actions uruchamiają format, `flutter analyze`,
 `flutter test`, testy mostków JS oraz `flutter build web --release
 --base-href /learn-piano/` **przed** publikacją strony. Nieudany test
 zatrzymuje job build, więc deployment nie może wystartować.
+
+## Ustawienia czułości i tolerancji strojenia
+
+Na ekranie głównym wybierz **Ustawienia mikrofonu**. Dwa niezależne
+przełączniki dotyczą wyłącznie rozpoznawania przez mikrofon w testerze,
+podczas ćwiczeń i nagrywania nut, nie gry na ekranowej klawiaturze:
+
+- **Zwiększona czułość mikrofonu** zmniejsza minimalny RMS z `0.015`
+  do `0.005`, aby można było wykrywać cichsze nuty.
+- **Większa tolerancja strojenia** dopuszcza odchylenie od najbliższej
+  nuty MIDI do **±45 centów**, zamiast domyślnych ±35. Granica 50 centów
+  oznacza sąsiedni półton, dlatego nie rozszerzamy tolerancji ponad nią.
+
+Obie opcje są domyślnie wyłączone. Po zmianie są lokalnie zapisywane
+w `localStorage` pod kluczem `learn-piano.detection-preferences.v1` i stosowane
+przy otwarciu testera mikrofonu lub treningu. Nie zmieniają samego sygnału
+PCM, strojenia A4=440 Hz, numerów MIDI ani jakości mikrofonu. Większa
+czułość może powodować przypadkowe trafienia z szumu lub pogłosu; jeśli
+tak się dzieje, wyłącz opcję. Przy zablokowanym `localStorage` ustawienia
+pozostają dostępne do zamknięcia karty. Testy jednostkowe weryfikują
+ciche i rozstrojone dźwięki, a test Node sprawdza zapis i tryb awaryjny.

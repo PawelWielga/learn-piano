@@ -10,6 +10,8 @@ import '../instrument/instrument_range.dart';
 import '../instrument/instrument_range_store.dart';
 import '../instrument/instrument_range_store_factory.dart';
 import '../layout/landscape_gate.dart';
+import '../pitch/detection_preferences.dart';
+import '../pitch/detection_preferences_store_factory.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/pitch_detector.dart';
 import '../recording/midi_recording_export.dart';
@@ -28,12 +30,14 @@ class RecordingScreen extends StatefulWidget {
     this.noteOutput,
     this.exporter,
     this.rangeStore,
+    this.detectionPreferences,
   });
 
   final AudioInput? audioInput;
   final NoteOutput? noteOutput;
   final MidiRecordingExporter? exporter;
   final InstrumentRangeStore? rangeStore;
+  final DetectionPreferences? detectionPreferences;
 
   @override
   State<RecordingScreen> createState() => _RecordingScreenState();
@@ -45,8 +49,8 @@ class _RecordingScreenState extends State<RecordingScreen>
   late final NoteOutput _output;
   late final MidiRecordingExporter _exporter;
   final NoteRecorder _recorder = NoteRecorder();
-  final PitchDetector _detector = const PitchDetector();
-  final NoteEventTracker _tracker = NoteEventTracker();
+  late final PitchDetector _detector;
+  late final NoteEventTracker _tracker;
   final Stopwatch _keyboardClock = Stopwatch();
   final Set<int> _heldKeys = {};
   StreamSubscription<PcmFrame>? _frames;
@@ -72,6 +76,17 @@ class _RecordingScreenState extends State<RecordingScreen>
     _input = widget.audioInput ?? createAudioInput();
     _output = widget.noteOutput ?? createNoteOutput();
     _exporter = widget.exporter ?? createMidiRecordingExporter();
+    DetectionPreferences preferences;
+    try {
+      preferences =
+          widget.detectionPreferences ??
+          createDetectionPreferencesStore().load() ??
+          const DetectionPreferences();
+    } catch (_) {
+      preferences = const DetectionPreferences();
+    }
+    _detector = preferences.createDetector();
+    _tracker = preferences.createTracker();
     WidgetsBinding.instance.addObserver(this);
     _frames = _input.frames.listen(_onFrame);
     _statuses = _input.statuses.listen(_onStatus);
