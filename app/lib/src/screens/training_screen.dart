@@ -167,7 +167,8 @@ class _TrainingScreenState extends State<TrainingScreen>
       setState(() => _error = 'Nie można odtworzyć MIDI w tej przeglądarce.');
       return;
     }
-    final end = notes.map((note) => note.start + note.duration)
+    final end = notes
+        .map((note) => note.start + note.duration)
         .reduce((a, b) => a > b ? a : b);
     final total = end - notes.first.start;
     _autoClock.duration = total > Duration.zero
@@ -178,7 +179,9 @@ class _TrainingScreenState extends State<TrainingScreen>
       _autoPlaying = true;
       _autoNextIndex = 1;
       _autoActiveIndex = 0;
-      _autoActiveIndices..clear()..add(0);
+      _autoActiveIndices
+        ..clear()
+        ..add(0);
       _autoPlayhead = notes.first.start;
       _error = null;
     });
@@ -308,8 +311,8 @@ class _TrainingScreenState extends State<TrainingScreen>
       if (polyphonic
           ? quiet && _polyTracker.activeNotes.isEmpty
           : pitch == null &&
-              detected!.stableNote == null &&
-              detected.candidateNote == null) {
+                detected!.stableNote == null &&
+                detected.candidateNote == null) {
         _quietSince ??= frame.capturedAt;
         if (frame.capturedAt - _quietSince! >=
             const Duration(milliseconds: 240)) {
@@ -332,8 +335,8 @@ class _TrainingScreenState extends State<TrainingScreen>
     setState(() {
       _stableNote = polyphonic
           ? (_polyTracker.activeNotes.isEmpty
-              ? null
-              : _polyTracker.activeNotes.first)
+                ? null
+                : _polyTracker.activeNotes.first)
           : detected!.stableNote;
       _snapshot = updated;
     });
@@ -556,10 +559,10 @@ class _TrainingScreenState extends State<TrainingScreen>
     final attemptLabel = _snapshot.matchedMidiNotes.isNotEmpty
         ? 'Trzymaj wszystkie nuty akordu jednocześnie.'
         : switch (_snapshot.lastAttempt) {
-      TrainingAttempt.ignored => 'Zagraj wskazaną nutę.',
-      TrainingAttempt.correct => 'Dobrze! Przejdź do kolejnej nuty.',
-      TrainingAttempt.incorrect => 'Inna nuta. Spróbuj ponownie.',
-    };
+            TrainingAttempt.ignored => 'Zagraj wskazaną nutę.',
+            TrainingAttempt.correct => 'Dobrze! Przejdź do kolejnej nuty.',
+            TrainingAttempt.incorrect => 'Inna nuta. Spróbuj ponownie.',
+          };
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -578,15 +581,17 @@ class _TrainingScreenState extends State<TrainingScreen>
                     : widget.selection.notes[_autoActiveIndex!].midiNote
               : _snapshot.expectedMidiNote,
           expectedNotes: _autoPlaying
-              ? _autoActiveIndices.map((i) => widget.selection.notes[i].midiNote).toSet()
+              ? _autoActiveIndices
+                    .map((i) => widget.selection.notes[i].midiNote)
+                    .toSet()
               : _snapshot.expectedMidiNotes,
           detectedNotes: _autoPlaying
               ? const <int>{}
               : _mode == TrainingInputMode.keyboard
-                  ? _heldKeyboardNotes
-                  : widget.selection.part.isMonophonic
-                      ? <int>{if (_stableNote != null) _stableNote!}
-                      : _polyTracker.activeNotes,
+              ? _heldKeyboardNotes
+              : widget.selection.part.isMonophonic
+              ? <int>{if (_stableNote != null) _stableNote!}
+              : _polyTracker.activeNotes,
           detectedNote: _autoPlaying
               ? null
               : _mode == TrainingInputMode.keyboard
