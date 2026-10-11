@@ -30,8 +30,6 @@ jobs:
           node-version: '22'
       - name: Resolve dependencies
         run: flutter pub get
-      - name: Show temporary MP3 formatter output
-        run: dart format --output=show lib/src/audio/audio_file_picker.dart lib/src/recording/mp3_note_transcriber.dart lib/src/screens/mp3_import_screen.dart test/recording/mp3_note_transcriber_test.dart test/screens/mp3_import_screen_test.dart
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
