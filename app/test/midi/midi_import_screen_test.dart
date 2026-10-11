@@ -150,9 +150,12 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('poly-preview-open-0-0')));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('polyphonic-midi-preview')),
+      180,
+    );
     expect(find.byKey(const Key('polyphonic-midi-preview')), findsOneWidget);
     expect(find.byKey(const Key('falling-notes-canvas')), findsOneWidget);
     expect(find.byKey(const Key('start-midi-training')), findsNothing);
   });
-
 }
