@@ -78,7 +78,9 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: Mp3ImportScreen(picker: picker)));
     expect(picker.preparations, 1);
     expect(
-      tester.widget<FilledButton>(find.byKey(const Key('mp3-select'))).onPressed,
+      tester
+          .widget<FilledButton>(find.byKey(const Key('mp3-select')))
+          .onPressed,
       isNull,
     );
     expect(picker.picks, 0);
@@ -86,7 +88,9 @@ void main() {
     picker.ready.complete();
     await tester.pumpAndSettle();
     expect(
-      tester.widget<FilledButton>(find.byKey(const Key('mp3-select'))).onPressed,
+      tester
+          .widget<FilledButton>(find.byKey(const Key('mp3-select')))
+          .onPressed,
       isNotNull,
     );
     await tester.tap(find.byKey(const Key('mp3-select')));
@@ -116,7 +120,6 @@ void main() {
     expect(picker.picks, 1);
     expect(find.text('Rozpoznane nuty: 1'), findsOneWidget);
   });
-
 
   testWidgets('selects MP3, recognizes notes and exports playable MIDI', (
     tester,
