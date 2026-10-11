@@ -281,7 +281,7 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                               if (rangeCheck!.canPractice)
                                 const Text(
                                   'Wszystkie nuty mieszczą się w zakresie. '
-                                  'Melodia jest gotowa do treningu.',
+                                  'Partia jest gotowa do treningu.',
                                   key: Key('selected-range-ok'),
                                 )
                               else
@@ -380,8 +380,8 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                     )
                   else
                     const Text(
-                      'Wybierz jedną z partii jednogłosowych poniżej. '
-                      'Akordy oraz perkusja nie są obsługiwane w treningu.',
+                      'Wybierz partię do ćwiczenia. Obsługujemy również akordy '
+                      'i nakładające się nuty. Perkusja nie jest obsługiwana.',
                       key: Key('melody-selection-hint'),
                     ),
                   const SizedBox(height: 20),
@@ -479,7 +479,7 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                                                     : part.overlapCount > 0
                                                     ? 'Akordy/nakładające się nuty: '
                                                           '${part.overlapCount}. '
-                                                          'Ta partia nie nadaje się do treningu.'
+                                                          'Dotknij, aby ćwiczyć akordy.'
                                                     : 'Melodia jednogłosowa. Dotknij, aby wybrać.',
                                                 key: Key(
                                                   'melody-status-${part.trackIndex}-${part.channel}',
