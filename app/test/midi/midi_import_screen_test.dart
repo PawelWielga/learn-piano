@@ -148,6 +148,11 @@ void main() {
       find.byKey(const Key('poly-preview-open-0-0')),
       160,
     );
+    await Scrollable.ensureVisible(
+      tester.element(find.byKey(const Key('poly-preview-open-0-0'))),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('poly-preview-open-0-0')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
