@@ -280,6 +280,8 @@ potwierdzenia, zakończenia i heurystykę ponownego uderzenia. Krótki
 próg RMS wyznacza przybliżone momenty ataku i zaniku. Eksport do istniejącego
 SMF typu 0 zapisuje równoczesne NoteOn/NoteOff na jednym kanale.
 Rozdzielanie ścieżek według samego rejestru byłoby niewiarygodne.
+Ekran importu MIDI pozwala obejrzeć wielogłosowe partie w podglądzie
+spadających nut, ale trening Wait for Note nadal wymaga jednej nuty naraz.
 
 Pliki do **12 MB / 90 sekund**, bez uploadu ani zależności od backendu.
 Postęp i anulowanie są dostępne na ekranie. Pętla oddaje sterowanie Flutterowi
