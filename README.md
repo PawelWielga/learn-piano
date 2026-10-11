@@ -115,3 +115,17 @@ Landing page Jaspr, natywne Android/iOS, akordy, nagrywanie melodii do MIDI, got
 ## Aktualny stan
 
 M0 jest zrealizowane. W M1 tester mikrofonu wykrywa kandydackie nuty (YIN) oraz stabilizuje zdarzenia NoteOn/NoteOff. W M2 można lokalnie importować MIDI typu 0/1, wybierać jednogłosową partię, ustawić zakres instrumentu i oglądać spadające nuty nad klawiaturą (#8–#12). W M3 działa trening Wait for Note (#13–#14): po wyborze partii zgodnej z zakresem wybierz **Rozpocznij trening**, następnie **Start i mikrofon**. Każda stabilnie rozpoznana poprawna nuta przesuwa melodię, błędna nie zmienia postępu, a powtórzenie dźwięku wymaga oddzielnego uderzenia. Przy rozpoczęciu i wznowieniu trzeba najpierw wyciszyć instrument na krótką chwilę, aby już brzmiący dźwięk nie został zaliczony. Pauza, reset, ukończenie oraz wyjście z treningu wyłączają mikrofon. Rzeczywista jakość detekcji i wydajność wymagają testów na pianinie i przeglądarkach mobilnych. Szczegóły: [app/README.md](app/README.md).
+
+## Nagrywanie nut do MIDI
+
+Na ekranie głównym wybierz **Nagraj własną melodię**. Wybierz źródło nut:
+**pianino przez mikrofon** (pozwolenie dopiero po wciśnięciu nagrywania, rozpoznawanie pojedynczych nut)
+lub **klawiatura ekranowa** (wielodotyk i odsłuch naciskanych klawiszy).
+Wciśnij **Rozpocznij nagrywanie**, zagraj melodię i wybierz **Zatrzymaj**.
+Przycisk **Zapisz MIDI** pobiera lokalny plik `.mid` (SMF typ 0, 120 BPM),
+który można później ponownie zaimportować. Zachowywane są numery MIDI, czasy
+rozpoczęcia i zakończenia nut, nie surowe audio. Nagranie jest tylko w pamięci
+otwartej strony do czasu pobrania; rozpoczęcie nowego zastępuje poprzednie.
+Przerwanie mikrofonu lub przejście aplikacji w tło kończy nagranie z zachowaniem
+już rozpoznanych nut. Detekcja akustyczna jest monofoniczna i przybliża momenty
+naciśnięcia i puszczenia klawiszy na podstawie dźwięku.

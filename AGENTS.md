@@ -26,7 +26,9 @@ Starsza dokumentacja opisuje Android APK jako pierwszy prototyp. **To założeni
 - **M2 — MIDI i wizualizacja:** lokalny import `.mid`/`.midi`, wybór monofonicznej partii, konfiguracja faktycznego zakresu instrumentu, wirtualna klawiatura i spadające nuty.
 - **M3 — trening:** tryb „Wait for Note”, który przechodzi do kolejnej nuty dopiero po poprawnym, osobnym uderzeniu; pełny przepływ ekranów, testy i dopracowanie mobilnego UX.
 
-**Poza MVP 1:** aplikacje natywne Android/iOS, landing page Jaspr, konta, backend, synchronizacja w chmurze, gotowa biblioteka komercyjnych utworów, rozpoznawanie akordów, nagrywanie audio do MIDI, transpozycja i statystyki. Nie implementuj ich przy okazji innych zadań.
+Nagrywanie nut do MIDI (z mikrofonu lub klawiatury ekranowej) zostało dodane osobnym wymaganiem użytkownika. Nie przechowujemy surowego audio.
+
+**Poza MVP 1:** aplikacje natywne Android/iOS, landing page Jaspr, konta, backend, synchronizacja w chmurze, gotowa biblioteka komercyjnych utworów, rozpoznawanie akordów, transpozycja i statystyki. Nie implementuj ich przy okazji innych zadań.
 
 ## 3. Stack i układ repozytorium
 
