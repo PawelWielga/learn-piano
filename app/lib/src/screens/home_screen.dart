@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'microphone_preview_screen.dart';
+import 'detection_settings_screen.dart';
 import 'recording_screen.dart';
 import 'midi_import_screen.dart';
 import 'instrument_range_screen.dart';
@@ -93,6 +94,22 @@ class HomeScreen extends StatelessWidget {
                   },
                   icon: const Icon(Icons.tune),
                   label: const Text('Ustaw zakres klawiatury'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  key: const Key('open-detection-settings'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const DetectionSettingsScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.settings_input_component),
+                  label: const Text('Ustawienia mikrofonu'),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size.fromHeight(56),
                   ),
