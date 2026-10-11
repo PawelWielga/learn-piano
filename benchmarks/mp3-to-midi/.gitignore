@@ -1,0 +1,8 @@
+# Do not commit audio or MIDI without explicitly verifying redistribution rights.
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.ogg
+*.mid
+*.midi
