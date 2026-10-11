@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
@@ -18,6 +19,31 @@ class _AudioFileFake implements AudioFilePicker {
     picks++;
     if (failure case final e?) throw e;
     return selected;
+  }
+}
+
+class _PreparableFileFake extends _AudioFileFake
+    implements PreparableAudioFilePicker {
+  final Completer<void> ready = Completer<void>();
+  int preparations = 0;
+
+  @override
+  Future<void> prepare() {
+    preparations++;
+    return ready.future;
+  }
+}
+
+class _RetryPickerFake extends _AudioFileFake
+    implements PreparableAudioFilePicker {
+  int preparations = 0;
+
+  @override
+  Future<void> prepare() async {
+    preparations++;
+    if (preparations == 1) {
+      throw const AudioFilePickException('Nie załadowano modułu MP3.');
+    }
   }
 }
 
@@ -45,6 +71,53 @@ DecodedAudioFile _shortNote() {
 }
 
 void main() {
+  testWidgets('file chooser stays disabled until the browser bridge is ready', (
+    tester,
+  ) async {
+    final picker = _PreparableFileFake()..selected = _shortNote();
+    await tester.pumpWidget(MaterialApp(home: Mp3ImportScreen(picker: picker)));
+    expect(picker.preparations, 1);
+    expect(
+      tester.widget<FilledButton>(find.byKey(const Key('mp3-select'))).onPressed,
+      isNull,
+    );
+    expect(picker.picks, 0);
+
+    picker.ready.complete();
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<FilledButton>(find.byKey(const Key('mp3-select'))).onPressed,
+      isNotNull,
+    );
+    await tester.tap(find.byKey(const Key('mp3-select')));
+    await tester.pumpAndSettle();
+    expect(picker.picks, 1);
+    expect(find.text('Rozpoznane nuty: 1'), findsOneWidget);
+  });
+
+  testWidgets('bridge load error offers retry instead of blaming MP3 file', (
+    tester,
+  ) async {
+    final picker = _RetryPickerFake()..selected = _shortNote();
+    await tester.pumpWidget(MaterialApp(home: Mp3ImportScreen(picker: picker)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Nie załadowano modułu MP3.'), findsOneWidget);
+    expect(picker.picks, 0);
+    expect(find.text('Ponów przygotowanie wyboru MP3'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('mp3-select')));
+    await tester.pumpAndSettle();
+    expect(picker.preparations, 2);
+    expect(find.text('Wybierz plik MP3'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('mp3-select')));
+    await tester.pumpAndSettle();
+    expect(picker.picks, 1);
+    expect(find.text('Rozpoznane nuty: 1'), findsOneWidget);
+  });
+
+
   testWidgets('selects MP3, recognizes notes and exports playable MIDI', (
     tester,
   ) async {
