@@ -48,7 +48,7 @@ void main() {
   testWidgets('selects MP3, recognizes notes and exports playable MIDI', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(844, 390);
+    tester.view.physicalSize = const Size(1000, 640);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
