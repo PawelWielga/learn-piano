@@ -120,9 +120,7 @@ void main() {
     expect(find.byKey(const Key('midi-import-error')), findsNothing);
   });
 
-  testWidgets('polyphonic MIDI can be previewed, but not practiced', (
-    tester,
-  ) async {
+  testWidgets('polyphonic MIDI can be selected and trained', (tester) async {
     final chords = midiFixture(
       format: 0,
       tracks: [
@@ -142,26 +140,23 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('choose-midi-file')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('2 nut'), findsWidgets);
-    expect(find.byKey(const Key('start-midi-training')), findsNothing);
     await tester.scrollUntilVisible(
-      find.byKey(const Key('poly-preview-open-0-0')),
+      find.byKey(const Key('melody-part-0-0')),
       160,
     );
+    await tester.tap(find.byKey(const Key('melody-part-0-0')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('selected-melody')), findsOneWidget);
+    expect(find.byKey(const Key('start-midi-training')), findsOneWidget);
+    expect(find.textContaining('Akordy/nakładające się nuty'), findsWidgets);
     await Scrollable.ensureVisible(
-      tester.element(find.byKey(const Key('poly-preview-open-0-0'))),
+      tester.element(find.byKey(const Key('start-midi-training'))),
       alignment: 0.5,
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('poly-preview-open-0-0')));
+    await tester.tap(find.byKey(const Key('start-midi-training')));
     await tester.pumpAndSettle();
-    await Scrollable.ensureVisible(
-      tester.element(find.byKey(const Key('polyphonic-midi-preview'))),
-      alignment: 0.2,
-    );
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('polyphonic-midi-preview')), findsOneWidget);
-    expect(find.byKey(const Key('falling-notes-canvas')), findsOneWidget);
-    expect(find.byKey(const Key('start-midi-training')), findsNothing);
+    expect(find.byKey(const Key('training-progress')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
