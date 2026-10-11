@@ -14,7 +14,7 @@ Docelowy adres GitHub Pages po uruchomieniu publikacji:
 **Kolejność źródeł wymagań:**
 1. Bieżące polecenie użytkownika i zaakceptowany zakres danego GitHub Issue.
 2. Zbiorcze [MVP 1 — issue #18](https://github.com/PawelWielga/learn-piano/issues/18) oraz powiązane issues #1–#17.
-3. Ten plik i aktualna implementacja.
+3. [Roadmapa stabilizacji — issue #67](https://github.com/PawelWielga/learn-piano/issues/67), ten plik i aktualna implementacja.
 4. [docs/project-concept.md](docs/project-concept.md) oraz [README.md](README.md) jako kontekst produktu.
 
 Starsza dokumentacja opisuje Android APK jako pierwszy prototyp. **To założenie jest nieaktualne**; aktualny kierunek to najpierw Flutter Web i testy mikrofonu w przeglądarce. Aktualizacja dokumentacji jest śledzona w issue #17.
@@ -22,13 +22,13 @@ Starsza dokumentacja opisuje Android APK jako pierwszy prototyp. **To założeni
 ## 2. Zakres i etapy MVP 1
 
 - **M0 — fundament:** aplikacja Flutter Web w `app/`, CI dla PR oraz automatyczny build i publikacja GitHub Pages przez GitHub Actions.
-- **M1 — proof of concept:** przechwytywanie dźwięku z mikrofonu, detekcja pojedynczej nuty z oktawą, stabilizacja zdarzeń i ekran testera. Sprawdzamy skuteczność na prawdziwym pianinku, zanim rozbudujemy produkt.
+- **M1 — proof of concept:** przechwytywanie dźwięku z mikrofonu, detekcja pojedynczej nuty z oktawą, stabilizacja zdarzeń i ekran testera. Jakość na prawdziwym pianinie wymaga późniejszej walidacji (#7); do czasu dostępności sprzętu prowadzimy testy syntetyczne i benchmarki (#55–#57), bez przedstawiania ich jako testów fizycznego instrumentu.
 - **M2 — MIDI i wizualizacja:** lokalny import `.mid`/`.midi`, wybór monofonicznej partii, konfiguracja faktycznego zakresu instrumentu, wirtualna klawiatura i spadające nuty.
 - **M3 — trening:** tryb „Wait for Note”, który przechodzi do kolejnej nuty dopiero po poprawnym, osobnym uderzeniu; pełny przepływ ekranów, testy i dopracowanie mobilnego UX.
 
 Nagrywanie nut do MIDI (z mikrofonu lub klawiatury ekranowej) zostało dodane osobnym wymaganiem użytkownika. Nie przechowujemy surowego audio.
 
-**Poza MVP 1:** aplikacje natywne Android/iOS, landing page Jaspr, konta, backend, synchronizacja w chmurze, gotowa biblioteka komercyjnych utworów, rozpoznawanie akordów, transpozycja i statystyki. Nie implementuj ich przy okazji innych zadań.
+**Poza MVP 1:** aplikacje natywne Android/iOS, landing page Jaspr, konta, backend, synchronizacja w chmurze, gotowa biblioteka komercyjnych utworów, transpozycja i statystyki. Wykrywanie akordów i trening akordowy istnieją eksperymentalnie, lecz nie mają jeszcze potwierdzonej jakości na fizycznym instrumencie. Nie implementuj ich przy okazji innych zadań.
 
 ## 3. Stack i układ repozytorium
 
@@ -61,14 +61,27 @@ Jeśli moduły audio, MIDI lub treningu trzeba rozdzielić, preferuj na począte
 
 1. Oddziel **źródło audio**, **algorytm pitch detection**, **stabilizację zdarzeń nut**, **parser MIDI**, **silnik treningu** oraz **prezentację**. Komponenty logiki powinny działać bez widgetów i bez przeglądarkowego mikrofonu.
 2. Modeluj nuty przede wszystkim jako **numery MIDI (0–127)**; nazwy typu `C4` i częstotliwości to reprezentacje pochodne. Utrzymaj konsekwentną konwencję oktaw (MIDI 60 = C4) i standardowe strojenie A4 = 440 Hz, o ile wymagania nie mówią inaczej.
-3. Detektor rozpoznaje **pojedynczy dźwięk**, nie akord. Zwracaj stan „brak wiarygodnej nuty” dla ciszy, hałasu i niepewnego pomiaru; nie przedstawiaj przypuszczeń jako pewnego trafienia.
+3. Rozdziel detekcję **pojedynczych nut** (YIN) od eksperymentalnej detekcji **akordów/wielogłosowości**. Zwracaj stan „brak wiarygodnej nuty” dla ciszy, hałasu i niepewnego pomiaru; nie przedstawiaj przypuszczeń jako pewnego trafienia.
 4. Rozdziel chwilowego kandydata pitch od **stabilnego zdarzenia NoteOn**. Jedno przytrzymanie klawisza nie może zaliczyć wielu kolejnych kroków. Sekwencja `C4, C4, C4` wymaga trzech odrębnych uderzeń; uwzględniaj wybrzmiewanie instrumentu i możliwość błędów detekcji początku dźwięku.
 5. Nie blokuj wątku UI intensywną analizą audio. Zachowaj kontrolę nad rozmiarem buforów, częstotliwością aktualizacji widoku i opóźnieniem detekcji. Zachowuj sample rate rzeczywistego wejścia.
 6. Import MIDI musi respektować `note on/off` (w tym `note on` z velocity 0), ticks/PPQ, tempo i jego zmiany, czasy nut oraz strukturę ścieżek/kanałów. Obsłuż poprawne pliki typu 0/1 w granicach MVP i błędy danych bez crasha.
-7. W treningu wybieramy pojedynczą monofoniczną partię. Wykryte akordy/nachodzące nuty oraz nuty poza zakresem fizycznej klawiatury zgłaszamy czytelnie, bez ukrytej transpozycji, automatycznego wybierania dowolnej nuty akordu lub cichego usuwania zdarzeń.
+7. W treningu wybieramy jedną partię MIDI (ścieżka/kanał). Partie monofoniczne i akordy obsługuj zgodnie z możliwościami silnika; zbyt niejednoznaczne nakładanie tego samego pitch oraz nuty poza zakresem instrumentu zgłaszaj czytelnie. Bez ukrytej transpozycji i cichego usuwania zdarzeń.
 8. **Wait for Note** porównuje zdarzenia z detektora do oczekiwanej nuty MIDI. Błędna nuta nie przesuwa postępu; pauza/reset nie zaliczają zdarzeń; postęp i animacja wynikają z tego samego stanu treningu, nie z autonomicznego zegara odtwarzania.
 9. Projektuj **mobile-first w orientacji poziomej**: czytelne klawisze, duże przyciski dotykowe i zrozumiałe komunikaty. W pionie pokaż ekran z prośbą o obrót, zachowaj stan nawigacji i ćwiczenia, a aktywny nasłuch wstrzymaj bez automatycznego wznowienia. Pokaż status mikrofonu oraz stan rozpoznawania; unikaj migotania UI.
-10. Dodawaj zależności tylko wtedy, gdy są potrzebne do bieżącego issue. Sprawdzaj wsparcie Flutter Web, aktualność, licencję i koszt rozmiaru aplikacji; nie wprowadzaj rozbudowanych frameworków bez wyraźnego powodu.
+10. **Preferuj sprawdzone biblioteki zamiast własnej implementacji typowych rozwiązań.** Dodawaj zależności wtedy, gdy rozwiązują realny problem; sprawdzaj Flutter Web, wsparcie offline, aktualność, licencje kodu/modeli/sampli, wydajność, koszt rozmiaru i złożoność integracji. Nie wprowadzaj rozbudowanych frameworków bez wyraźnego powodu.
+
+## 4a. Library-first i selektywna przebudowa (decyzja 2026-10-12)
+
+**Właściciel projektu dopuszcza zastąpienie lub napisanie od nowa całych modułów, jeśli uzasadniają to pomiary, brak utrzymywalności albo możliwość użycia sprawdzonej biblioteki.** Nie zachowuj własnego kodu wyłącznie dlatego, że już powstał. Nie oznacza to zgody na bezwarunkowy rewrite całego produktu.
+
+1. **Przed pisaniem DSP, MIDI, syntezatora, odtwarzacza lub mechanizmów przeglądarkowych od zera** zbadaj istniejące biblioteki. Preferowane kierunki do weryfikacji: `@spotify/basic-pitch` dla offline polyphonic transcription (#59), `fftea` dla FFT (#58), `@tonejs/midi` dla MIDI (#64), `Tone.js` dla syntezy/schedulingu (#62/#64) oraz `pitchy` jako alternatywa dla monofonicznego pitch detection (#57). To kandydaci, nie zatwierdzone zależności.
+2. Porównuj kandydatów na **identycznych, poprawnie zsynchronizowanych i legalnych fixturach**, mierząc accuracy (pitch/onset/offset, precision/recall/F1), fałszywe nuty, latencję, czas obliczeń, pamięć i rozmiar builda. Podawaj ograniczenia testów syntetycznych.
+3. Sprawdzaj **licencję osobno dla kodu, wag modeli, soundfontów, sampli i danych testowych**. Unikaj przypadkowego wprowadzenia copyleft lub niedozwolonej redystrybucji; żadnych zdalnych CDN ani backendu wymaganych do działania na danych audio.
+4. **Zamieniaj moduły etapami** przez testowalne interfejsy i adaptery: nowy silnik obok starego → porównanie → migracja → usunięcie zbędnego kodu. Nie trzymaj dwóch stałych implementacji bez ważnego powodu.
+5. **Wolno usunąć lub przepisać własną FFT, transkrypcję MP3, parser/writer MIDI, syntezator lub zbyt rozbudowane widżety**, jeżeli nowy moduł zachowuje wymagane funkcje i przechodzi porównawcze testy regresji. Nie przepisuj niezwiązanego UI, nawigacji ani CI tylko z przyzwyczajenia.
+6. Basic Pitch TS ma starszy stos TensorFlow.js i zgłoszenia kompatybilności mobilnej: przed wyborem konieczny jest działający proof of concept w docelowej przeglądarce i test offline (#59), a nie jedynie README biblioteki.
+7. **Bez fizycznego sprzętu** działamy na deterministycznym audio/MIDI i automatycznych przeglądarkach. Ograniczenia sprzętowe z #7 i #16 pozostają otwarte; nie raportuj tych kryteriów jako zaliczonych.
+8. Każdą większą migrację poprzedź krótkim ADR: co usuwamy, co zastępujemy, dlaczego, wymagania licencyjne, dane benchmarkowe, plan powrotu i lista testów. Główny backlog: [#67](https://github.com/PawelWielga/learn-piano/issues/67).
 
 ## 5. Mikrofon, bezpieczeństwo i prywatność
 
@@ -140,3 +153,4 @@ Uruchamianie lokalne: `flutter run -d chrome` z `app/`. Jeżeli środowisko nie 
 - [Deployment GitHub Pages — #3](https://github.com/PawelWielga/learn-piano/issues/3)
 - [Web Audio — #4](https://github.com/PawelWielga/learn-piano/issues/4)
 - [Tester nut i próby sprzętowe — #7](https://github.com/PawelWielga/learn-piano/issues/7)
+- [Stabilizacja i przebudowa library-first — #67](https://github.com/PawelWielga/learn-piano/issues/67)
