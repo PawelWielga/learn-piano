@@ -30,3 +30,11 @@ class AudioFilePickException implements Exception {
 abstract class AudioFilePicker {
   Future<DecodedAudioFile?> pickAndDecode();
 }
+
+/// Optional warm-up for web bridges needed before opening a native file picker.
+///
+/// Call on screen entry, not inside the file button callback: mobile browsers
+/// require the file chooser to open synchronously during user activation.
+abstract interface class PreparableAudioFilePicker {
+  Future<void> prepare();
+}
