@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'microphone_preview_screen.dart';
+import 'recording_screen.dart';
 import 'midi_import_screen.dart';
 import 'instrument_range_screen.dart';
 import '../instrument/instrument_range.dart';
@@ -55,6 +56,28 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   'Sprawdź zgodę na mikrofon i poziom dźwięku.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 28),
+                FilledButton.icon(
+                  key: const Key('open-note-recording'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const RecordingScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.fiber_manual_record),
+                  label: const Text('Nagraj własną melodię'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Graj przez mikrofon lub na ekranie, a potem zapisz plik MIDI.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall,
                 ),
