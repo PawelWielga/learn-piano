@@ -16,6 +16,8 @@ class TrainingSnapshot {
     required this.currentIndex,
     required this.totalNotes,
     required this.expectedMidiNote,
+    this.expectedMidiNotes = const <int>{},
+    this.matchedMidiNotes = const <int>{},
     required this.lastPlayedMidiNote,
     required this.lastAttempt,
     required this.errorMessage,
@@ -27,6 +29,10 @@ class TrainingSnapshot {
   final int currentIndex;
   final int totalNotes;
   final int? expectedMidiNote;
+  /// All pitches in the current onset group (chord).
+  final Set<int> expectedMidiNotes;
+  /// Chord pitches currently held, awaiting the other keys.
+  final Set<int> matchedMidiNotes;
   final int? lastPlayedMidiNote;
   final TrainingAttempt lastAttempt;
   final String? errorMessage;
@@ -60,9 +66,9 @@ class WaitForNoteEngine {
     required InstrumentRange instrumentRange,
   }) : _notes = List<MidiNote>.unmodifiable(selection.notes) {
     if (!selection.part.canPractice || _notes.isEmpty) {
-      _fail('Wybierz niepustą, jednogłosową partię bez perkusji.');
-    } else if (!_isOrderedAndMonophonic(_notes)) {
-      _fail('Melodia zawiera nakładające się lub niepoprawne nuty.');
+      _fail('Wybierz niepustą partię bez perkusji.');
+    } else if (!_isOrderedAndValid(_notes)) {
+      _fail('Melodia zawiera niepoprawne lub nieuporządkowane nuty.');
     } else if (!instrumentRange
         .checkNotes(_notes.map((note) => note.midiNote))
         .canPractice) {
@@ -72,6 +78,24 @@ class WaitForNoteEngine {
 
   final List<MidiNote> _notes;
   final Set<int> _pressedNotes = <int>{};
+  final Set<int> _chordHits = <int>{};
+  // Near-simultaneous MP3 transcription onsets may differ by one/two hops.
+  static const chordOnsetTolerance = Duration(milliseconds: 65);
+
+  int get _groupEnd {
+    if (_index >= _notes.length) return _index;
+    final onset = _notes[_index].start;
+    var end = _index + 1;
+    while (end < _notes.length &&
+        _notes[end].start - onset <= chordOnsetTolerance) {
+      end++;
+    }
+    return end;
+  }
+
+  Set<int> get _expectedNotes => _index == _notes.length
+      ? <int>{}
+      : _notes.sublist(_index, _groupEnd).map((n) => n.midiNote).toSet();
   TrainingPhase _phase = TrainingPhase.ready;
   int _index = 0;
   int? _lastPlayedMidiNote;
@@ -83,6 +107,8 @@ class WaitForNoteEngine {
     currentIndex: _index,
     totalNotes: _notes.length,
     expectedMidiNote: _index < _notes.length ? _notes[_index].midiNote : null,
+    expectedMidiNotes: Set<int>.unmodifiable(_expectedNotes),
+    matchedMidiNotes: Set<int>.unmodifiable(_chordHits),
     lastPlayedMidiNote: _lastPlayedMidiNote,
     lastAttempt: _lastAttempt,
     errorMessage: _errorMessage,
@@ -118,6 +144,7 @@ class WaitForNoteEngine {
   TrainingSnapshot reset() {
     if (_phase != TrainingPhase.error) {
       _index = 0;
+      _chordHits.clear();
       _phase = TrainingPhase.ready;
       _lastPlayedMidiNote = null;
       _lastAttempt = TrainingAttempt.ignored;
@@ -132,6 +159,7 @@ class WaitForNoteEngine {
   /// that a physical key was released.
   void releaseHeldNotesAfterSilence() {
     _pressedNotes.clear();
+    _chordHits.clear();
   }
 
   TrainingEventUpdate onNoteEvent(NoteEvent event) {
@@ -144,6 +172,8 @@ class WaitForNoteEngine {
 
     if (event.type == NoteEventType.noteOff) {
       _pressedNotes.remove(event.midiNote);
+      // A chord needs all keys held together, not one after another.
+      _chordHits.remove(event.midiNote);
       return TrainingEventUpdate(
         snapshot: snapshot,
         attempt: TrainingAttempt.ignored,
@@ -161,7 +191,8 @@ class WaitForNoteEngine {
     }
 
     _lastPlayedMidiNote = event.midiNote;
-    if (event.midiNote != _notes[_index].midiNote) {
+    final expected = _expectedNotes;
+    if (!expected.contains(event.midiNote)) {
       _lastAttempt = TrainingAttempt.incorrect;
       return TrainingEventUpdate(
         snapshot: snapshot,
@@ -169,7 +200,16 @@ class WaitForNoteEngine {
       );
     }
 
-    _index++;
+    _chordHits.add(event.midiNote);
+    if (!_chordHits.containsAll(expected)) {
+      _lastAttempt = TrainingAttempt.ignored;
+      return TrainingEventUpdate(
+        snapshot: snapshot,
+        attempt: TrainingAttempt.ignored,
+      );
+    }
+    _index = _groupEnd;
+    _chordHits.clear();
     _lastAttempt = TrainingAttempt.correct;
     if (_index == _notes.length) {
       _phase = TrainingPhase.completed;
@@ -185,7 +225,7 @@ class WaitForNoteEngine {
     _errorMessage = message;
   }
 
-  static bool _isOrderedAndMonophonic(List<MidiNote> notes) {
+  static bool _isOrderedAndValid(List<MidiNote> notes) {
     MidiNote? previous;
     for (final note in notes) {
       if (note.midiNote < 0 ||
@@ -195,9 +235,7 @@ class WaitForNoteEngine {
           note.duration.isNegative) {
         return false;
       }
-      if (previous != null &&
-          (note.startTick == previous.startTick ||
-              note.startTick < previous.endTick)) {
+      if (previous != null && note.startTick < previous.startTick) {
         return false;
       }
       previous = note;
