@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:learn_piano/src/audio/audio_file_picker.dart';
 import 'package:learn_piano/src/midi/midi_parser.dart';
+import 'package:learn_piano/src/pitch/detection_preferences.dart';
 import 'package:learn_piano/src/pitch/pitch_detector.dart';
 import 'package:learn_piano/src/recording/midi_recording_writer.dart';
 import 'package:learn_piano/src/recording/mp3_note_transcriber.dart';
@@ -31,7 +32,7 @@ DecodedAudioFile pianoFixture(
       final attack = math.min(1.0, elapsed / 0.012);
       final release = math.min(1.0, remaining / 0.018);
       final phase = 2 * math.pi * frequency * elapsed;
-      samples[i] += gain * attack * release *
+      samples[i] += gain * (note.velocity / 96) * attack * release *
           (math.sin(phase) +
               0.18 * math.sin(2 * phase) +
               0.08 * math.sin(3 * phase));
@@ -41,8 +42,9 @@ DecodedAudioFile pianoFixture(
       sampleRate: sampleRate);
 }
 
-RecordedNote event(int pitch, int fromMs, int untilMs) => RecordedNote(
+RecordedNote event(int pitch, int fromMs, int untilMs, {int velocity = 96}) => RecordedNote(
       midiNote: pitch,
+      velocity: velocity,
       start: Duration(milliseconds: fromMs),
       duration: Duration(milliseconds: untilMs - fromMs),
     );
@@ -71,7 +73,7 @@ void main() {
   const converter = Mp3NoteTranscriber();
 
   test('G2 and B4 are detected together, even with louder bass', () async {
-    final reference = [event(43, 200, 1050), event(71, 200, 1050)];
+    final reference = [event(43, 200, 1050), event(71, 200, 1050, velocity: 68)];
     final result = await converter.transcribe(
       pianoFixture(reference, gain: 0.24),
     );
