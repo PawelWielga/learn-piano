@@ -17,8 +17,7 @@ class PolyphonicFrameAnalyzer {
        assert(minMidi >= 0 && maxMidi <= 127 && minMidi < maxMidi),
        assert(maxVoices > 0),
        decimation = sourceSampleRate >= 32000 ? 2 : 1,
-       sampleRate = sourceSampleRate /
-           (sourceSampleRate >= 32000 ? 2 : 1) {
+       sampleRate = sourceSampleRate / (sourceSampleRate >= 32000 ? 2 : 1) {
     for (var i = 0; i < fftSize; i++) {
       _window[i] = 0.5 - 0.5 * math.cos(2 * math.pi * i / (fftSize - 1));
       var x = i;
@@ -101,8 +100,7 @@ class PolyphonicFrameAnalyzer {
     for (var i = 3; i < _magnitude.length - 3; i++) {
       final value = math.max(
         0.0,
-        _magnitude[i] -
-            0.18 * (_magnitude[i - 3] + _magnitude[i + 3]),
+        _magnitude[i] - 0.18 * (_magnitude[i - 3] + _magnitude[i + 3]),
       );
       _residual[i] = value;
       if (i * sampleRate / fftSize >= 60 &&
