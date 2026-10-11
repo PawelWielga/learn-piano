@@ -4,9 +4,9 @@ Instrukcje dla agentów AI i osób wprowadzających zmiany w repozytorium `Pawel
 
 ## 1. Produkt i aktualny cel
 
-Budujemy darmową aplikację do ćwiczenia gry na **fizycznym pianinie lub keyboardzie bez wyjścia MIDI**. Użytkownik otwiera stronę, udziela dostępu do mikrofonu, importuje własny plik MIDI i ćwiczy melodię; aplikacja przechodzi dalej po wykryciu właściwej nuty.
+Budujemy **darmową dla użytkownika** aplikację do ćwiczenia gry na **fizycznym pianinie lub keyboardzie bez wyjścia MIDI**. Docelowo powstanie natywna wersja Android na Google Play finansowana reklamami; aktualne MVP pozostaje Web-first, bez reklam. Użytkownik otwiera stronę, udziela dostępu do mikrofonu, importuje własny plik MIDI i ćwiczy melodię; aplikacja przechodzi dalej po wykryciu właściwej nuty.
 
-**Pierwsze MVP jest Web-first**: Flutter Web hostowany na GitHub Pages, bez backendu, kont użytkowników, abonamentów i obowiązkowego połączenia z internetem po załadowaniu niezbędnych zasobów. Audio i importowane MIDI przetwarzamy lokalnie w przeglądarce. Nie dodawaj usług serwerowych ani transmisji mikrofonu.
+**Pierwsze MVP jest Web-first**: Flutter Web hostowany na GitHub Pages, bez backendu, kont użytkowników, abonamentów i obowiązkowego połączenia z internetem po załadowaniu niezbędnych zasobów. Audio i importowane MIDI przetwarzamy lokalnie zarówno na Web, jak docelowo na Androidzie. Nie dodawaj usług serwerowych ani transmisji mikrofonu. Przyszły SDK reklam może mieć własną, jawną komunikację sieciową niezwiązaną z dźwiękiem.
 
 Docelowy adres GitHub Pages po uruchomieniu publikacji:
 `https://pawelwielga.github.io/learn-piano/`.
@@ -28,11 +28,11 @@ Starsza dokumentacja opisuje Android APK jako pierwszy prototyp. **To założeni
 
 Nagrywanie nut do MIDI (z mikrofonu lub klawiatury ekranowej) zostało dodane osobnym wymaganiem użytkownika. Nie przechowujemy surowego audio.
 
-**Poza MVP 1:** aplikacje natywne Android/iOS, landing page Jaspr, konta, backend, synchronizacja w chmurze, gotowa biblioteka komercyjnych utworów, transpozycja i statystyki. Wykrywanie akordów i trening akordowy istnieją eksperymentalnie, lecz nie mają jeszcze potwierdzonej jakości na fizycznym instrumencie. Nie implementuj ich przy okazji innych zadań.
+**Poza MVP 1, ale w planie:** natywna aplikacja Flutter Android z reklamami (#69–#71), później ewentualnie iOS. Pozostałe przyszłe pomysły: landing page Jaspr, konta, backend, synchronizacja, gotowa biblioteka komercyjnych utworów, transpozycja i statystyki. Wykrywanie akordów i trening akordowy istnieją eksperymentalnie i wymagają walidacji na fizycznym instrumencie. Nie dodawaj Android SDK ani reklam przy okazji bieżących zadań Web.
 
 ## 3. Stack i układ repozytorium
 
-- Język: **Dart**; aplikacja i UI: **Flutter Web**.
+- Język: **Dart**; aplikacja i UI: **Flutter**, obecnie Web, docelowo natywny Android. Nie zastępuj docelowo natywnej aplikacji opakowaniem całego Web w WebView.
 - Audio: przeglądarkowe **Web Audio API / getUserMedia**; sposób dostarczania próbek (np. AudioWorklet i interop JS) należy potwierdzić eksperymentem na obsługiwanych przeglądarkach.
 - Detekcja wysokości: testowalny, niezależny od UI algorytm; rozważ YIN lub autokorelację, ale wybierz rozwiązanie na podstawie pomiarów. Nie zakładaj, że FFT z największym pikiem jest wystarczające.
 - MIDI: lokalny parser/import zdarzeń i tempa; dobór biblioteki po ocenie kompatybilności Flutter Web, utrzymania i licencji.
@@ -76,12 +76,21 @@ Jeśli moduły audio, MIDI lub treningu trzeba rozdzielić, preferuj na począte
 
 1. **Przed pisaniem DSP, MIDI, syntezatora, odtwarzacza lub mechanizmów przeglądarkowych od zera** zbadaj istniejące biblioteki. Preferowane kierunki do weryfikacji: `@spotify/basic-pitch` dla offline polyphonic transcription (#59), `fftea` dla FFT (#58), `@tonejs/midi` dla MIDI (#64), `Tone.js` dla syntezy/schedulingu (#62/#64) oraz `pitchy` jako alternatywa dla monofonicznego pitch detection (#57). To kandydaci, nie zatwierdzone zależności.
 2. Porównuj kandydatów na **identycznych, poprawnie zsynchronizowanych i legalnych fixturach**, mierząc accuracy (pitch/onset/offset, precision/recall/F1), fałszywe nuty, latencję, czas obliczeń, pamięć i rozmiar builda. Podawaj ograniczenia testów syntetycznych.
-3. Sprawdzaj **licencję osobno dla kodu, wag modeli, soundfontów, sampli i danych testowych**. Unikaj przypadkowego wprowadzenia copyleft lub niedozwolonej redystrybucji; żadnych zdalnych CDN ani backendu wymaganych do działania na danych audio.
+3. Sprawdzaj **licencję osobno dla kodu, wag modeli, soundfontów, sampli i danych testowych** pod kątem **komercyjnej dystrybucji Androida z reklamami**. Preferuj prawidłowo licencjonowane komponenty dopuszczające komercyjne użycie (MIT/BSD/Apache-2.0 itp.). GPL/AGPL wymagają oceny obowiązków, a NC (np. zbiór MAESTRO CC BY-NC-SA) dodatkowego uprawnienia lub oceny przed użyciem w komercyjnym procesie; nie zakładaj automatycznej zgody. Rejestr ryzyk: #68. Żadnych CDN/backendu niezbędnych do analizy muzycznego audio.
 4. **Zamieniaj moduły etapami** przez testowalne interfejsy i adaptery: nowy silnik obok starego → porównanie → migracja → usunięcie zbędnego kodu. Nie trzymaj dwóch stałych implementacji bez ważnego powodu.
 5. **Wolno usunąć lub przepisać własną FFT, transkrypcję MP3, parser/writer MIDI, syntezator lub zbyt rozbudowane widżety**, jeżeli nowy moduł zachowuje wymagane funkcje i przechodzi porównawcze testy regresji. Nie przepisuj niezwiązanego UI, nawigacji ani CI tylko z przyzwyczajenia.
-6. Basic Pitch TS ma starszy stos TensorFlow.js i zgłoszenia kompatybilności mobilnej: przed wyborem konieczny jest działający proof of concept w docelowej przeglądarce i test offline (#59), a nie jedynie README biblioteki.
+6. Basic Pitch TS ma starszy stos TensorFlow.js i zgłoszenia kompatybilności mobilnej: przed wyborem konieczny jest działający proof of concept w docelowej przeglądarce i test offline (#59), a nie jedynie README biblioteki. JS-only model nie jest automatycznie dostępny w natywnym Androidzie; wymagana ocena natywnego backendu lub adaptera (#69).
 7. **Bez fizycznego sprzętu** działamy na deterministycznym audio/MIDI i automatycznych przeglądarkach. Ograniczenia sprzętowe z #7 i #16 pozostają otwarte; nie raportuj tych kryteriów jako zaliczonych.
-8. Każdą większą migrację poprzedź krótkim ADR: co usuwamy, co zastępujemy, dlaczego, wymagania licencyjne, dane benchmarkowe, plan powrotu i lista testów. Główny backlog: [#67](https://github.com/PawelWielga/learn-piano/issues/67).
+8. Każdą większą migrację poprzedź krótkim ADR: co usuwamy, co zastępujemy, dlaczego, wymagania licencyjne i zgodność komercyjna, obsługa natywnego Androida, dane benchmarkowe, plan powrotu i lista testów. Główny backlog: [#67](https://github.com/PawelWielga/learn-piano/issues/67).
+
+## 4b. Komercyjny Android i reklamy (cel po Web MVP, 2026-10-12)
+
+1. **Wspólny Flutter i domena, oddzielne adaptery Web/Android.** MIDI, nuty, WaitForNote, normalizacja zdarzeń i testy pozostają niezależne od platformy. Mikrofon/PCM, dekodowanie plików, wyjście audio, transkrypcja AI, zapis plików i ustawienia mają testowalne interfejsy; `dart:js_interop` i Web Audio pozostają tylko w web adapterach (#69).
+2. Każdy kandydat library-first musi mieć sprawdzoną **komercyjną licencję** na kod, modele/wagi, soundfonty/sample i dane testowe oraz realistyczny plan natywnego działania na Androidzie (np. TFLite/ONNX jeśli uzasadniają to benchmarki). Nie wybieraj Basic Pitch TS ani Tone.js jako jedynego rozwiązania domenowego tylko dlatego, że działają w przeglądarce (#59, #60, #64, #68).
+3. **Web MVP bez reklam.** Google Mobile Ads Flutter Plugin działa na Androidzie/iOS, nie w Flutter Web; integracja dopiero w fazie Android. Podstawowy trening lokalny ma pozostać dostępny offline, przy odmowie zgód i braku reklam. SDK nie dostaje surowego audio ani importowanych MIDI (#70).
+4. Przed wyborem SDK reklamowego ustal rzeczywistą **grupę wiekową** odbiorców; obecny projekt dotyka także scenariuszy dziecięcych. Google Play Families wymaga szczególnych ograniczeń reklam i odpowiednich wersji samocertyfikowanych SDK dla dzieci i nieustalonego wieku; nie zakładaj, że AdMob nadaje się do każdej grupy. Nie deklaruj sztucznie grupy dorosłej tylko po to, by obejść wymagania (#70).
+5. Gdy reklamy będą wdrażane, zweryfikuj aktualne przepisy i polityki (GDPR/RODO, UMP/CMP, Google Play Data safety, deklaracja reklam, dane i identyfikatory SDK). Nie wstawiaj reklam w aktywnym treningu, nad klawiaturą, podczas pracy mikrofonu ani w miejscach generujących przypadkowe kliknięcia; nie blokuj podstawowego treningu przy braku reklam. W development używaj testowych jednostek reklamowych (#70).
+6. Docelowo CI buduje Flutter Web i Android (AAB), testy adapterów i emulator/fake PCM. Emulator nie zastępuje fizycznego Androida ani pianina; #7 i #16 pozostają do walidacji sprzętowej (#71).
 
 ## 5. Mikrofon, bezpieczeństwo i prywatność
 
@@ -89,7 +98,7 @@ Jeśli moduły audio, MIDI lub treningu trzeba rozdzielić, preferuj na począte
 - Korzystaj z bezpiecznego kontekstu (`HTTPS` na Pages, `localhost` podczas developmentu); obsłuż odmowę uprawnień, brak urządzenia, zmianę/utratę strumienia i nieobsługiwaną przeglądarkę.
 - Po zakończeniu nasłuchu zwolnij zasoby, zamknij/wycisz przetwarzanie i zatrzymaj `MediaStreamTrack`. Zadbaj o ponowne uruchamianie oraz usypianie/wznawianie karty.
 - **Nie przesyłaj, nie loguj i domyślnie nie zapisuj surowego audio**, importowanych plików MIDI ani danych dziecka. Lokalne ustawienia mogą być przechowywane w przeglądarce, jeśli jest to niezbędne i czytelne dla użytkownika.
-- Nie wprowadzaj analityki, trackerów, reklam, kluczy API ani usług chmurowych bez osobnego wymagania.
+- Nie wprowadzaj analityki, trackerów, reklam, kluczy API ani usług chmurowych do Web MVP. Reklamy Android wymagają odrębnej integracji i audytu prywatności (#70); ich transfer danych nigdy nie obejmuje mikrofonu ani plików muzycznych.
 - Waliduj rozmiar i strukturę wczytywanego pliku. Błędy wejścia są normalnym przypadkiem UX, nie nieobsłużonym wyjątkiem.
 - Nie kopiuj do repozytorium chronionych prawem autorskim piosenek lub cudzych nagrań bez odpowiedniej licencji. Fixtury testowe twórz samodzielnie albo używaj materiałów z jasną licencją.
 
@@ -154,3 +163,7 @@ Uruchamianie lokalne: `flutter run -d chrome` z `app/`. Jeżeli środowisko nie 
 - [Web Audio — #4](https://github.com/PawelWielga/learn-piano/issues/4)
 - [Tester nut i próby sprzętowe — #7](https://github.com/PawelWielga/learn-piano/issues/7)
 - [Stabilizacja i przebudowa library-first — #67](https://github.com/PawelWielga/learn-piano/issues/67)
+- [Komercyjny audyt licencji — #68](https://github.com/PawelWielga/learn-piano/issues/68)
+- [Przenośna architektura Web/Android — #69](https://github.com/PawelWielga/learn-piano/issues/69)
+- [Reklamy, zgody i Google Play — #70](https://github.com/PawelWielga/learn-piano/issues/70)
+- [Android build i emulator CI — #71](https://github.com/PawelWielga/learn-piano/issues/71)
