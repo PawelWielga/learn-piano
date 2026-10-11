@@ -344,8 +344,9 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                     Text('Wyświetlono pierwsze 32 z ${_notes.length} nut.'),
                   const SizedBox(height: 14),
                   const Text(
-                    'Zapisany plik możesz ponownie zaimportować '
-                    'przez „Importuj plik MIDI”, aby ćwiczyć melodię.',
+                    'Plik możesz ponownie zaimportować przez „Importuj plik MIDI”. '
+                    'Współbrzmienia obejrzysz w podglądzie wielogłosowym. '
+                    'Trening Wait for Note nadal wymaga partii jednogłosowej.',
                   ),
                 ],
               ],
