@@ -39,7 +39,10 @@ class MelodyPart {
       if ((lastEndByPitch[note.midiNote] ?? -1) > note.startTick) {
         return true;
       }
-      lastEndByPitch[note.midiNote] = note.endTick;
+      lastEndByPitch[note.midiNote] =
+          note.endTick > (lastEndByPitch[note.midiNote] ?? -1)
+          ? note.endTick
+          : lastEndByPitch[note.midiNote]!;
     }
     return false;
   }
