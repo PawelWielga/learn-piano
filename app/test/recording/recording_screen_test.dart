@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:learn_piano/src/audio/audio_input.dart';
 import 'package:learn_piano/src/audio/note_output.dart';
 import 'package:learn_piano/src/midi/midi_parser.dart';
+import 'package:learn_piano/src/pitch/detection_preferences.dart';
 import 'package:learn_piano/src/recording/midi_recording_export.dart';
 import 'package:learn_piano/src/screens/recording_screen.dart';
 import 'package:learn_piano/src/widgets/recording_keyboard.dart';
@@ -36,13 +37,14 @@ class _FakeInput implements AudioInput {
     statusController.add(AudioInputStatus.stopped);
   }
 
-  void tone(int ms) {
+  void tone(int ms, {double gain = 0.35, double cents = 0}) {
+    final hz = 440 * math.pow(2, cents / 1200);
     frameController.add(
       PcmFrame(
         samples: Float32List.fromList(
           List.generate(
             2048,
-            (i) => 0.35 * math.sin(2 * math.pi * 440 * i / 48000),
+            (i) => gain * math.sin(2 * math.pi * hz * i / 48000),
           ),
         ),
         sampleRate: 48000,
@@ -148,6 +150,45 @@ void main() {
     final file = const MidiParser().parse(exporter.bytes!);
     expect(file.noteCount, 1);
     expect(file.tracks.single.notes.single.midiNote, 69);
+  });
+
+  testWidgets('quiet and detuned acoustic notes are captured in MIDI', (
+    tester,
+  ) async {
+    useLandscape(tester);
+    final input = _FakeInput();
+    final exporter = _FakeExporter();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RecordingScreen(
+          audioInput: input,
+          noteOutput: _FakeOutput(),
+          exporter: exporter,
+          detectionPreferences: const DetectionPreferences(
+            increasedSensitivity: true,
+            widerTuningTolerance: true,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('recording-start')));
+    await tester.pump();
+    for (final ms in [50, 180, 310]) {
+      input.tone(ms, gain: 0.01, cents: 42);
+    }
+    for (final ms in [440, 570, 700]) {
+      input.silence(ms);
+    }
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('recording-stop')));
+    await tester.pump();
+    expect(find.text('Zarejestrowane nuty: 1'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('recording-save')));
+    await tester.pump();
+    final midi = const MidiParser().parse(exporter.bytes!);
+    expect(midi.noteCount, 1);
+    expect(midi.tracks.single.notes.single.midiNote, 69);
   });
 
   testWidgets('keyboard records touch NoteOn and NoteOff', (tester) async {
