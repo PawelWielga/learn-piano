@@ -57,6 +57,55 @@ NoteEvent off(int pitch, [int millis = 0]) => NoteEvent(
 );
 
 void main() {
+  test('chord requires all held keys and advances the full onset group', () {
+    final engine = WaitForNoteEngine(
+      melody([
+        midiNote(60, 0, 500),
+        midiNote(64, 30, 300),
+        midiNote(67, 300, 700),
+      ], overlapCount: 2),
+      instrumentRange: const InstrumentRange(36, 96),
+    )..start();
+
+    expect(engine.snapshot.expectedMidiNotes, {60, 64});
+    expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.ignored);
+    expect(engine.snapshot.currentIndex, 0);
+    expect(engine.snapshot.matchedMidiNotes, {60});
+
+    // Merely playing a chord one key at a time is not sufficient.
+    engine.onNoteEvent(off(60));
+    expect(engine.snapshot.matchedMidiNotes, isEmpty);
+    expect(engine.onNoteEvent(on(64)).attempt, TrainingAttempt.ignored);
+    expect(engine.snapshot.currentIndex, 0);
+    expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.correct);
+    expect(engine.snapshot.currentIndex, 2);
+    expect(engine.snapshot.expectedMidiNotes, {67});
+    expect(engine.snapshot.progress, closeTo(2 / 3, 0.00001));
+
+    // The previous bass may keep ringing while the melody moves on.
+    expect(engine.onNoteEvent(on(67)).attempt, TrainingAttempt.correct);
+    expect(engine.snapshot.phase, TrainingPhase.completed);
+    expect(engine.snapshot.currentIndex, 3);
+  });
+
+  test('chord rejects wrong keys and reset clears partial matches', () {
+    final engine = engineFor([
+      midiNote(60, 0, 500),
+      midiNote(64, 0, 500),
+    ])..start();
+    expect(engine.onNoteEvent(on(61)).attempt, TrainingAttempt.incorrect);
+    expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.ignored);
+    expect(engine.snapshot.matchedMidiNotes, {60});
+    engine.reset();
+    expect(engine.snapshot.matchedMidiNotes, isEmpty);
+    expect(engine.snapshot.expectedMidiNotes, {60, 64});
+    engine.start();
+    expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.ignored);
+    engine.onNoteEvent(off(60));
+    expect(engine.onNoteEvent(on(60)).attempt, TrainingAttempt.ignored);
+    expect(engine.onNoteEvent(on(64)).attempt, TrainingAttempt.correct);
+  });
+
   test('right note advances exactly once; wrong pitch and octave do not', () {
     final engine = engineFor([
       midiNote(60, 0, 480),
