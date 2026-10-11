@@ -100,8 +100,9 @@ class WebAudioFilePicker implements AudioFilePicker, PreparableAudioFilePicker {
           'invalid_format' => 'Wybierz plik z rozszerzeniem .mp3.',
           'unsupported' => 'Przeglądarka nie obsługuje dekodowania MP3.',
           'busy' => 'Wybieranie pliku już trwa.',
-          'open_failed' => 'Przeglądarka nie pozwoliła otworzyć wyboru pliku. '
-              'Spróbuj ponownie lub odśwież stronę.',
+          'open_failed' =>
+            'Przeglądarka nie pozwoliła otworzyć wyboru pliku. '
+                'Spróbuj ponownie lub odśwież stronę.',
           'decode_failed' => 'Nie udało się zdekodować pliku MP3.',
           _ => 'Nie udało się odczytać wybranego MP3.',
         });
