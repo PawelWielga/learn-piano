@@ -241,18 +241,18 @@ class _TrainingStageState extends State<TrainingStage> {
     final completed = widget.phase == TrainingPhase.completed;
     final expected = widget.expectedNotes.isNotEmpty
         ? (widget.expectedNotes.toList()..sort())
-            .map(PitchEstimate.nameForMidi)
-            .join(' + ')
+              .map(PitchEstimate.nameForMidi)
+              .join(' + ')
         : widget.expectedNote == null
-            ? '—'
-            : PitchEstimate.nameForMidi(widget.expectedNote!);
+        ? '—'
+        : PitchEstimate.nameForMidi(widget.expectedNote!);
     final detected = widget.detectedNotes.isNotEmpty
         ? (widget.detectedNotes.toList()..sort())
-            .map(PitchEstimate.nameForMidi)
-            .join(' + ')
+              .map(PitchEstimate.nameForMidi)
+              .join(' + ')
         : widget.detectedNote == null
-            ? '—'
-            : PitchEstimate.nameForMidi(widget.detectedNote!);
+        ? '—'
+        : PitchEstimate.nameForMidi(widget.detectedNote!);
     const accent = TrainingStagePalette.primary;
     const foreground = TrainingStagePalette.foreground;
 
@@ -868,8 +868,10 @@ class _TrainingStagePainter extends CustomPainter {
   void _drawKey(Canvas canvas, PianoKeyGeometry key) {
     final rect = key.rect;
     final shape = RRect.fromRectAndRadius(rect, const Radius.circular(3));
-    final isExpected = key.midiNote == expectedNote || expectedNotes.contains(key.midiNote);
-    final isDetected = key.midiNote == detectedNote || detectedNotes.contains(key.midiNote);
+    final isExpected =
+        key.midiNote == expectedNote || expectedNotes.contains(key.midiNote);
+    final isDetected =
+        key.midiNote == detectedNote || detectedNotes.contains(key.midiNote);
     canvas.drawRRect(
       shape,
       Paint()
