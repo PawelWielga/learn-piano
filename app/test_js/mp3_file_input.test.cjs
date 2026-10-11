@@ -9,7 +9,7 @@ const source = fs.readFileSync(
   'utf8',
 );
 
-function makePicker({ duration = 2, noContext = false, decodeError = false } = {}) {
+function makePicker({ duration = 2, noContext = false, decodeError = false, clickBlocked = false } = {}) {
   const elements = [];
   let closes = 0;
   let decodes = 0;
@@ -34,7 +34,7 @@ function makePicker({ duration = 2, noContext = false, decodeError = false } = {
         addEventListener: (type, cb) => listeners.set(type, cb),
         removeEventListener: (type) => listeners.delete(type),
         remove() { this.removed = true; },
-        click() {},
+        click() { if (clickBlocked) throw Error('file dialog blocked'); },
         emit(type) { return listeners.get(type)?.(); },
       };
     },
@@ -131,4 +131,23 @@ test('reports MP3 decoder errors and can retry', async () => {
   const again = app.picker.pick();
   await app.elements[1].emit('cancel');
   assert.equal((await again).code, 'cancelled');
+});
+
+test('reports native chooser failure without claiming the MP3 is damaged', async () => {
+  const app = makePicker({ clickBlocked: true });
+  const result = await app.picker.pick();
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'open_failed');
+  assert.equal(app.elements[0].removed, true);
+  assert.equal(app.decodes, 0);
+});
+
+test('keeps the picker rendered for mobile Firefox activation', async () => {
+  const app = makePicker();
+  const pending = app.picker.pick();
+  const input = app.elements[0];
+  assert.notEqual(input.style.display, 'none');
+  assert.equal(input.style.position, 'fixed');
+  await input.emit('cancel');
+  assert.equal((await pending).code, 'cancelled');
 });

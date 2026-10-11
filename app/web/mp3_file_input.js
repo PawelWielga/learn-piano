@@ -15,7 +15,15 @@
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = '.mp3,audio/mpeg';
-      input.style.display = 'none';
+      // Keep the input attached and rendered (but invisible). Firefox Android
+      // may refuse synthetic clicks on display:none file inputs.
+      input.style.position = 'fixed';
+      input.style.left = '0';
+      input.style.top = '0';
+      input.style.width = '1px';
+      input.style.height = '1px';
+      input.style.opacity = '0';
+      input.style.pointerEvents = 'none';
       document.body.appendChild(input);
 
       let finished = false;
@@ -97,7 +105,7 @@
       try {
         input.click();
       } catch (_) {
-        finish({ ok: false, code: 'read_failed' });
+        finish({ ok: false, code: 'open_failed' });
       }
     });
   }
