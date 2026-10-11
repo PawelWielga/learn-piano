@@ -34,9 +34,7 @@ DecodedAudioFile _shortNote() {
   final samples = Float32List.fromList(
     List<double>.generate(
       48000,
-      (i) => i < 32000
-          ? 0.35 * math.sin(2 * math.pi * 440 * i / 48000)
-          : 0,
+      (i) => i < 32000 ? 0.35 * math.sin(2 * math.pi * 440 * i / 48000) : 0,
     ),
   );
   return DecodedAudioFile(
@@ -57,12 +55,17 @@ void main() {
     final picker = _AudioFileFake()..selected = _shortNote();
     final exporter = _MidiExporterFake();
     await tester.pumpWidget(
-      MaterialApp(home: Mp3ImportScreen(picker: picker, exporter: exporter)),
+      MaterialApp(
+        home: Mp3ImportScreen(picker: picker, exporter: exporter),
+      ),
     );
     expect(find.text('Rozpoznane nuty: 0'), findsOneWidget);
-    expect(tester.widget<OutlinedButton>(
-      find.byKey(const Key('mp3-save')),
-    ).onPressed, isNull);
+    expect(
+      tester
+          .widget<OutlinedButton>(find.byKey(const Key('mp3-save')))
+          .onPressed,
+      isNull,
+    );
 
     await tester.tap(find.byKey(const Key('mp3-select')));
     await tester.pumpAndSettle();
