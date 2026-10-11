@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'microphone_preview_screen.dart';
 import 'detection_settings_screen.dart';
 import 'recording_screen.dart';
+import 'mp3_import_screen.dart';
 import 'midi_import_screen.dart';
 import 'instrument_range_screen.dart';
 import '../instrument/instrument_range.dart';
@@ -149,6 +150,29 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   'Graj przez mikrofon lub na ekranie, a potem zapisz plik MIDI.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: 20),
+                OutlinedButton.icon(
+                  key: const Key('open-mp3-import'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const Mp3ImportScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.audio_file),
+                  label: const Text('Odczytaj nuty z MP3'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Wczytaj krótkie nagranie pojedynczej melodii '
+                  'i zapisz rozpoznane nuty jako MIDI.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall,
                 ),
