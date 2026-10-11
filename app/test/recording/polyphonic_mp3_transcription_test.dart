@@ -21,9 +21,7 @@ DecodedAudioFile pianoFixture(
   final samples = Float32List((seconds * sampleRate).round());
   for (final note in notes) {
     final begin = (note.start.inMicroseconds * sampleRate / 1e6).round();
-    final end = ((note.start + note.duration).inMicroseconds *
-            sampleRate /
-            1e6)
+    final end = ((note.start + note.duration).inMicroseconds * sampleRate / 1e6)
         .round();
     final frequency = 440 * math.pow(2, (note.midiNote - 69) / 12);
     for (var i = begin; i < end && i < samples.length; i++) {
@@ -33,17 +31,25 @@ DecodedAudioFile pianoFixture(
       final attack = math.min(1.0, elapsed / 0.012);
       final release = math.min(1.0, remaining / 0.018);
       final phase = 2 * math.pi * frequency * elapsed;
-      samples[i] += gain * (note.velocity / 96) * attack * release *
+      samples[i] +=
+          gain *
+          (note.velocity / 96) *
+          attack *
+          release *
           (math.sin(phase) +
               0.18 * math.sin(2 * phase) +
               0.08 * math.sin(3 * phase));
     }
   }
-  return DecodedAudioFile(name: 'synth.mp3', samples: samples,
-      sampleRate: sampleRate);
+  return DecodedAudioFile(
+    name: 'synth.mp3',
+    samples: samples,
+    sampleRate: sampleRate,
+  );
 }
 
-RecordedNote event(int pitch, int fromMs, int untilMs, {int velocity = 96}) => RecordedNote(
+RecordedNote event(int pitch, int fromMs, int untilMs, {int velocity = 96}) =>
+    RecordedNote(
       midiNote: pitch,
       velocity: velocity,
       start: Duration(milliseconds: fromMs),
@@ -60,13 +66,21 @@ void checkMatched(
   int offsetToleranceMs = 150,
 }) {
   for (final target in reference) {
-    final found = actual.where((note) =>
-        note.midiNote == target.midiNote &&
-        closeTo(note.start, target.start, onsetToleranceMs) &&
-        closeTo(note.start + note.duration, target.start + target.duration,
-            offsetToleranceMs));
-    expect(found, isNotEmpty,
-        reason: 'No matching MIDI ${target.midiNote} at ${target.start}');
+    final found = actual.where(
+      (note) =>
+          note.midiNote == target.midiNote &&
+          closeTo(note.start, target.start, onsetToleranceMs) &&
+          closeTo(
+            note.start + note.duration,
+            target.start + target.duration,
+            offsetToleranceMs,
+          ),
+    );
+    expect(
+      found,
+      isNotEmpty,
+      reason: 'No matching MIDI ${target.midiNote} at ${target.start}',
+    );
   }
 }
 
@@ -76,14 +90,15 @@ List<RecordedNote> oldMonophonicBaseline(DecodedAudioFile audio) {
   final tracker = NoteEventTracker();
   final recorder = NoteRecorder()..start();
   final hop = (audio.sampleRate * 0.13).round();
-  for (var start = 0;
-      start + 2048 <= audio.samples.length;
-      start += hop) {
+  for (var start = 0; start + 2048 <= audio.samples.length; start += hop) {
     final frame = Float32List.sublistView(audio.samples, start, start + 2048);
     final at = Duration(
-        microseconds: (start * 1000000 / audio.sampleRate).round());
+      microseconds: (start * 1000000 / audio.sampleRate).round(),
+    );
     final update = tracker.observe(
-        detector.detect(frame, audio.sampleRate), at);
+      detector.detect(frame, audio.sampleRate),
+      at,
+    );
     for (final event in update.events) {
       if (event.type == NoteEventType.noteOn) {
         recorder.noteOn(event.midiNote, event.at);
@@ -106,8 +121,11 @@ double noteF1(List<RecordedNote> expected, List<RecordedNote> found) {
       final note = found[i];
       if (note.midiNote == target.midiNote &&
           closeTo(note.start, target.start, 130) &&
-          closeTo(note.start + note.duration,
-              target.start + target.duration, 160)) {
+          closeTo(
+            note.start + note.duration,
+            target.start + target.duration,
+            160,
+          )) {
         used.add(i);
         matched++;
         break;
@@ -123,7 +141,10 @@ void main() {
   const converter = Mp3NoteTranscriber();
 
   test('G2 and B4 are detected together, even with louder bass', () async {
-    final reference = [event(43, 200, 1050), event(71, 200, 1050, velocity: 68)];
+    final reference = [
+      event(43, 200, 1050),
+      event(71, 200, 1050, velocity: 68),
+    ];
     final result = await converter.transcribe(
       pianoFixture(reference, gain: 0.24),
     );
@@ -134,34 +155,35 @@ void main() {
     expect(high.start < low.start + low.duration, isTrue);
     expect(result.polyphonic, isTrue);
 
-    // Before this change the 2048-sample YIN path could output at most
-    // one pitch candidate per frame. This proves the new path is not using it.
-    final pcm = pianoFixture(reference).samples;
-    final oldFrame = Float32List.sublistView(pcm, 24000, 26048);
-    final oldEstimate = const PitchDetector().detect(oldFrame, 48000);
-    expect(oldEstimate == null || oldEstimate.midiNote is int, isTrue);
-    expect(result.notes.map((n) => n.midiNote).toSet(),
-        containsAll(<int>[43, 71]));
+    expect(
+      result.notes.map((n) => n.midiNote).toSet(),
+      containsAll(<int>[43, 71]),
+    );
   });
 
-  test('polyphonic F1 exceeds old YIN on simultaneous melody and bass',
-      () async {
-    final reference = [
-      event(43, 200, 1050),
-      event(71, 200, 1050, velocity: 68),
-    ];
-    final file = pianoFixture(reference, gain: 0.28);
-    final previous = oldMonophonicBaseline(file);
-    final current = (await converter.transcribe(file)).notes;
-    final oldF1 = noteF1(reference, previous);
-    final newF1 = noteF1(reference, current);
-    expect(newF1, greaterThan(oldF1));
-    expect(newF1, greaterThanOrEqualTo(0.75));
-  });
+  test(
+    'polyphonic F1 exceeds old YIN on simultaneous melody and bass',
+    () async {
+      final reference = [
+        event(43, 200, 1050),
+        event(71, 200, 1050, velocity: 68),
+      ];
+      final file = pianoFixture(reference, gain: 0.28);
+      final previous = oldMonophonicBaseline(file);
+      final current = (await converter.transcribe(file)).notes;
+      final oldF1 = noteF1(reference, previous);
+      final newF1 = noteF1(reference, current);
+      expect(newF1, greaterThan(oldF1));
+      expect(newF1, greaterThanOrEqualTo(0.75));
+    },
+  );
 
   test('triad keeps all three notes, not only the strongest voice', () async {
-    final reference = [event(60, 250, 1100), event(64, 250, 1100),
-        event(67, 250, 1100)];
+    final reference = [
+      event(60, 250, 1100),
+      event(64, 250, 1100),
+      event(67, 250, 1100),
+    ];
     final result = await converter.transcribe(pianoFixture(reference));
     checkMatched(reference, result.notes);
   });
@@ -184,15 +206,22 @@ void main() {
     checkMatched(reference, hits);
   });
 
-  test('short note and near-silence do not need 200ms stabilization',
-      () async {
+  test('short note and near-silence do not need 200ms stabilization', () async {
     final reference = [event(81, 350, 435)];
     final result = await converter.transcribe(pianoFixture(reference));
-    checkMatched(reference, result.notes, onsetToleranceMs: 120,
-        offsetToleranceMs: 150);
-    final empty = await converter.transcribe(DecodedAudioFile(
-        name: 'silence', samples: Float32List(48000),
-        sampleRate: 48000));
+    checkMatched(
+      reference,
+      result.notes,
+      onsetToleranceMs: 120,
+      offsetToleranceMs: 150,
+    );
+    final empty = await converter.transcribe(
+      DecodedAudioFile(
+        name: 'silence',
+        samples: Float32List(48000),
+        sampleRate: 48000,
+      ),
+    );
     expect(empty.notes, isEmpty);
   });
 
@@ -200,8 +229,10 @@ void main() {
     final reference = [event(69, 200, 980)];
     final file = pianoFixture(reference, gain: 0.010);
     final standard = await converter.transcribe(file);
-    final sensitive = await converter.transcribe(file,
-      preferences: const DetectionPreferences(increasedSensitivity: true));
+    final sensitive = await converter.transcribe(
+      file,
+      preferences: const DetectionPreferences(increasedSensitivity: true),
+    );
     expect(standard.notes, isEmpty);
     expect(sensitive.notes.any((n) => n.midiNote == 69), isTrue);
   });
@@ -213,19 +244,24 @@ void main() {
       mode: Mp3TranscriptionMode.fast,
       onProgress: progress.add,
     );
-    expect(result.notes.map((n) => n.midiNote).toSet(),
-        containsAll(<int>[48, 72]));
+    expect(
+      result.notes.map((n) => n.midiNote).toSet(),
+      containsAll(<int>[48, 72]),
+    );
     expect(progress.last, 1);
   });
 
-  test('MIDI export/import preserves overlapping pitches and times',
-      () async {
-    final input = [event(43, 200, 1050), event(71, 200, 1050),
-        event(64, 450, 900)];
+  test('MIDI export/import preserves overlapping pitches and times', () async {
+    final input = [
+      event(43, 200, 1050),
+      event(71, 200, 1050),
+      event(64, 450, 900),
+    ];
     final result = await converter.transcribe(pianoFixture(input));
     checkMatched(input, result.notes);
     final midi = const MidiParser().parse(
-        const MidiRecordingWriter().write(result.notes));
+      const MidiRecordingWriter().write(result.notes),
+    );
     expect(midi.format, 0);
     expect(midi.tracks, hasLength(1));
     final imported = midi.tracks.single.notes;
@@ -233,8 +269,10 @@ void main() {
     for (var i = 0; i < imported.length; i++) {
       expect(imported[i].midiNote, result.notes[i].midiNote);
       expect(closeTo(imported[i].start, result.notes[i].start, 2), isTrue);
-      expect(closeTo(imported[i].duration, result.notes[i].duration, 2),
-          isTrue);
+      expect(
+        closeTo(imported[i].duration, result.notes[i].duration, 2),
+        isTrue,
+      );
     }
     expect(imported.where((n) => n.midiNote == 43), isNotEmpty);
     expect(imported.where((n) => n.midiNote == 71), isNotEmpty);
