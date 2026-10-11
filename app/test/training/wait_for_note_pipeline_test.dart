@@ -241,7 +241,8 @@ void main() {
     final engine = WaitForNoteEngine(
       selection!,
       instrumentRange: const InstrumentRange(48, 72),
-    )..start();
+    );
+    engine.start();
     expect(engine.snapshot.expectedMidiNotes, {60, 64});
     expect(
       engine.onNoteEvent(
