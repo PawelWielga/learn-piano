@@ -26,25 +26,37 @@ DecodedAudioFile melody({int sampleRate = 48000, double gain = 0.35}) {
 }
 
 void main() {
-  test('extracts monophonic notes at real PCM sample rates and exports MIDI', () async {
-    for (final sampleRate in [44100, 48000]) {
-      final progress = <double>[];
-      final result = await const Mp3NoteTranscriber().transcribe(
-        melody(sampleRate: sampleRate),
-        onProgress: progress.add,
-      );
-      expect(result.notes.map((note) => note.midiNote).toList(), [69, 60]);
-      expect(result.notes.first.duration, greaterThan(const Duration(milliseconds: 500)));
-      expect(result.notes.last.start, greaterThan(const Duration(milliseconds: 1300)));
-      expect(progress.last, 1);
-      expect(result.truncated, isFalse);
-      final midi = const MidiParser().parse(
-        const MidiRecordingWriter().write(result.notes),
-      );
-      expect(midi.noteCount, 2);
-      expect(midi.tracks.single.notes.map((n) => n.midiNote).toList(), [69, 60]);
-    }
-  });
+  test(
+    'extracts monophonic notes at real PCM sample rates and exports MIDI',
+    () async {
+      for (final sampleRate in [44100, 48000]) {
+        final progress = <double>[];
+        final result = await const Mp3NoteTranscriber().transcribe(
+          melody(sampleRate: sampleRate),
+          onProgress: progress.add,
+        );
+        expect(result.notes.map((note) => note.midiNote).toList(), [69, 60]);
+        expect(
+          result.notes.first.duration,
+          greaterThan(const Duration(milliseconds: 500)),
+        );
+        expect(
+          result.notes.last.start,
+          greaterThan(const Duration(milliseconds: 1300)),
+        );
+        expect(progress.last, 1);
+        expect(result.truncated, isFalse);
+        final midi = const MidiParser().parse(
+          const MidiRecordingWriter().write(result.notes),
+        );
+        expect(midi.noteCount, 2);
+        expect(midi.tracks.single.notes.map((n) => n.midiNote).toList(), [
+          69,
+          60,
+        ]);
+      }
+    },
+  );
 
   test('quiet recording requires sensitivity switch', () async {
     final normal = await const Mp3NoteTranscriber().transcribe(
