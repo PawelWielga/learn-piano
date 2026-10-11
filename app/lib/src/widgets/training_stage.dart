@@ -61,6 +61,8 @@ class TrainingStage extends StatefulWidget {
     required this.progress,
     required this.expectedNote,
     required this.detectedNote,
+    this.expectedNotes = const <int>{},
+    this.detectedNotes = const <int>{},
     required this.lastAttempt,
     required this.phaseLabel,
     required this.attemptLabel,
@@ -87,6 +89,8 @@ class TrainingStage extends StatefulWidget {
   final double progress;
   final int? expectedNote;
   final int? detectedNote;
+  final Set<int> expectedNotes;
+  final Set<int> detectedNotes;
   final TrainingAttempt lastAttempt;
   final String phaseLabel;
   final String attemptLabel;
@@ -235,12 +239,20 @@ class _TrainingStageState extends State<TrainingStage> {
         !widget.autoPlaying &&
         (_showControls || widget.phase != TrainingPhase.running);
     final completed = widget.phase == TrainingPhase.completed;
-    final expected = widget.expectedNote == null
-        ? '—'
-        : PitchEstimate.nameForMidi(widget.expectedNote!);
-    final detected = widget.detectedNote == null
-        ? '—'
-        : PitchEstimate.nameForMidi(widget.detectedNote!);
+    final expected = widget.expectedNotes.isNotEmpty
+        ? (widget.expectedNotes.toList()..sort())
+            .map(PitchEstimate.nameForMidi)
+            .join(' + ')
+        : widget.expectedNote == null
+            ? '—'
+            : PitchEstimate.nameForMidi(widget.expectedNote!);
+    final detected = widget.detectedNotes.isNotEmpty
+        ? (widget.detectedNotes.toList()..sort())
+            .map(PitchEstimate.nameForMidi)
+            .join(' + ')
+        : widget.detectedNote == null
+            ? '—'
+            : PitchEstimate.nameForMidi(widget.detectedNote!);
     const accent = TrainingStagePalette.primary;
     const foreground = TrainingStagePalette.foreground;
 
@@ -313,6 +325,8 @@ class _TrainingStageState extends State<TrainingStage> {
                                   : roll,
                               expectedNote: widget.expectedNote,
                               detectedNote: widget.detectedNote,
+                              expectedNotes: widget.expectedNotes,
+                              detectedNotes: widget.detectedNotes,
                               pressedNotes: _pointerNotes.values.toSet(),
                               rollHeight: rollHeight,
                             ),
@@ -766,6 +780,8 @@ class _TrainingStagePainter extends CustomPainter {
     required this.roll,
     required this.expectedNote,
     required this.detectedNote,
+    required this.expectedNotes,
+    required this.detectedNotes,
     required this.pressedNotes,
     required this.rollHeight,
   });
@@ -775,6 +791,8 @@ class _TrainingStagePainter extends CustomPainter {
   final int? expectedNote;
   final int? detectedNote;
   final Set<int> pressedNotes;
+  final Set<int> expectedNotes;
+  final Set<int> detectedNotes;
   final double rollHeight;
 
   @override
@@ -850,8 +868,8 @@ class _TrainingStagePainter extends CustomPainter {
   void _drawKey(Canvas canvas, PianoKeyGeometry key) {
     final rect = key.rect;
     final shape = RRect.fromRectAndRadius(rect, const Radius.circular(3));
-    final isExpected = key.midiNote == expectedNote;
-    final isDetected = key.midiNote == detectedNote;
+    final isExpected = key.midiNote == expectedNote || expectedNotes.contains(key.midiNote);
+    final isDetected = key.midiNote == detectedNote || detectedNotes.contains(key.midiNote);
     canvas.drawRRect(
       shape,
       Paint()
@@ -933,6 +951,8 @@ class _TrainingStagePainter extends CustomPainter {
       oldDelegate.keyboard.height != keyboard.height ||
       oldDelegate.expectedNote != expectedNote ||
       oldDelegate.detectedNote != detectedNote ||
+      !setEquals(oldDelegate.expectedNotes, expectedNotes) ||
+      !setEquals(oldDelegate.detectedNotes, detectedNotes) ||
       !setEquals(oldDelegate.pressedNotes, pressedNotes) ||
       oldDelegate.roll?.currentIndex != roll?.currentIndex ||
       oldDelegate.roll?.playhead != roll?.playhead ||
