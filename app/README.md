@@ -259,3 +259,22 @@ czułość może powodować przypadkowe trafienia z szumu lub pogłosu; jeśli
 tak się dzieje, wyłącz opcję. Przy zablokowanym `localStorage` ustawienia
 pozostają dostępne do zamknięcia karty. Testy jednostkowe weryfikują
 ciche i rozstrojone dźwięki, a test Node sprawdza zapis i tryb awaryjny.
+
+## Lokalny odczyt nut z MP3
+
+Ekran główny → **Odczytaj nuty z MP3** otwiera import pliku `.mp3`.
+Przeglądarka używa `AudioContext.decodeAudioData`, sprowadza jeden lub dwa
+kanały PCM do mono i przekazuje próbki do czysto dartowego
+`Mp3NoteTranscriber`. Ten używa algorytmu YIN, `NoteEventTracker`
+i zapisanych progów czułości i tolerancji, co nagrywanie przez mikrofon.
+Po analizie można pobrać rezultat jako MIDI typu 0 i zaimportować
+do istniejącego ekranu treningu.
+
+**Ograniczenia:** MP3 do **12 MB / 90 sekund**. Transkrypcja
+rozpoznaje pojedynczą melodię, nie rozdziela akordów, perkusji ani kilku
+instrumentów. Początki i długości nut są przybliżone ze względu na
+stabilizację i wybrzmiewanie. Dekodowanie zależy od wsparcia MP3
+w przeglądarce. Nie ma przesyłania audio do serwera ani jego zapisu.
+Analizę można przerwać przez opuszczenie ekranu; pętla regularnie oddaje
+sterowanie UI. Testy Flutter wykorzystują syntetyczny PCM, a Node
+testuje przeglądarkowy picker na atrapach Web Audio API.
