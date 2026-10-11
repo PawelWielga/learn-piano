@@ -244,26 +244,18 @@ void main() {
     );
     engine.start();
     expect(engine.snapshot.expectedMidiNotes, {60, 64});
-    expect(
-      engine.onNoteEvent(
-        const NoteEvent(
-          type: NoteEventType.noteOn,
-          midiNote: 60,
-          at: Duration.zero,
-        ),
-      ).attempt,
-      TrainingAttempt.ignored,
+    const first = NoteEvent(
+      type: NoteEventType.noteOn,
+      midiNote: 60,
+      at: Duration.zero,
     );
-    expect(
-      engine.onNoteEvent(
-        const NoteEvent(
-          type: NoteEventType.noteOn,
-          midiNote: 64,
-          at: Duration.zero,
-        ),
-      ).attempt,
-      TrainingAttempt.correct,
+    const second = NoteEvent(
+      type: NoteEventType.noteOn,
+      midiNote: 64,
+      at: Duration.zero,
     );
+    expect(engine.onNoteEvent(first).attempt, TrainingAttempt.ignored);
+    expect(engine.onNoteEvent(second).attempt, TrainingAttempt.correct);
     expect(engine.snapshot.isCompleted, isTrue);
   });
 }
