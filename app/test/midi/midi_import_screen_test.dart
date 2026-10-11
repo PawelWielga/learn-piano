@@ -119,4 +119,49 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('midi-import-error')), findsNothing);
   });
+
+  testWidgets('polyphonic MIDI can be previewed, but not practiced', (
+    tester,
+  ) async {
+    final chords = midiFixture(
+      format: 0,
+      tracks: [
+        trackBytes([
+          event(0, [0x90, 43, 90]),
+          event(0, [0x90, 71, 90]),
+          event(480, [0x80, 43, 0]),
+          event(0, [0x80, 71, 0]),
+          endOfTrack(),
+        ]),
+      ],
+    );
+    final picker = FakeMidiFilePicker()
+      ..next = PickedMidiFile(name: 'chords.mid', bytes: chords);
+    await tester.pumpWidget(
+      MaterialApp(home: MidiImportScreen(filePicker: picker)),
+    );
+    await tester.tap(find.byKey(const Key('choose-midi-file')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('2 nut'), findsWidgets);
+    expect(find.byKey(const Key('start-midi-training')), findsNothing);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('poly-preview-open-0-0')),
+      160,
+    );
+    await Scrollable.ensureVisible(
+      tester.element(find.byKey(const Key('poly-preview-open-0-0'))),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('poly-preview-open-0-0')));
+    await tester.pumpAndSettle();
+    await Scrollable.ensureVisible(
+      tester.element(find.byKey(const Key('polyphonic-midi-preview'))),
+      alignment: 0.2,
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('polyphonic-midi-preview')), findsOneWidget);
+    expect(find.byKey(const Key('falling-notes-canvas')), findsOneWidget);
+    expect(find.byKey(const Key('start-midi-training')), findsNothing);
+  });
 }

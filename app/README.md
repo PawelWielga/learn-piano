@@ -260,21 +260,46 @@ tak się dzieje, wyłącz opcję. Przy zablokowanym `localStorage` ustawienia
 pozostają dostępne do zamknięcia karty. Testy jednostkowe weryfikują
 ciche i rozstrojone dźwięki, a test Node sprawdza zapis i tryb awaryjny.
 
-## Lokalny odczyt nut z MP3
+## Lokalny odczyt nut z MP3 (wielogłosowy)
 
-Ekran główny → **Odczytaj nuty z MP3** otwiera import pliku `.mp3`.
-Przeglądarka używa `AudioContext.decodeAudioData`, sprowadza jeden lub dwa
-kanały PCM do mono i przekazuje próbki do czysto dartowego
-`Mp3NoteTranscriber`. Ten używa algorytmu YIN, `NoteEventTracker`
-i zapisanych progów czułości i tolerancji, co nagrywanie przez mikrofon.
-Po analizie można pobrać rezultat jako MIDI typu 0 i zaimportować
-do istniejącego ekranu treningu.
+Ekran główny → **Odczytaj nuty z MP3**. Przeglądarka dekoduje lokalne
+MP3 przez Web Audio API i przekazuje mono PCM do osobnego transkrybera
+plików. Mikrofonowy YIN oraz `NoteEventTracker` nie są używane ani zmieniane.
 
-**Ograniczenia:** MP3 do **12 MB / 90 sekund**. Transkrypcja
-rozpoznaje pojedynczą melodię, nie rozdziela akordów, perkusji ani kilku
-instrumentów. Początki i długości nut są przybliżone ze względu na
-stabilizację i wybrzmiewanie. Dekodowanie zależy od wsparcia MP3
-w przeglądarce. Nie ma przesyłania audio do serwera ani jego zapisu.
-Analizę można przerwać przez opuszczenie ekranu; pętla regularnie oddaje
-sterowanie UI. Testy Flutter wykorzystują syntetyczny PCM, a Node
-testuje przeglądarkowy picker na atrapach Web Audio API.
+Tryby:
+- **Dokładna (domyślna):** FFT 4096 po decymacji 2× przy 44,1/48 kHz,
+  krok ~23 ms, maksymalnie 8 kandydatów na ramkę.
+- **Szybka:** ten sam rozmiar FFT, krok ~46 ms, wyższy próg i maksymalnie
+  5 kandydatów na ramkę. Mniejszy koszt, większe ryzyko pominięcia nut.
+
+Widmo jest okienkowane funkcją Hanna i analizowane metodą *harmonic matching
+pursuit*: iteracyjne punktowanie podstawowych częstotliwości MIDI C2–C7,
+wykorzystanie do 6 harmonicznych oraz częściowe odejmowanie energii
+rozpoznanych głosów. Każda wysokość ma niezależny stan rozpoczęcia,
+potwierdzenia, zakończenia i heurystykę ponownego uderzenia. Krótki
+próg RMS wyznacza przybliżone momenty ataku i zaniku. Eksport do istniejącego
+SMF typu 0 zapisuje równoczesne NoteOn/NoteOff na jednym kanale.
+Rozdzielanie ścieżek według samego rejestru byłoby niewiarygodne.
+Ekran importu MIDI pozwala obejrzeć wielogłosowe partie w podglądzie
+spadających nut, ale trening Wait for Note nadal wymaga jednej nuty naraz.
+
+Pliki do **12 MB / 90 sekund**, bez uploadu ani zależności od backendu.
+Postęp i anulowanie są dostępne na ekranie. Pętla oddaje sterowanie Flutterowi
+co 6 ramek; **dekodowanie MP3 w Web Audio pozostaje zależne od przeglądarki**,
+a nie każdą fazę dekodowania można przerwać natychmiast.
+
+**Ograniczenia:** to niewielki klasyczny algorytm widmowy, **nie**
+model typu Onsets & Frames, CQT ani uczony NMF. Wspólne składowe widma
+(np. oktawy i częstotliwości harmoniczne basu), silny pogłos, bardzo ciche
+głosy, nagrania mieszane z perkusją i pedał sustain mogą tworzyć
+fałszywe lub brakujące nuty. Akustyczny koniec wybrzmiewania nie jest
+fizycznym momentem puszczenia klawisza. Nie gwarantujemy rozdzielenia
+melodii i akompaniamentu, ani dokładności dla wszystkich fortepianów.
+
+Testy używają niezależnie syntetyzowanych przebiegów mono i sprawdzają
+współbrzmienia, bas z melodią, trójdźwięki, krótkie i powtarzane nuty,
+ciszę, ustawienia czułości oraz import/eksport MIDI. Autorskie nagranie
+testowe z rozmowy nie jest przechowywane w repozytorium i wymaga
+oddzielnej walidacji po dostarczeniu pliku. Rzeczywiste wyniki nagrań
+fortepianowych oraz mobilne czasy obliczeń należy zmierzyć ręcznie
+w Chrome desktop/Android i Safari iOS przed uznaniem jakości za docelową.

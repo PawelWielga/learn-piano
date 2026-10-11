@@ -13,7 +13,7 @@ import '../recording/midi_recording_writer.dart';
 import '../recording/mp3_note_transcriber.dart';
 import '../recording/note_recorder.dart';
 
-/// Local-only mono MP3 transcription. No microphone or cloud service needed.
+/// Local-only multi-pitch MP3 transcription. No microphone or cloud service.
 class Mp3ImportScreen extends StatefulWidget {
   const Mp3ImportScreen({
     super.key,
@@ -46,6 +46,7 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
   bool _pickerReady = true;
   bool _pickerLoading = false;
   bool _truncated = false;
+  Mp3TranscriptionMode _mode = Mp3TranscriptionMode.accurate;
   int _request = 0;
 
   @override
@@ -110,6 +111,7 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
       final result = await widget.transcriber.transcribe(
         audio,
         preferences: _preferences,
+        mode: _mode,
         isCancelled: () => !mounted || request != _request,
         onProgress: (progress) {
           if (mounted && request == _request) {
@@ -123,9 +125,10 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
         _duration = result.duration;
         _truncated = result.truncated;
         _message = result.notes.isEmpty
-            ? 'Nie wykryto pewnych nut. Wypróbuj czyste nagranie '
-                  'pojedynczej melodii lub zwiększ czułość w ustawieniach.'
-            : 'Rozpoznano ${result.notes.length} nut. Możesz zapisać MIDI.';
+            ? 'Nie wykryto nut. Spróbuj dokładnej analizy lub zwiększ '
+                  'czułość w ustawieniach.'
+            : 'Rozpoznano ${result.notes.length} nut, także współbrzmienia. '
+                  'Sprawdź wynik odsłuchem po imporcie MIDI.';
       });
     } on Mp3TranscriptionCancelled {
       // Leaving this screen invalidates the work. Do not retain PCM.
@@ -146,6 +149,17 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
         setState(() => _busy = false);
       }
     }
+  }
+
+  void _cancelAnalysis() {
+    if (!_busy) return;
+    // Invalidates the running analysis; its next checkpoint stops the work.
+    ++_request;
+    setState(() {
+      _busy = false;
+      _progress = 0;
+      _message = 'Analiza anulowana.';
+    });
   }
 
   void _saveMidi() {
@@ -186,18 +200,45 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                 Text('MP3 → MIDI', style: theme.textTheme.headlineSmall),
                 const SizedBox(height: 8),
                 const Text(
-                  'Wybierz nagranie pojedynczej melodii na pianinie. '
-                  'Przeglądarka odczyta MP3 lokalnie i spróbuje zamienić '
-                  'wykryte nuty na MIDI. Nie używamy mikrofonu ani serwera.',
+                  'Wybierz nagranie pianina. Analiza lokalna spróbuje '
+                  'odczytać jednoczesne nuty melodii i akompaniamentu. '
+                  'Nie używamy mikrofonu ani serwera.',
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Limit: 12 MB i 90 sekund. Najlepsze wyniki daje '
-                  'jeden instrument grający pojedyncze nuty bez podkładu. '
-                  'Piosenki, akordy, perkusja i pogłos mogą być rozpoznane '
-                  'błędnie. Czasy nut są przybliżone.',
+                  'Limit: 12 MB i 90 sekund. Analiza spektralna wspiera '
+                  'wielogłosowość, ale gęste akordy, perkusja, pogłos '
+                  'i wspólne harmoniczne mogą wprowadzać błędy. '
+                  'Czasy naciśnięć i zwolnień są szacowane.',
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 6,
+                  children: [
+                    ChoiceChip(
+                      key: const Key('mp3-mode-fast'),
+                      label: const Text('Szybka'),
+                      selected: _mode == Mp3TranscriptionMode.fast,
+                      onSelected: _busy
+                          ? null
+                          : (_) => setState(
+                              () => _mode = Mp3TranscriptionMode.fast,
+                            ),
+                    ),
+                    ChoiceChip(
+                      key: const Key('mp3-mode-accurate'),
+                      label: const Text('Dokładna (wielogłosowa)'),
+                      selected: _mode == Mp3TranscriptionMode.accurate,
+                      onSelected: _busy
+                          ? null
+                          : (_) => setState(
+                              () => _mode = Mp3TranscriptionMode.accurate,
+                            ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Wrap(
                   spacing: 12,
                   runSpacing: 8,
@@ -220,6 +261,13 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                             : 'Wybierz plik MP3',
                       ),
                     ),
+                    if (_busy)
+                      OutlinedButton.icon(
+                        key: const Key('mp3-cancel'),
+                        onPressed: _cancelAnalysis,
+                        icon: const Icon(Icons.close),
+                        label: const Text('Anuluj analizę'),
+                      ),
                     OutlinedButton.icon(
                       key: const Key('mp3-save'),
                       onPressed: _busy || _notes.isEmpty ? null : _saveMidi,
@@ -250,6 +298,16 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                   key: const Key('mp3-note-count'),
                   style: theme.textTheme.titleMedium,
                 ),
+                const Text(
+                  'Obsługa wielogłosowości: do 8 jednoczesnych '
+                  'kandydatów w trybie dokładnym. Wynik przybliżony.',
+                ),
+                if (_notes.isNotEmpty)
+                  Text(
+                    'Zakres: ${PitchEstimate.nameForMidi(_notes.map((n) => n.midiNote).reduce((a, b) => a < b ? a : b))}'
+                    ' – ${PitchEstimate.nameForMidi(_notes.map((n) => n.midiNote).reduce((a, b) => a > b ? a : b))}',
+                    key: const Key('mp3-note-range'),
+                  ),
                 if (_truncated)
                   const Text('Osiągnięto limit 8192 nut. Wynik jest niepełny.'),
                 if (_error != null) ...[
@@ -286,8 +344,9 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                     Text('Wyświetlono pierwsze 32 z ${_notes.length} nut.'),
                   const SizedBox(height: 14),
                   const Text(
-                    'Zapisany plik możesz ponownie zaimportować '
-                    'przez „Importuj plik MIDI”, aby ćwiczyć melodię.',
+                    'Plik możesz ponownie zaimportować przez „Importuj plik MIDI”. '
+                    'Współbrzmienia obejrzysz w podglądzie wielogłosowym. '
+                    'Trening Wait for Note nadal wymaga partii jednogłosowej.',
                   ),
                 ],
               ],
