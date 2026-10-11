@@ -144,6 +144,11 @@ void main() {
       find.byKey(const Key('melody-part-0-0')),
       160,
     );
+    await Scrollable.ensureVisible(
+      tester.element(find.byKey(const Key('melody-part-0-0'))),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('melody-part-0-0')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('selected-melody')), findsOneWidget);
