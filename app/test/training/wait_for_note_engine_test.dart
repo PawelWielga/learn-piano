@@ -198,11 +198,8 @@ void main() {
     final selections = [
       melody([]),
       melody([midiNote(60, 0, 100)], channel: 9),
-      melody([midiNote(60, 0, 200), midiNote(64, 100, 300)], overlapCount: 1),
-      melody([
-        midiNote(60, 0, 200),
-        midiNote(64, 100, 300),
-      ]), // Malformed manually supplied part cannot bypass validation.
+      melody([midiNote(60, 100, 200), midiNote(64, 0, 300)]),
+      melody([midiNote(60, 0, 200), midiNote(64, 100, 50)]),
       melody([midiNote(24, 0, 100)]),
     ];
     for (final selection in selections) {
