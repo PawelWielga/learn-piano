@@ -78,10 +78,17 @@ void main() {
 
   test('very short notes are still valid NoteOn/NoteOff MIDI pairs', () {
     final bytes = const MidiRecordingWriter().write([
-      const RecordedNote(midiNote: 60, start: Duration.zero, duration: Duration.zero),
+      const RecordedNote(
+        midiNote: 60,
+        start: Duration.zero,
+        duration: Duration.zero,
+      ),
     ]);
     final file = const MidiParser().parse(bytes);
     expect(file.noteCount, 1);
-    expect(file.tracks.single.notes.single.duration, greaterThan(Duration.zero));
+    expect(
+      file.tracks.single.notes.single.duration,
+      greaterThan(Duration.zero),
+    );
   });
 }

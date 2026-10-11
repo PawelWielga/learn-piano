@@ -13,8 +13,9 @@ import 'package:learn_piano/src/widgets/recording_keyboard.dart';
 
 class _FakeInput implements AudioInput {
   final frameController = StreamController<PcmFrame>.broadcast(sync: true);
-  final statusController =
-      StreamController<AudioInputStatus>.broadcast(sync: true);
+  final statusController = StreamController<AudioInputStatus>.broadcast(
+    sync: true,
+  );
   int started = 0;
   int stopped = 0;
 
@@ -36,21 +37,28 @@ class _FakeInput implements AudioInput {
   }
 
   void tone(int ms) {
-    frameController.add(PcmFrame(
-      samples: Float32List.fromList(List.generate(
-        2048, (i) => 0.35 * math.sin(2 * math.pi * 440 * i / 48000),
-      )),
-      sampleRate: 48000,
-      capturedAt: Duration(milliseconds: ms),
-    ));
+    frameController.add(
+      PcmFrame(
+        samples: Float32List.fromList(
+          List.generate(
+            2048,
+            (i) => 0.35 * math.sin(2 * math.pi * 440 * i / 48000),
+          ),
+        ),
+        sampleRate: 48000,
+        capturedAt: Duration(milliseconds: ms),
+      ),
+    );
   }
 
   void silence(int ms) {
-    frameController.add(PcmFrame(
-      samples: Float32List(2048),
-      sampleRate: 48000,
-      capturedAt: Duration(milliseconds: ms),
-    ));
+    frameController.add(
+      PcmFrame(
+        samples: Float32List(2048),
+        sampleRate: 48000,
+        capturedAt: Duration(milliseconds: ms),
+      ),
+    );
   }
 
   @override
@@ -70,6 +78,7 @@ class _FakeOutput implements NoteOutput {
     pressed++;
     return true;
   }
+
   @override
   void noteOff(int midiNote) => released++;
   @override
@@ -104,13 +113,15 @@ void main() {
     useLandscape(tester);
     final input = _FakeInput();
     final exporter = _FakeExporter();
-    await tester.pumpWidget(MaterialApp(
-      home: RecordingScreen(
-        audioInput: input,
-        noteOutput: _FakeOutput(),
-        exporter: exporter,
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RecordingScreen(
+          audioInput: input,
+          noteOutput: _FakeOutput(),
+          exporter: exporter,
+        ),
       ),
-    ));
+    );
 
     expect(input.started, 0);
     await tester.tap(find.byKey(const Key('recording-start')));
@@ -144,13 +155,15 @@ void main() {
     final output = _FakeOutput();
     final exporter = _FakeExporter();
     final input = _FakeInput();
-    await tester.pumpWidget(MaterialApp(
-      home: RecordingScreen(
-        audioInput: input,
-        noteOutput: output,
-        exporter: exporter,
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RecordingScreen(
+          audioInput: input,
+          noteOutput: output,
+          exporter: exporter,
+        ),
       ),
-    ));
+    );
     await tester.tap(find.text('Klawiatura ekranowa'));
     await tester.pump();
     await tester.tap(find.byKey(const Key('recording-start')));
@@ -181,13 +194,15 @@ void main() {
   ) async {
     useLandscape(tester);
     final input = _FakeInput();
-    await tester.pumpWidget(MaterialApp(
-      home: RecordingScreen(
-        audioInput: input,
-        noteOutput: _FakeOutput(),
-        exporter: _FakeExporter(),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RecordingScreen(
+          audioInput: input,
+          noteOutput: _FakeOutput(),
+          exporter: _FakeExporter(),
+        ),
       ),
-    ));
+    );
     await tester.tap(find.byKey(const Key('recording-start')));
     await tester.pump();
     input.tone(50);

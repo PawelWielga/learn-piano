@@ -45,8 +45,11 @@ class NoteRecorder {
   }
 
   void noteOn(int midiNote, Duration at, {int velocity = 96}) {
-    if (!_recording || midiNote < 0 || midiNote > 127 ||
-        velocity < 1 || velocity > 127) {
+    if (!_recording ||
+        midiNote < 0 ||
+        midiNote > 127 ||
+        velocity < 1 ||
+        velocity > 127) {
       return;
     }
     final time = _normalize(at);
@@ -59,12 +62,14 @@ class NoteRecorder {
     final time = _normalize(at);
     final started = _active.remove(midiNote);
     if (started == null) return;
-    _notes.add(RecordedNote(
-      midiNote: midiNote,
-      start: started.at,
-      duration: time > started.at ? time - started.at : Duration.zero,
-      velocity: started.velocity,
-    ));
+    _notes.add(
+      RecordedNote(
+        midiNote: midiNote,
+        start: started.at,
+        duration: time > started.at ? time - started.at : Duration.zero,
+        velocity: started.velocity,
+      ),
+    );
   }
 
   /// Complete held notes even when the user stops without releasing a key.

@@ -111,15 +111,19 @@ class _RecordingScreenState extends State<RecordingScreen>
   }
 
   void _onStatus(AudioInputStatus status) {
-    if (!_listening || !_recording ||
-        status == AudioInputStatus.listening) {
+    if (!_listening || !_recording || status == AudioInputStatus.listening) {
       return;
     }
-    unawaited(_stop(message: 'Mikrofon został przerwany. Zapisz zebrane nuty.'));
+    unawaited(
+      _stop(message: 'Mikrofon został przerwany. Zapisz zebrane nuty.'),
+    );
   }
 
   void _onFrame(PcmFrame frame) {
-    if (!mounted || !_recording || !_listening || _busy ||
+    if (!mounted ||
+        !_recording ||
+        !_listening ||
+        _busy ||
         frame.samples.isEmpty) {
       return;
     }
@@ -127,7 +131,8 @@ class _RecordingScreenState extends State<RecordingScreen>
     final relative = frame.capturedAt - _micOrigin!;
     _micElapsed = relative.isNegative ? Duration.zero : relative;
     final previous = _lastAnalyzedAt;
-    if (previous != null && frame.capturedAt >= previous &&
+    if (previous != null &&
+        frame.capturedAt >= previous &&
         frame.capturedAt - previous < const Duration(milliseconds: 120)) {
       return;
     }
@@ -223,7 +228,8 @@ class _RecordingScreenState extends State<RecordingScreen>
   }
 
   void _noteDown(int note) {
-    if (!_recording || _mode != TrainingInputMode.keyboard ||
+    if (!_recording ||
+        _mode != TrainingInputMode.keyboard ||
         !_heldKeys.add(note)) {
       return;
     }
@@ -323,18 +329,26 @@ class _RecordingScreenState extends State<RecordingScreen>
                     runSpacing: 8,
                     children: [
                       FilledButton.icon(
-                        key: Key(_recording ? 'recording-stop' : 'recording-start'),
+                        key: Key(
+                          _recording ? 'recording-stop' : 'recording-start',
+                        ),
                         onPressed: _busy
                             ? null
                             : _recording
                             ? _stop
                             : _start,
-                        icon: Icon(_recording ? Icons.stop : Icons.fiber_manual_record),
-                        label: Text(_recording ? 'Zatrzymaj' : 'Rozpocznij nagrywanie'),
+                        icon: Icon(
+                          _recording ? Icons.stop : Icons.fiber_manual_record,
+                        ),
+                        label: Text(
+                          _recording ? 'Zatrzymaj' : 'Rozpocznij nagrywanie',
+                        ),
                       ),
                       OutlinedButton.icon(
                         key: const Key('recording-save'),
-                        onPressed: _busy || _recording || notes.isEmpty ? null : _save,
+                        onPressed: _busy || _recording || notes.isEmpty
+                            ? null
+                            : _save,
                         icon: const Icon(Icons.download),
                         label: const Text('Zapisz MIDI'),
                       ),
@@ -342,13 +356,16 @@ class _RecordingScreenState extends State<RecordingScreen>
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    _recording ? 'Nagrywanie trwa • nuty: ${_recorder.noteCount}'
+                    _recording
+                        ? 'Nagrywanie trwa • nuty: ${_recorder.noteCount}'
                         : 'Zarejestrowane nuty: ${notes.length}',
                     key: const Key('recording-note-count'),
                     style: theme.textTheme.titleMedium,
                   ),
                   if (_recorder.isFull)
-                    const Text('Limit nut osiągnięty. Zakończ i zapisz nagranie.'),
+                    const Text(
+                      'Limit nut osiągnięty. Zakończ i zapisz nagranie.',
+                    ),
                   if (_message != null)
                     Text(_message!, key: const Key('recording-message')),
                   if (_error != null)
@@ -359,7 +376,9 @@ class _RecordingScreenState extends State<RecordingScreen>
                     ),
                   const SizedBox(height: 12),
                   if (_mode == TrainingInputMode.keyboard) ...[
-                    const Text('Naciskaj klawisze poniżej. Możesz grać kilka nut naraz.'),
+                    const Text(
+                      'Naciskaj klawisze poniżej. Możesz grać kilka nut naraz.',
+                    ),
                     const SizedBox(height: 8),
                     RecordingKeyboard(
                       range: _range,
@@ -373,24 +392,35 @@ class _RecordingScreenState extends State<RecordingScreen>
                       key: const Key('recording-detected-note'),
                       style: theme.textTheme.titleLarge,
                     ),
-                    const Text('Mikrofon rozpoznaje pojedyncze nuty. '
-                        'Wybrzmiewanie i szum mogą wpływać na ich długość.'),
+                    const Text(
+                      'Mikrofon rozpoznaje pojedyncze nuty. '
+                      'Wybrzmiewanie i szum mogą wpływać na ich długość.',
+                    ),
                   ],
                   const SizedBox(height: 16),
-                  Text('Ostatnie zapisane nuty', style: theme.textTheme.titleMedium),
+                  Text(
+                    'Ostatnie zapisane nuty',
+                    style: theme.textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 8),
                   if (notes.isEmpty)
-                    const Text('Brak nut. Rozpocznij nagrywanie i zagraj melodię.')
+                    const Text(
+                      'Brak nut. Rozpocznij nagrywanie i zagraj melodię.',
+                    )
                   else
                     Wrap(
                       spacing: 6,
                       runSpacing: 4,
                       children: [
-                        for (final note in notes.skip(notes.length > 12 ? notes.length - 12 : 0))
-                          Chip(label: Text(
-                            '${PitchEstimate.nameForMidi(note.midiNote)} '
-                            '${note.duration.inMilliseconds} ms',
-                          )),
+                        for (final note in notes.skip(
+                          notes.length > 12 ? notes.length - 12 : 0,
+                        ))
+                          Chip(
+                            label: Text(
+                              '${PitchEstimate.nameForMidi(note.midiNote)} '
+                              '${note.duration.inMilliseconds} ms',
+                            ),
+                          ),
                       ],
                     ),
                   const SizedBox(height: 8),

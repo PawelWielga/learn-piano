@@ -70,49 +70,53 @@ class _RecordingKeyboardState extends State<RecordingKeyboard> {
       whiteKeyWidth: 42,
       height: 132,
     );
-    return LayoutBuilder(builder: (context, constraints) {
-      if (_positionedRange != widget.range) {
-        _positionedRange = widget.range;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted || !_scroll.hasClients) return;
-          final initialNote = 60.clamp(widget.range.low, widget.range.high).toInt();
-          final key = layout.keyForMidi(initialNote);
-          final offset = (key?.rect.center.dx ?? 0) -
-              constraints.maxWidth / 2;
-          _scroll.jumpTo(
-            offset.clamp(0.0, _scroll.position.maxScrollExtent).toDouble(),
-          );
-        });
-      }
-      return SingleChildScrollView(
-        key: const Key('recording-keyboard-scroll'),
-        controller: _scroll,
-        scrollDirection: Axis.horizontal,
-        child: Listener(
-          onPointerDown: (event) => _press(event, layout),
-          onPointerMove: (event) {
-            final held = _pressed[event.pointer];
-            if (held != null && layout.noteAt(event.localPosition) != held) {
-              _release(event.pointer);
-            }
-          },
-          onPointerUp: (event) => _release(event.pointer),
-          onPointerCancel: (event) => _release(event.pointer),
-          child: SizedBox(
-            width: layout.width,
-            height: layout.height,
-            child: CustomPaint(
-              painter: PianoKeyboardPainter(
-                layout: layout,
-                expectedNote: null,
-                detectedNote: _pressed.isEmpty ? null : _pressed.values.last,
-                expectedColor: const Color(0xFF087E77),
-                detectedColor: const Color(0xFFAB5300),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (_positionedRange != widget.range) {
+          _positionedRange = widget.range;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || !_scroll.hasClients) return;
+            final initialNote = 60
+                .clamp(widget.range.low, widget.range.high)
+                .toInt();
+            final key = layout.keyForMidi(initialNote);
+            final offset =
+                (key?.rect.center.dx ?? 0) - constraints.maxWidth / 2;
+            _scroll.jumpTo(
+              offset.clamp(0.0, _scroll.position.maxScrollExtent).toDouble(),
+            );
+          });
+        }
+        return SingleChildScrollView(
+          key: const Key('recording-keyboard-scroll'),
+          controller: _scroll,
+          scrollDirection: Axis.horizontal,
+          child: Listener(
+            onPointerDown: (event) => _press(event, layout),
+            onPointerMove: (event) {
+              final held = _pressed[event.pointer];
+              if (held != null && layout.noteAt(event.localPosition) != held) {
+                _release(event.pointer);
+              }
+            },
+            onPointerUp: (event) => _release(event.pointer),
+            onPointerCancel: (event) => _release(event.pointer),
+            child: SizedBox(
+              width: layout.width,
+              height: layout.height,
+              child: CustomPaint(
+                painter: PianoKeyboardPainter(
+                  layout: layout,
+                  expectedNote: null,
+                  detectedNote: _pressed.isEmpty ? null : _pressed.values.last,
+                  expectedColor: const Color(0xFF087E77),
+                  detectedColor: const Color(0xFFAB5300),
+                ),
               ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }

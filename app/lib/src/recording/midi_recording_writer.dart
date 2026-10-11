@@ -13,19 +13,20 @@ class MidiRecordingWriter {
   Uint8List write(List<RecordedNote> notes) {
     final events = <_TimedEvent>[];
     for (final note in notes) {
-      if (note.midiNote < 0 || note.midiNote > 127 ||
-          note.velocity < 1 || note.velocity > 127 ||
-          note.start.isNegative || note.duration.isNegative) {
+      if (note.midiNote < 0 ||
+          note.midiNote > 127 ||
+          note.velocity < 1 ||
+          note.velocity > 127 ||
+          note.start.isNegative ||
+          note.duration.isNegative) {
         throw const FormatException('Niepoprawne dane nagranej nuty.');
       }
       final begin = _toTicks(note.start);
       final end = _toTicks(note.start + note.duration);
       events.add(_TimedEvent(begin, 1, [0x90, note.midiNote, note.velocity]));
-      events.add(_TimedEvent(
-        end > begin ? end : begin + 1,
-        0,
-        [0x80, note.midiNote, 0],
-      ));
+      events.add(
+        _TimedEvent(end > begin ? end : begin + 1, 0, [0x80, note.midiNote, 0]),
+      );
     }
     events.sort((a, b) {
       final tick = a.tick.compareTo(b.tick);
@@ -58,8 +59,8 @@ class MidiRecordingWriter {
   }
 
   int _toTicks(Duration duration) =>
-      (duration.inMicroseconds * ticksPerBeat +
-          microsecondsPerBeat ~/ 2) ~/ microsecondsPerBeat;
+      (duration.inMicroseconds * ticksPerBeat + microsecondsPerBeat ~/ 2) ~/
+      microsecondsPerBeat;
 
   void _writeUint32(List<int> bytes, int value) {
     bytes.addAll([
