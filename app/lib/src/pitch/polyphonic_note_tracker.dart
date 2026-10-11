@@ -26,22 +26,18 @@ class PolyphonicNoteTracker {
   final Map<int, _PitchState> _states = <int, _PitchState>{};
 
   Set<int> get activeNotes => Set<int>.unmodifiable(
-    _states.entries.where((entry) => entry.value.active)
+    _states.entries
+        .where((entry) => entry.value.active)
         .map((entry) => entry.key),
   );
 
   /// Returns note-on/off transitions; empty frames do not imply silence.
-  List<NoteEvent> observe(
-    Float32List samples,
-    int sampleRate,
-    Duration at,
-  ) {
+  List<NoteEvent> observe(Float32List samples, int sampleRate, Duration at) {
     if (samples.isEmpty || sampleRate < 8000 || sampleRate > 96000) {
       return const [];
     }
     if (_sampleRate != sampleRate ||
-        (_lastAt != null &&
-            (at <= _lastAt! || at - _lastAt! > _gap))) {
+        (_lastAt != null && (at <= _lastAt! || at - _lastAt! > _gap))) {
       reset();
     }
     _sampleRate = sampleRate;
@@ -60,8 +56,12 @@ class PolyphonicNoteTracker {
       _buffer.setRange(0, count, samples, samples.length - count);
     } else {
       _buffer.setRange(0, _buffer.length - count, _buffer, count);
-      _buffer.setRange(_buffer.length - count, _buffer.length,
-          samples, samples.length - count);
+      _buffer.setRange(
+        _buffer.length - count,
+        _buffer.length,
+        samples,
+        samples.length - count,
+      );
     }
     _received = math.min(_buffer.length, _received + count);
     if (_received < _buffer.length) return const [];
@@ -85,7 +85,9 @@ class PolyphonicNoteTracker {
         state.presentSince ??= at;
         if (!state.active && at - state.presentSince! >= _attack) {
           state.active = true;
-          events.add(NoteEvent(type: NoteEventType.noteOn, midiNote: note, at: at));
+          events.add(
+            NoteEvent(type: NoteEventType.noteOn, midiNote: note, at: at),
+          );
         }
       } else {
         state.presentSince = null;
@@ -94,7 +96,9 @@ class PolyphonicNoteTracker {
           if (at - state.missingSince! >= _release) {
             state.active = false;
             state.missingSince = null;
-            events.add(NoteEvent(type: NoteEventType.noteOff, midiNote: note, at: at));
+            events.add(
+              NoteEvent(type: NoteEventType.noteOff, midiNote: note, at: at),
+            );
           }
         }
       }
