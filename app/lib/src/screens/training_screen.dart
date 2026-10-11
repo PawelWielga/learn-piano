@@ -590,7 +590,7 @@ class _TrainingScreenState extends State<TrainingScreen>
               : _mode == TrainingInputMode.keyboard
               ? _heldKeyboardNotes
               : widget.selection.part.isMonophonic
-              ? <int>{if (_stableNote != null) _stableNote!}
+              ? <int>{?_stableNote}
               : _polyTracker.activeNotes,
           detectedNote: _autoPlaying
               ? null
