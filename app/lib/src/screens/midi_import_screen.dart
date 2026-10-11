@@ -384,64 +384,6 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                       'Akordy oraz perkusja nie są obsługiwane w treningu.',
                       key: Key('melody-selection-hint'),
                     ),
-                  if (selection == null && _polyPreview != null) ...[
-                    const SizedBox(height: 12),
-                    Card(
-                      key: const Key('polyphonic-midi-preview'),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              'Podgląd wielogłosowy: '
-                              '${_polyPreview!.displayName}, '
-                              'kanał ${_polyPreview!.channel + 1}',
-                              style: theme.textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Współbrzmienia pozostają widoczne. '
-                              'Ten podgląd nie jest treningiem Wait for Note.',
-                            ),
-                            const SizedBox(height: 8),
-                            FallingNotesView(
-                              key: ValueKey(_polyPreview),
-                              notes: _polyPreview!.notes,
-                              range: InstrumentRange(
-                                _polyPreview!.minMidiNote,
-                                _polyPreview!.maxMidiNote,
-                              ),
-                              currentIndex: _polyPreviewIndex,
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 10,
-                              children: [
-                                OutlinedButton.icon(
-                                  key: const Key('poly-preview-previous'),
-                                  onPressed: _polyPreviewIndex == 0
-                                      ? null
-                                      : () => setState(() => _polyPreviewIndex--),
-                                  icon: const Icon(Icons.arrow_back),
-                                  label: const Text('Poprzednia'),
-                                ),
-                                FilledButton.icon(
-                                  key: const Key('poly-preview-next'),
-                                  onPressed: _polyPreviewIndex ==
-                                          _polyPreview!.notes.length - 1
-                                      ? null
-                                      : () => setState(() => _polyPreviewIndex++),
-                                  icon: const Icon(Icons.arrow_forward),
-                                  label: const Text('Następna'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 20),
                   Text('Ścieżki i kanały', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
@@ -563,7 +505,9 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                                                     _polyPreview = part;
                                                     _polyPreviewIndex = 0;
                                                   }),
-                                                  icon: const Icon(Icons.visibility),
+                                                  icon: const Icon(
+                                                    Icons.visibility,
+                                                  ),
                                                   label: const Text(
                                                     'Podgląd współbrzmień',
                                                   ),
@@ -581,6 +525,67 @@ class _MidiImportScreenState extends State<MidiImportScreen> {
                         ),
                       ),
                     ),
+                  if (selection == null && _polyPreview != null) ...[
+                    const SizedBox(height: 12),
+                    Card(
+                      key: const Key('polyphonic-midi-preview'),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              'Podgląd wielogłosowy: '
+                              '${_polyPreview!.displayName}, '
+                              'kanał ${_polyPreview!.channel + 1}',
+                              style: theme.textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Współbrzmienia pozostają widoczne. '
+                              'Ten podgląd nie jest treningiem Wait for Note.',
+                            ),
+                            const SizedBox(height: 8),
+                            FallingNotesView(
+                              key: ValueKey(_polyPreview),
+                              notes: _polyPreview!.notes,
+                              range: InstrumentRange(
+                                _polyPreview!.minMidiNote,
+                                _polyPreview!.maxMidiNote,
+                              ),
+                              currentIndex: _polyPreviewIndex,
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 10,
+                              children: [
+                                OutlinedButton.icon(
+                                  key: const Key('poly-preview-previous'),
+                                  onPressed: _polyPreviewIndex == 0
+                                      ? null
+                                      : () =>
+                                            setState(() => _polyPreviewIndex--),
+                                  icon: const Icon(Icons.arrow_back),
+                                  label: const Text('Poprzednia'),
+                                ),
+                                FilledButton.icon(
+                                  key: const Key('poly-preview-next'),
+                                  onPressed:
+                                      _polyPreviewIndex ==
+                                          _polyPreview!.notes.length - 1
+                                      ? null
+                                      : () =>
+                                            setState(() => _polyPreviewIndex++),
+                                  icon: const Icon(Icons.arrow_forward),
+                                  label: const Text('Następna'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   const Text(
                     'Po wyborze melodii możesz ustawić zakres swojej '
