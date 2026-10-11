@@ -298,8 +298,10 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                   key: const Key('mp3-note-count'),
                   style: theme.textTheme.titleMedium,
                 ),
-                const Text('Obsługa wielogłosowości: do 8 jednoczesnych '
-                    'kandydatów w trybie dokładnym. Wynik przybliżony.'),
+                const Text(
+                  'Obsługa wielogłosowości: do 8 jednoczesnych '
+                  'kandydatów w trybie dokładnym. Wynik przybliżony.',
+                ),
                 if (_notes.isNotEmpty)
                   Text(
                     'Zakres: ${PitchEstimate.nameForMidi(_notes.map((n) => n.midiNote).reduce((a, b) => a < b ? a : b))}'
