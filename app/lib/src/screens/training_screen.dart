@@ -280,7 +280,8 @@ class _TrainingScreenState extends State<TrainingScreen>
     }
 
     final previous = _lastAnalyzedAt;
-    if (previous != null &&
+    if (widget.selection.part.isMonophonic &&
+        previous != null &&
         frame.capturedAt >= previous &&
         frame.capturedAt - previous < const Duration(milliseconds: 120)) {
       return;
