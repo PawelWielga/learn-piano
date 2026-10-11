@@ -23,7 +23,7 @@ Future<void> reveal(WidgetTester tester, Finder finder, double delta) async {
 }
 
 void main() {
-  testWidgets('selects melody by track without treating chords as playable', (
+  testWidgets('selects melody by track while also offering chord practice', (
     tester,
   ) async {
     final bytes = midiFixture(
@@ -63,7 +63,7 @@ void main() {
     await reveal(tester, find.byKey(const Key('melody-part-1-0')), 200);
     expect(
       tester.widget<InkWell>(find.byKey(const Key('melody-part-1-0'))).onTap,
-      isNull,
+      isNotNull,
     );
     expect(find.textContaining('Akordy/nakładające się nuty'), findsWidgets);
 
