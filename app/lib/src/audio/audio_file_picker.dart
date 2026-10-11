@@ -14,9 +14,7 @@ class DecodedAudioFile {
 
   Duration get duration => sampleRate <= 0
       ? Duration.zero
-      : Duration(
-          microseconds: (samples.length * 1000000 / sampleRate).round(),
-        );
+      : Duration(microseconds: (samples.length * 1000000 / sampleRate).round());
 }
 
 class AudioFilePickException implements Exception {
