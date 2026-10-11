@@ -155,10 +155,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('poly-preview-open-0-0')));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('polyphonic-midi-preview')),
-      180,
+    await Scrollable.ensureVisible(
+      tester.element(find.byKey(const Key('polyphonic-midi-preview'))),
+      alignment: 0.2,
     );
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('polyphonic-midi-preview')), findsOneWidget);
     expect(find.byKey(const Key('falling-notes-canvas')), findsOneWidget);
     expect(find.byKey(const Key('start-midi-training')), findsNothing);
