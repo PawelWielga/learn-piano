@@ -67,7 +67,7 @@ class _DetectionSettingsScreenState extends State<DetectionSettingsScreen> {
                 const Text(
                   'Ustawienia dotyczą rozpoznawania przez mikrofon '
                   'w teście, treningu i nagrywaniu. Nie wpływają na '
-                  'klawiaturę ekranową ani odtwarzanie MIDI.'
+                  'klawiaturę ekranową ani odtwarzanie MIDI.',
                 ),
                 const SizedBox(height: 20),
                 if (_storageWarning != null) ...[
