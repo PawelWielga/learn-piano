@@ -49,9 +49,7 @@ class Mp3NoteTranscriber {
         start,
         start + _frameSize,
       );
-      final at = Duration(
-        microseconds: (start * 1000000 / sampleRate).round(),
-      );
+      final at = Duration(microseconds: (start * 1000000 / sampleRate).round());
       final update = tracker.observe(detector.detect(frame, sampleRate), at);
       for (final event in update.events) {
         if (event.type == NoteEventType.noteOn) {
