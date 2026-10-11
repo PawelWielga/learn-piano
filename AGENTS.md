@@ -114,9 +114,9 @@ Ważne zasady:
 
 ## 7. Komendy developerskie i weryfikacja
 
-**Aktualny stan repozytorium:** M0 zawiera projekt Flutter Web w `app/`, CI i workflow Pages. M1 ma wejście PCM przez getUserMedia + AudioWorklet (#4) oraz algorytm YIN do rozpoznawania nut i oktaw (#5). W #6 dodano stabilizację `NoteOn`/`NoteOff`; użytkownik potwierdził działanie na swoim instrumencie, ale formalne pomiary i macierz przeglądarek dla #7 pozostają otwarte. W M2 import SMF typu 0/1 (#8) został wdrożony, a selektor partii jednogłosowych (#9) weryfikuje osobno ścieżki/kanały, wykrywa akordy i odrzuca perkusję. W #10 dodano model i ustawienia zakresu fizycznej klawiatury, lokalną preferencję oraz walidację nut wybranej melodii. Graficzna klawiatura (#11) jest włączona w ustawieniach zakresu, podglądzie wybranej melodii i testerze mikrofonu; spadające nuty (#12) i trening (#13–#14) pozostają kolejnymi etapami. `app/pubspec.lock` został wygenerowany Flutterem 3.47.7. Każdą nową zmianę weryfikuj osobnym przebiegiem CI; nie traktuj wcześniejszego sukcesu testów jako potwierdzenia nowych zmian.
+**Aktualny stan repozytorium (2026-10-12):** Flutter Web jest wdrożony na GitHub Pages, działają import MIDI, parser SMF 0/1, ekranowa klawiatura, podgląd spadających nut, trening Wait for Note (w tym ćwiczenia akordowe), lokalne nagrywanie MIDI i eksperymentalna transkrypcja MP3 do MIDI. Mikrofon korzysta z getUserMedia/AudioWorklet; tryb monofoniczny z YIN, wielogłosowy z autorskim analizatorem widma. Kodu DSP, wyniku MP3 ani kompatybilności na realnym pianinie nie uznawaj za zweryfikowane tylko dlatego, że przechodzą testy syntetyczne. Aktualna roadmapa jakości i przebudowy to #67 (#54–#66); testy rzeczywistego instrumentu #7 i fizycznych urządzeń #16 pozostają do wykonania, gdy sprzęt będzie dostępny. W `app/pubspec.lock` jest Flutter/Dart kompatybilny z CI, a workflowy przypinają Flutter 3.47.7. Każdą nową zmianę weryfikuj bieżącym CI, nie wcześniejszym wynikiem.
 
-Gdy `app/` zostanie utworzony:
+Weryfikacja istniejącego `app/`:
 
 ```sh
 cd app
