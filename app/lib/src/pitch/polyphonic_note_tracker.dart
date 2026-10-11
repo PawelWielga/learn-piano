@@ -20,7 +20,7 @@ class PolyphonicNoteTracker {
 
   PolyphonicFrameAnalyzer? _analyzer;
   int? _sampleRate;
-  Float32List _buffer = Float32List(8192);
+  final Float32List _buffer = Float32List(8192);
   int _received = 0;
   Duration? _lastAt;
   final Map<int, _PitchState> _states = <int, _PitchState>{};
