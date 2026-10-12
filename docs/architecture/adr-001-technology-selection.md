@@ -54,6 +54,19 @@ Oficjalne Spotify Basic Pitch oferuje model w formatach TensorFlow, TFLite i ONN
 7. **#62 + #64:** scheduler i opcjonalny parser pure Dart po testach, nie wymieniać całego playback tylko dla ujednolicenia stacku.
 8. **#71, #70:** przyszły natywny build/emulator i reklamy po decyzji o grupie docelowej.
 
+## Uzupełnienie: konkurencja i rozdział offline/realtime (2026-10-12)
+
+Audyt rynku w [docs/research/competitive-landscape-2026-10.md](../research/competitive-landscape-2026-10.md) potwierdza, że:
+- **Simply Piano** opisało historycznie (2018) własny on-device ML piano recognizer MusicSense (PCM → wektor aktywnych 88 klawiszy) oraz natywne TensorFlow C++/JNI na Androidzie. Nie jest to dowód obecnego stacku 2026.
+- **Piano Marvel** ujawnia własny model ML i podaje 99% dla 2 oraz 90% dla 3 jednoczesnych nut **pod idealnymi warunkami**, bez porównywalnej metodologii F1. Wielogłosowy mikrofon pozostaje trudnym problemem.
+- **Basic Pitch** to model do **offline transcription** i sam Spotify opisuje zastosowanie przede wszystkim do pojedynczego instrumentu. Nie deklarować jego przydatności jako niskolatencyjnego realtime piano scorer bez niezależnych testów.
+- **ONNX Runtime** ma wiarygodne produkcyjne referencje m.in. Deezer i Goodnotes; to nie znaczy, że wrapper `flutter_onnxruntime` jest stosowany przez te firmy.
+- **Tone.js** jest publicznie używany w Google Chrome Music Lab, ale to nadal biblioteka Web, nie wspólny Android/Web silnik muzyczny.
+- **Synthesia** już wczytuje własne MIDI i oferuje Wait for Note. Te funkcje same nie odróżniają naszego produktu; szansą jest darmowy trening **na akustycznym pianinie przez mikrofon, bez kabla**.
+- **Oboe/AAudio** są zalecane przez Android do natywnego low-latency audio; nie kopiować `OpenSL ES` reklamowanego przez Perfect Piano (API deprecated).
+
+**Konsekwencja architektoniczna:** rekomendowany silnik **offline MP3 → MIDI = Spotify Basic Pitch ONNX** pod `TranscriptionEngine`, natomiast **real-time mic → NoteOn/NoteOff/scoring** ma osobny kontrakt i odmienny latency target, obecny YIN pozostaje baseline; przyszły niewielki on-device piano-specific 88-key/onset model dopiero po benchmarku. Do `NoteInput` warto dodać później adapter USB MIDI (Web MIDI/Android MIDI API) jako opcjonalną ścieżkę o wysokiej pewności. Odrębne wyjaśnienie problemu i źródła są w audycie rynku.
+
 ## Kryteria jakości dla implementatora, nie dla użytkownika
 
 - **Automatyczne compatibility checks:** Flutter Web release build, Android emulator build, modele ładują się offline, przygotowanie tensorów daje wyniki zgodne z oficjalnym kodem na referencjach.
