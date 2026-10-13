@@ -13,8 +13,8 @@ Docelowy adres GitHub Pages po uruchomieniu publikacji:
 
 **Kolejność źródeł wymagań:**
 1. Bieżące polecenie użytkownika i zaakceptowany zakres danego GitHub Issue.
-2. Zbiorcze [MVP 1 — issue #18](https://github.com/PawelWielga/learn-piano/issues/18) oraz powiązane issues #1–#17.
-3. [ADR-001: wybrane technologie](docs/architecture/adr-001-technology-selection.md), [Roadmapa #67](https://github.com/PawelWielga/learn-piano/issues/67), ten plik i aktualna implementacja.
+2. **Aktualna [Roadmapa #67](https://github.com/PawelWielga/learn-piano/issues/67)** oraz zaakceptowane konkretne issues, następnie [ADR-001](docs/architecture/adr-001-technology-selection.md).
+3. Ten plik, aktualna implementacja i historyczne [MVP Web #18](https://github.com/PawelWielga/learn-piano/issues/18).
 4. [docs/project-concept.md](docs/project-concept.md) oraz [README.md](README.md) jako kontekst produktu.
 
 Starsza dokumentacja opisuje Android APK jako pierwszy prototyp. **To założenie jest nieaktualne**; aktualny kierunek to najpierw Flutter Web i testy mikrofonu w przeglądarce. Aktualizacja dokumentacji jest śledzona w issue #17.
@@ -74,14 +74,14 @@ Jeśli moduły audio, MIDI lub treningu trzeba rozdzielić, preferuj na począte
 
 **Właściciel projektu dopuszcza zastąpienie lub napisanie od nowa całych modułów, jeśli uzasadniają to pomiary, brak utrzymywalności albo możliwość użycia sprawdzonej biblioteki.** Nie zachowuj własnego kodu wyłącznie dlatego, że już powstał. Nie oznacza to zgody na bezwarunkowy rewrite całego produktu.
 
-1. **Przed pisaniem DSP, MIDI, syntezatora i odtwarzacza od zera** wykorzystuj decyzje z [ADR-001](docs/architecture/adr-001-technology-selection.md). Preferowany stack: Spotify **Basic Pitch ONNX** + `flutter_onnxruntime` dla transkrypcji (#59), `record` dla przyszłego Android PCM capture (#69), `fftea` dla FFT (#58), obecny pure-Dart YIN do czasu wyników (#57); parser MIDI w Dart, z `dart_midi_pro` tylko po sprawdzeniu Web (#64). Nie przenoś podstawowej logiki do `@tonejs/midi`, `Tone.js` ani `pitchy` JS-only. Weryfikacja w CI, nie przez ręczny benchmark użytkownika.
+1. **Przed pisaniem DSP, MIDI, syntezatora i odtwarzacza od zera** wykorzystuj decyzje z [ADR-001](docs/architecture/adr-001-technology-selection.md). Preferowany stack: Spotify **Basic Pitch ONNX** + `flutter_onnxruntime` dla **offline MP3→MIDI** (#59), **osobny niskolatencyjny detektor realtime** dla mikrofonu/akordów (#57, #72), `record` dla przyszłego Android PCM capture (#69), `fftea` dla FFT (#58), obecny pure-Dart YIN jako baseline; parser MIDI w Dart, z `dart_midi_pro` tylko po sprawdzeniu Web (#64). Nie przenoś podstawowej logiki do `@tonejs/midi`, `Tone.js` ani `pitchy` JS-only. Weryfikacja w CI, nie przez ręczny benchmark użytkownika.
 2. Porównuj kandydatów na **identycznych, poprawnie zsynchronizowanych i legalnych fixturach**, mierząc accuracy (pitch/onset/offset, precision/recall/F1), fałszywe nuty, latencję, czas obliczeń, pamięć i rozmiar builda. Podawaj ograniczenia testów syntetycznych.
 3. Sprawdzaj **licencję osobno dla kodu, wag modeli, soundfontów, sampli i danych testowych** pod kątem **komercyjnej dystrybucji Androida z reklamami**. Preferuj prawidłowo licencjonowane komponenty dopuszczające komercyjne użycie (MIT/BSD/Apache-2.0 itp.). GPL/AGPL wymagają oceny obowiązków, a NC (np. zbiór MAESTRO CC BY-NC-SA) dodatkowego uprawnienia lub oceny przed użyciem w komercyjnym procesie; nie zakładaj automatycznej zgody. Rejestr ryzyk: #68. Żadnych CDN/backendu niezbędnych do analizy muzycznego audio.
 4. **Zamieniaj moduły etapami** przez testowalne interfejsy i adaptery: nowy silnik obok starego → porównanie → migracja → usunięcie zbędnego kodu. Nie trzymaj dwóch stałych implementacji bez ważnego powodu.
 5. **Wolno usunąć lub przepisać własną FFT, transkrypcję MP3, parser/writer MIDI, syntezator lub zbyt rozbudowane widżety**, jeżeli nowy moduł zachowuje wymagane funkcje i przechodzi porównawcze testy regresji. Nie przepisuj niezwiązanego UI, nawigacji ani CI tylko z przyzwyczajenia.
-6. Wybrany **kandydat do implementacji** to model Basic Pitch **ONNX** z runtime `flutter_onnxruntime` (Web/Android), nie stara biblioteka Basic Pitch TS. Obowiązkowe są oficjalna referencja Python, weryfikacja licencji wag, preprocessing/postprocessing, test Web runtime, hash modelu i pomiary w CI (#59, #68). Jeśli PoC nie przejdzie, udokumentuj wynik i rozważ fallback TFLite Android + adapter Web.
+6. Wybrany **kandydat do implementacji OFFLINE transkrypcji** to model Basic Pitch **ONNX** z runtime `flutter_onnxruntime` (Web/Android), nie stara biblioteka Basic Pitch TS. Obowiązkowe są oficjalna referencja Python, weryfikacja licencji wag, preprocessing/postprocessing, test Web runtime, hash modelu i pomiary w CI (#59, #68). **Nie używaj jego wyników jako dowodu jakości realtime mikrofonu**; live akordy bada #72. Jeśli PoC nie przejdzie, udokumentuj wynik i rozważ fallback TFLite Android + adapter Web.
 7. **Użytkownik nie ma możliwości wykonywania benchmarków bibliotek ani testów na fizycznym sprzęcie.** Implementator sam tworzy deterministyczne audio/MIDI, uruchamia automatyczne benchmarki z metrykami w GitHub Actions i sam wybiera technologię na podstawie ich wyników. Nie przerzucaj testów porównawczych na użytkownika. Ograniczenia sprzętowe z #7 i #16 pozostają otwarte; nie raportuj tych kryteriów jako zaliczonych.
-8. Każdą większą migrację poprzedź krótkim ADR: co usuwamy, co zastępujemy, dlaczego, wymagania licencyjne i zgodność komercyjna, obsługa natywnego Androida, dane benchmarkowe, plan powrotu i lista testów. Główny backlog: [#67](https://github.com/PawelWielga/learn-piano/issues/67).
+8. Każdą większą migrację poprzedź krótkim ADR: co usuwamy, co zastępujemy, dlaczego, wymagania licencyjne i zgodność komercyjna, obsługa natywnego Androida, dane benchmarkowe, plan powrotu i lista testów. Główny backlog: [#67](https://github.com/PawelWielga/learn-piano/issues/67). Dodatkowe, dopiero późniejsze rozszerzenia treningu: USB MIDI #73, pętla A–B #74, edycja transkrypcji #75.
 
 ## 4b. Komercyjny Android i reklamy (cel po Web MVP, 2026-10-12)
 
@@ -123,7 +123,7 @@ Ważne zasady:
 
 ## 7. Komendy developerskie i weryfikacja
 
-**Aktualny stan repozytorium (2026-10-12):** Flutter Web jest wdrożony na GitHub Pages, działają import MIDI, parser SMF 0/1, ekranowa klawiatura, podgląd spadających nut, trening Wait for Note (w tym ćwiczenia akordowe), lokalne nagrywanie MIDI i eksperymentalna transkrypcja MP3 do MIDI. Mikrofon korzysta z getUserMedia/AudioWorklet; tryb monofoniczny z YIN, wielogłosowy z autorskim analizatorem widma. Kodu DSP, wyniku MP3 ani kompatybilności na realnym pianinie nie uznawaj za zweryfikowane tylko dlatego, że przechodzą testy syntetyczne. Aktualna roadmapa jakości i przebudowy to #67 (#54–#66); testy rzeczywistego instrumentu #7 i fizycznych urządzeń #16 pozostają do wykonania, gdy sprzęt będzie dostępny. W `app/pubspec.lock` jest Flutter/Dart kompatybilny z CI, a workflowy przypinają Flutter 3.47.7. Każdą nową zmianę weryfikuj bieżącym CI, nie wcześniejszym wynikiem.
+**Aktualny stan repozytorium (2026-10-13):** Flutter Web jest wdrożony na GitHub Pages, działają import MIDI, parser SMF 0/1, ekranowa klawiatura, podgląd spadających nut, trening Wait for Note (w tym ćwiczenia akordowe), lokalne nagrywanie MIDI i eksperymentalna transkrypcja MP3 do MIDI. Mikrofon korzysta z getUserMedia/AudioWorklet; tryb monofoniczny z YIN, wielogłosowy z autorskim analizatorem widma. Kodu DSP, wyniku MP3 ani kompatybilności na realnym pianinie nie uznawaj za zweryfikowane tylko dlatego, że przechodzą testy syntetyczne. Aktualna roadmapa jakości i przebudowy to #67 (#54–#75); testy rzeczywistego instrumentu #7 i fizycznych urządzeń #16 pozostają do wykonania, gdy sprzęt będzie dostępny. W `app/pubspec.lock` jest Flutter/Dart kompatybilny z CI, a workflowy przypinają Flutter 3.47.7. Każdą nową zmianę weryfikuj bieżącym CI, nie wcześniejszym wynikiem.
 
 Weryfikacja istniejącego `app/`:
 
@@ -139,6 +139,9 @@ flutter build web --release --base-href /learn-piano/
 Uruchamianie lokalne: `flutter run -d chrome` z `app/`. Jeżeli środowisko nie ma Fluttera, jasno zaznacz ograniczenie zamiast pozorować walidację.
 
 **Wymagane testy odpowiednio do zmiany:**
+- Offline ML: poprawna, legalna para referencyjna MIDI/audio, raport pitch/onset/offset/F1 oraz czas inferencji w GitHub Actions (#55/#56/#59).
+- Live mic: syntetyczny PCM, pomiar opóźnienia algorytmicznego, ponowne naciśnięcia, ghost notes i akordy; nie porównuj metryk offline do live bez metodologii (#57/#72).
+- E2E w realnej przeglądarce (headless) i osobne testy na fizycznym pianinie/telefonie, kiedy sprzęt będzie dostępny (#63 vs #7/#16).
 - Unit: pitch → nuta/oktawa, cisza, harmoniczne, stabilizacja, powtarzane uderzenia, walidacja zakresu, odczyt MIDI (tempo, note-off, wiele ścieżek, akordy), przejścia stanu treningu.
 - Widget/integration: wybór MIDI → wybór partii → trening; fałszywy i poprawny dźwięk; pauza/reset; błędy uprawnień i importu.
 - CI nie wymaga mikrofonu: wstrzykuj deterministyczny fake wejścia audio i syntetyczne/legitne fixtury.
@@ -155,14 +158,19 @@ Uruchamianie lokalne: `flutter run -d chrome` z `app/`. Jeżeli środowisko nie 
 
 ## 9. Przydatne odnośniki
 
-- [Backlog i kryteria ukończenia MVP 1 — #18](https://github.com/PawelWielga/learn-piano/issues/18)
+- [Aktualna roadmapa prac — #67](https://github.com/PawelWielga/learn-piano/issues/67)
+- [Historyczny MVP Web i zaległa walidacja fizyczna — #18](https://github.com/PawelWielga/learn-piano/issues/18)
 - [Web-first: zmiana dokumentacji — #17](https://github.com/PawelWielga/learn-piano/issues/17)
 - [Flutter Web — #1](https://github.com/PawelWielga/learn-piano/issues/1)
 - [CI GitHub Actions — #2](https://github.com/PawelWielga/learn-piano/issues/2)
 - [Deployment GitHub Pages — #3](https://github.com/PawelWielga/learn-piano/issues/3)
 - [Web Audio — #4](https://github.com/PawelWielga/learn-piano/issues/4)
 - [Tester nut i próby sprzętowe — #7](https://github.com/PawelWielga/learn-piano/issues/7)
-- [Stabilizacja i przebudowa library-first — #67](https://github.com/PawelWielga/learn-piano/issues/67)
+- [Konkurencja i zastosowania bibliotek](docs/research/competitive-landscape-2026-10.md)
+- [Testy realtime akordów i modeli — #72](https://github.com/PawelWielga/learn-piano/issues/72)
+- [Opcjonalny USB MIDI — #73](https://github.com/PawelWielga/learn-piano/issues/73)
+- [Pętle A–B i tempo — #74](https://github.com/PawelWielga/learn-piano/issues/74)
+- [Edycja wyniku MP3 → MIDI — #75](https://github.com/PawelWielga/learn-piano/issues/75)
 - [Komercyjny audyt licencji — #68](https://github.com/PawelWielga/learn-piano/issues/68)
 - [Przenośna architektura Web/Android — #69](https://github.com/PawelWielga/learn-piano/issues/69)
 - [Reklamy, zgody i Google Play — #70](https://github.com/PawelWielga/learn-piano/issues/70)
