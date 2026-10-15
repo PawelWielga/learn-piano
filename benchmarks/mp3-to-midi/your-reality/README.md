@@ -1,48 +1,9 @@
-# Your Reality — kandydat na benchmark
+# Your Reality: retired benchmark (metadata only)
 
-- Film/tutorial: https://youtu.be/aRJ_UugCCAM
-- Strona ze ścieżką MIDI: https://ichigos.com/sheets/1049
-- Status: **kandydat, niezweryfikowany**. Nie potwierdziliśmy jeszcze, że MIDI
-  odpowiada nuta po nucie i czasowo aranżacji słyszanej w filmie.
-- Licencja na redystrybucję audio: **niepotwierdzona**.
-- Licencja na redystrybucję MIDI: **niepotwierdzona**.
+- Video originally linked: https://youtu.be/aRJ_UugCCAM
+- MIDI source page: https://ichigos.com/sheets/1049
+- Former `source.mp3` (175.54 s) and `reference.mid` (289.46 s, melody only) did **not** represent a synchronized performance.
+- Redistribution rights for both files were **unverified**. They are no longer included on the current branch or used in CI; the links are only provenance records, **not permissions**.
+- Old Git commits may still contain the binaries. History cleaning requires a separate owner decision, not automatic force-pushing.
 
-## Faktyczne pliki w repozytorium
-
-```text
-your-reality/
-├── README.md
-├── source.mp3
-└── reference.mid
-```
-
-Referencyjny MIDI ma **278 nut, 289,46 s**, jedną ścieżkę,
-zakres **F4–A5 (MIDI 65–81)** i **maksymalnie jedną nutę na raz**.
-Nadaje się do badania melodii, ale **nie weryfikuje polifonicznej**
-transkrypcji akordów ani basu. Plik MP3 trwa **175,54 s**, więc długość źródeł jest istotnie różna.
-Nie możemy traktować tych plików jako pary referencyjnej bez dopasowania
-aranżacji i osi czasu.
-
-Pierwszy próbny pomiar na 80 s dał F1 = **0,037** dla wysokości i początku
-nuty (4 dopasowania / 92 referencyjne, 123 rozpoznane). **Nie jest to
-wiarygodna ocena jakości algorytmu**, bo referencja nie jest zsynchronizowana
-z MP3.
-
-Importer MP3 ma limit **90 sekund**. Workflow
-[`MP3 to MIDI benchmark`](../../../.github/workflows/mp3-benchmark.yml)
-dekoduje tylko **pierwsze 80 sekund** nagrania przez ffmpeg i uruchamia
-rzeczywisty `Mp3NoteTranscriber` w Dart. Porównuje tylko nuty mieszczące
-się w tym fragmencie. W logach GitHub Actions znajdziesz
-precision, recall, F1 dla wysokości i onsetu (±130 ms), a także wynik
-wymagający zgodności offsetu (±160 ms). Wyniki są diagnostyczne, a nie
-automatycznym testem zaliczonym/niezaliczonym.
-
-**Prawa autorskie:** te pliki są obecnie w *publicznym* repozytorium,
-chociaż prawa do ich redystrybucji nie zostały potwierdzone.
-`.gitignore` nie chroni już śledzonych plików. Przed dalszym publicznym
-udostępnianiem trzeba potwierdzić licencje albo zastąpić je własną,
-swobodnie dystrybuowalną parą audio+MIDI.
-
-Na pełnoprawny benchmark wielogłosowy potrzebujemy referencyjnego MIDI z
-basem i akordami, a najlepiej audio wygenerowanego bezpośrednio z tej
-samej wersji MIDI.
+See [../README.md](../README.md) for generated, independently authored fixtures. External media may be reintroduced only after a rights review (#54, #68).

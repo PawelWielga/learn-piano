@@ -8,18 +8,23 @@ import 'package:learn_piano/src/recording/note_recorder.dart';
 
 /// Offline benchmark for the *real* Mp3NoteTranscriber.
 ///
-/// Pass an 80-second, mono, 24000 Hz little-endian float32 PCM file produced
-/// by ffmpeg, and the reference MIDI. Only the first audio-window notes are
-/// evaluated; this is a diagnostic measurement, not a passing CI assertion.
+/// Pass a mono, 24000 Hz little-endian float32 PCM file and aligned MIDI.
+/// --require-full-reference rejects fixture windows that omit any MIDI notes.
+/// This is a diagnostic measurement, not a passing accuracy assertion.
 Future<void> main(List<String> arguments) async {
-  if (arguments.length != 2) {
+  if (arguments.length < 2 ||
+      arguments.length > 3 ||
+      (arguments.length == 3 && arguments[2] != '--require-full-reference')) {
     stderr.writeln(
       'Usage: dart run tool/mp3_benchmark.dart '
-      '<audio-24000hz-mono.f32> <reference.mid>',
+      '<audio-24000hz-mono.f32> <reference.mid> '
+      '[--require-full-reference]',
     );
     exitCode = 64;
     return;
   }
+
+  final requireFullReference = arguments.length == 3;
 
   try {
     final bytes = await File(arguments[0]).readAsBytes();
@@ -51,15 +56,27 @@ Future<void> main(List<String> arguments) async {
       mode: Mp3TranscriptionMode.accurate,
     );
 
-    // Discard notes cut short at the audio boundary from both sets. Never
-    // score the rest of a 5-minute reference against an 80-second excerpt.
-    final cutoff = audio.duration - const Duration(milliseconds: 350);
-    final expected = midi.tracks
+    // Exclude only notes too close to the end of an input window, where
+    // boundary truncation can bias offset comparison. Synthetic fixtures
+    // include 200ms of silence, so the full reference must be evaluated.
+    final cutoff = audio.duration - const Duration(milliseconds: 50);
+    final playableNotes = midi.tracks
         .expand((track) => track.notes)
-        .where(
-          (note) => note.start + note.duration <= cutoff && note.channel != 9,
-        )
+        .where((note) => note.channel != 9)
         .toList();
+    final expected = playableNotes
+        .where((note) => note.start + note.duration <= cutoff)
+        .toList();
+    if (requireFullReference && expected.length != playableNotes.length) {
+      throw const FormatException(
+        'Reference contains notes outside the comparable audio window.',
+      );
+    }
+    if (expected.isEmpty) {
+      throw const FormatException(
+        'No reference notes within the comparable audio window.',
+      );
+    }
     final actual = transcription.notes
         .where((note) => note.start + note.duration <= cutoff)
         .toList();
@@ -83,13 +100,16 @@ Future<void> main(List<String> arguments) async {
       '${midi.duration.inMilliseconds} ms',
     );
     stdout.writeln('Reference notes in window: ${expected.length}');
+    stdout.writeln(
+      'Reference notes excluded by window: '
+      '${playableNotes.length - expected.length}',
+    );
     stdout.writeln('Detected notes in window: ${actual.length}');
     _report('Exact pitch + onset (±130ms)', onset);
     _report('Exact pitch + onset (±130ms) + offset (±160ms)', strict);
     stdout.writeln(
-      'NOTE: Metrics assume source.mp3 and reference.mid have '
-      'the same arrangement, timing and start position. Unverified '
-      'alignment or a melody-only MIDI can make these scores misleading.',
+      'NOTE: Metrics require aligned audio and reference MIDI. '
+      'WAV fixtures share exact time zero; MP3 codec delay is not calibrated.',
     );
     if (transcription.truncated) {
       stdout.writeln('WARNING: transcription hit its note limit.');
