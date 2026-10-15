@@ -55,7 +55,9 @@ Future<void> main(List<String> arguments) async {
       sampleRate: 24000,
     );
     if (audio.duration > const Duration(seconds: 90)) {
-      throw const FormatException('Benchmark audio must be at most 90 seconds.');
+      throw const FormatException(
+        'Benchmark audio must be at most 90 seconds.',
+      );
     }
 
     final midi = const MidiParser().parse(
@@ -120,9 +122,7 @@ Future<void> main(List<String> arguments) async {
     stdout.writeln('Reference ${expected.length}, detected ${actual.length}');
     _printScore('Pitch + onset', comparison.onset);
     _printScore('Pitch + onset + offset', comparison.strict);
-    stdout.writeln(
-      'Octave confusions: ${comparison.octaveConfusions.length}',
-    );
+    stdout.writeln('Octave confusions: ${comparison.octaveConfusions.length}');
     if (outputPath != null) {
       await File(outputPath).writeAsString(
         '${const JsonEncoder.withIndent('  ').convert(result)}\n',
