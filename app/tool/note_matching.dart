@@ -20,7 +20,12 @@ class BenchmarkNote {
 }
 
 class NotePair {
-  const NotePair(this.referenceIndex, this.detectedIndex, this.onsetErrorUs, this.offsetErrorUs);
+  const NotePair(
+    this.referenceIndex,
+    this.detectedIndex,
+    this.onsetErrorUs,
+    this.offsetErrorUs,
+  );
 
   final int referenceIndex;
   final int detectedIndex;
@@ -46,7 +51,8 @@ class MatchScore {
   double get precision => detectedCount == 0
       ? (referenceCount == 0 ? 1.0 : 0.0)
       : truePositives / detectedCount;
-  double get recall => referenceCount == 0 ? 1.0 : truePositives / referenceCount;
+  double get recall =>
+      referenceCount == 0 ? 1.0 : truePositives / referenceCount;
   double get f1 => (precision + recall) == 0
       ? 0.0
       : 2 * precision * recall / (precision + recall);
@@ -66,14 +72,24 @@ class MatchScore {
 }
 
 Map<String, Object> _statistics(Iterable<int> microseconds) {
-  final values = microseconds.map((value) => value.abs() / 1000).toList()..sort();
+  final values = microseconds.map((value) => value.abs() / 1000).toList()
+    ..sort();
   if (values.isEmpty) {
-    return {'count': 0, 'meanAbs': 0.0, 'p50Abs': 0.0, 'p95Abs': 0.0, 'maxAbs': 0.0};
+    return {
+      'count': 0,
+      'meanAbs': 0.0,
+      'p50Abs': 0.0,
+      'p95Abs': 0.0,
+      'maxAbs': 0.0,
+    };
   }
   double percentile(double p) {
-    final index = ((values.length * p).ceil() - 1).clamp(0, values.length - 1).toInt();
+    final index = ((values.length * p).ceil() - 1)
+        .clamp(0, values.length - 1)
+        .toInt();
     return values[index];
   }
+
   return {
     'count': values.length,
     'meanAbs': values.reduce((a, b) => a + b) / values.length,
@@ -127,12 +143,20 @@ BenchmarkComparison compareNotes(
     throw ArgumentError('Timing tolerances must be nonnegative.');
   }
   for (final note in [...reference, ...detected]) {
-    if (note.pitch < 0 || note.pitch > 127 || note.onsetUs < 0 || note.offsetUs < note.onsetUs) {
+    if (note.pitch < 0 ||
+        note.pitch > 127 ||
+        note.onsetUs < 0 ||
+        note.offsetUs < note.onsetUs) {
       throw ArgumentError('Invalid benchmark note: pitch or timing.');
     }
   }
   final onsetPairs = _maximumMatch(reference, detected, onsetToleranceUs, null);
-  final strictPairs = _maximumMatch(reference, detected, onsetToleranceUs, offsetToleranceUs);
+  final strictPairs = _maximumMatch(
+    reference,
+    detected,
+    onsetToleranceUs,
+    offsetToleranceUs,
+  );
   final matchedReference = onsetPairs.map((p) => p.referenceIndex).toSet();
   final matchedDetected = onsetPairs.map((p) => p.detectedIndex).toSet();
   final missing = <BenchmarkNote>[];
@@ -178,8 +202,16 @@ BenchmarkComparison compareNotes(
     });
   }
   return BenchmarkComparison(
-    onset: MatchScore(referenceCount: reference.length, detectedCount: detected.length, pairs: onsetPairs),
-    strict: MatchScore(referenceCount: reference.length, detectedCount: detected.length, pairs: strictPairs),
+    onset: MatchScore(
+      referenceCount: reference.length,
+      detectedCount: detected.length,
+      pairs: onsetPairs,
+    ),
+    strict: MatchScore(
+      referenceCount: reference.length,
+      detectedCount: detected.length,
+      pairs: strictPairs,
+    ),
     falsePositiveNotes: List.unmodifiable(extra),
     falseNegativeNotes: List.unmodifiable(missing),
     octaveConfusions: List.unmodifiable(octaves),
@@ -221,8 +253,11 @@ List<NotePair> _maximumMatch(
       int cost(int j) {
         final c = detected[j];
         return (c.onsetUs - target.onsetUs).abs() +
-            (offsetToleranceUs == null ? 0 : (c.offsetUs - target.offsetUs).abs());
+            (offsetToleranceUs == null
+                ? 0
+                : (c.offsetUs - target.offsetUs).abs());
       }
+
       final byCost = cost(a).compareTo(cost(b));
       return byCost != 0 ? byCost : a.compareTo(b);
     });
@@ -250,12 +285,14 @@ List<NotePair> _maximumMatch(
   for (var j = 0; j < assigned.length; j++) {
     final i = assigned[j];
     if (i < 0) continue;
-    result.add(NotePair(
-      i,
-      j,
-      detected[j].onsetUs - reference[i].onsetUs,
-      detected[j].offsetUs - reference[i].offsetUs,
-    ));
+    result.add(
+      NotePair(
+        i,
+        j,
+        detected[j].onsetUs - reference[i].onsetUs,
+        detected[j].offsetUs - reference[i].offsetUs,
+      ),
+    );
   }
   result.sort((a, b) {
     final byRef = a.referenceIndex.compareTo(b.referenceIndex);
