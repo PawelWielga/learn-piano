@@ -70,7 +70,10 @@ Map<String, Object> _statistics(Iterable<int> microseconds) {
   if (values.isEmpty) {
     return {'count': 0, 'meanAbs': 0.0, 'p50Abs': 0.0, 'p95Abs': 0.0, 'maxAbs': 0.0};
   }
-  double percentile(double p) => values[(values.length * p).ceil().clamp(1, values.length) - 1];
+  double percentile(double p) {
+    final index = ((values.length * p).ceil() - 1).clamp(0, values.length - 1).toInt();
+    return values[index];
+  }
   return {
     'count': values.length,
     'meanAbs': values.reduce((a, b) => a + b) / values.length,
