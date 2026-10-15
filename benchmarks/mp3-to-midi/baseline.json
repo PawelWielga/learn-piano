@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "generator_version": 1,
+  "methodology": "maximum-cardinality-v1",
+  "onsetToleranceMs": 130,
+  "offsetToleranceMs": 160,
+  "budgets": {
+    "onset": {
+      "maxF1Drop": 0,
+      "maxExtraFalsePositives": 0,
+      "maxExtraFalseNegatives": 0
+    },
+    "strict": {
+      "maxF1Drop": 0,
+      "maxExtraFalsePositives": 0,
+      "maxExtraFalseNegatives": 0
+    }
+  },
+  "cases": {
+    "range_c2_c6": {
+      "reference": 2,
+      "notes": [
+        {
+          "pitch": 36,
+          "onset_tick": 96,
+          "length_tick": 280,
+          "velocity": 100
+        },
+        {
+          "pitch": 84,
+          "onset_tick": 500,
+          "length_tick": 280,
+          "velocity": 100
+        }
+      ],
+      "onset": {
+        "f1": 1,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      },
+      "strict": {
+        "f1": 1,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      }
+    },
+    "triad": {
+      "reference": 3,
+      "notes": [
+        {
+          "pitch": 60,
+          "onset_tick": 96,
+          "length_tick": 600,
+          "velocity": 100
+        },
+        {
+          "pitch": 64,
+          "onset_tick": 96,
+          "length_tick": 600,
+          "velocity": 100
+        },
+        {
+          "pitch": 67,
+          "onset_tick": 96,
+          "length_tick": 600,
+          "velocity": 100
+        }
+      ],
+      "onset": {
+        "f1": 1,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      },
+      "strict": {
+        "f1": 1,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      }
+    },
+    "bass_melody": {
+      "reference": 4,
+      "notes": [
+        {
+          "pitch": 36,
+          "onset_tick": 0,
+          "length_tick": 900,
+          "velocity": 80
+        },
+        {
+          "pitch": 60,
+          "onset_tick": 120,
+          "length_tick": 210,
+          "velocity": 100
+        },
+        {
+          "pitch": 64,
+          "onset_tick": 410,
+          "length_tick": 210,
+          "velocity": 93
+        },
+        {
+          "pitch": 67,
+          "onset_tick": 700,
+          "length_tick": 190,
+          "velocity": 106
+        }
+      ],
+      "onset": {
+        "f1": 1,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      },
+      "strict": {
+        "f1": 1,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      }
+    },
+    "repeated_c4": {
+      "reference": 3,
+      "notes": [
+        {
+          "pitch": 60,
+          "onset_tick": 0,
+          "length_tick": 180,
+          "velocity": 100
+        },
+        {
+          "pitch": 60,
+          "onset_tick": 300,
+          "length_tick": 180,
+          "velocity": 100
+        },
+        {
+          "pitch": 60,
+          "onset_tick": 600,
+          "length_tick": 180,
+          "velocity": 100
+        }
+      ],
+      "onset": {
+        "f1": 1,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      },
+      "strict": {
+        "f1": 1,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      }
+    },
+    "overlap_voices": {
+      "reference": 3,
+      "notes": [
+        {
+          "pitch": 48,
+          "onset_tick": 0,
+          "length_tick": 700,
+          "velocity": 80
+        },
+        {
+          "pitch": 60,
+          "onset_tick": 230,
+          "length_tick": 700,
+          "velocity": 103
+        },
+        {
+          "pitch": 64,
+          "onset_tick": 460,
+          "length_tick": 700,
+          "velocity": 90
+        }
+      ],
+      "onset": {
+        "f1": 1,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      },
+      "strict": {
+        "f1": 1,
+        "falsePositives": 0,
+        "falseNegatives": 0
+      }
+    }
+  }
+}
