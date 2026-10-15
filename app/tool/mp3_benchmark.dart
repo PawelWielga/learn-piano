@@ -1,33 +1,45 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:learn_piano/src/audio/audio_file_picker.dart';
 import 'package:learn_piano/src/midi/midi_parser.dart';
 import 'package:learn_piano/src/recording/mp3_note_transcriber.dart';
-import 'package:learn_piano/src/recording/note_recorder.dart';
 
-/// Offline benchmark for the *real* Mp3NoteTranscriber.
+import 'note_matching.dart';
+
+/// Runs the real transcriber against a time-aligned 24kHz mono PCM/MIDI pair.
 ///
-/// Pass a mono, 24000 Hz little-endian float32 PCM file and aligned MIDI.
-/// --require-full-reference rejects fixture windows that omit any MIDI notes.
-/// This is a diagnostic measurement, not a passing accuracy assertion.
+/// Unverified pairs must not be used to make quality claims. The CI runner
+/// validates synchronized fixtures against generator manifest SHA-256 hashes.
 Future<void> main(List<String> arguments) async {
-  if (arguments.length < 2 ||
-      arguments.length > 3 ||
-      (arguments.length == 3 && arguments[2] != '--require-full-reference')) {
-    stderr.writeln(
-      'Usage: dart run tool/mp3_benchmark.dart '
-      '<audio-24000hz-mono.f32> <reference.mid> '
-      '[--require-full-reference]',
-    );
-    exitCode = 64;
+  if (arguments.length < 2) {
+    _usage();
     return;
   }
+  final audioPath = arguments[0];
+  final referencePath = arguments[1];
+  var requireFullReference = false;
+  String? outputPath;
 
-  final requireFullReference = arguments.length == 3;
+  for (var i = 2; i < arguments.length; i++) {
+    switch (arguments[i]) {
+      case '--require-full-reference':
+        requireFullReference = true;
+      case '--json-output':
+        if (i + 1 >= arguments.length || outputPath != null) {
+          _usage();
+          return;
+        }
+        outputPath = arguments[++i];
+      default:
+        _usage();
+        return;
+    }
+  }
 
   try {
-    final bytes = await File(arguments[0]).readAsBytes();
+    final bytes = await File(audioPath).readAsBytes();
     if (bytes.isEmpty || bytes.lengthInBytes % 4 != 0) {
       throw const FormatException('Invalid little-endian float32 PCM data.');
     }
@@ -43,76 +55,78 @@ Future<void> main(List<String> arguments) async {
       sampleRate: 24000,
     );
     if (audio.duration > const Duration(seconds: 90)) {
-      throw const FormatException(
-        'Benchmark audio must be at most 90 seconds.',
-      );
+      throw const FormatException('Benchmark audio must be at most 90 seconds.');
     }
 
     final midi = const MidiParser().parse(
-      await File(arguments[1]).readAsBytes(),
+      await File(referencePath).readAsBytes(),
     );
+    final reference = midi.tracks
+        .expand((track) => track.notes)
+        .where((note) => note.channel != 9)
+        .toList();
+
+    // Trim only genuinely truncated notes. Every generated fixture has
+    // 200 ms of trailing silence, so all reference notes must participate.
+    final cutoff = audio.duration - const Duration(milliseconds: 50);
+    final expected = reference
+        .where((note) => note.start + note.duration <= cutoff)
+        .map(
+          (note) => BenchmarkNote(
+            pitch: note.midiNote,
+            onsetUs: note.start.inMicroseconds,
+            offsetUs: (note.start + note.duration).inMicroseconds,
+          ),
+        )
+        .toList();
+    if (expected.isEmpty) {
+      throw const FormatException('No reference notes in the audio window.');
+    }
+    if (requireFullReference && expected.length != reference.length) {
+      throw const FormatException(
+        'A reference note lies outside the comparable audio window.',
+      );
+    }
+
     final transcription = await const Mp3NoteTranscriber().transcribe(
       audio,
       mode: Mp3TranscriptionMode.accurate,
     );
-
-    // Exclude only notes too close to the end of an input window, where
-    // boundary truncation can bias offset comparison. Synthetic fixtures
-    // include 200ms of silence, so the full reference must be evaluated.
-    final cutoff = audio.duration - const Duration(milliseconds: 50);
-    final playableNotes = midi.tracks
-        .expand((track) => track.notes)
-        .where((note) => note.channel != 9)
-        .toList();
-    final expected = playableNotes
-        .where((note) => note.start + note.duration <= cutoff)
-        .toList();
-    if (requireFullReference && expected.length != playableNotes.length) {
-      throw const FormatException(
-        'Reference contains notes outside the comparable audio window.',
-      );
-    }
-    if (expected.isEmpty) {
-      throw const FormatException(
-        'No reference notes within the comparable audio window.',
-      );
+    if (transcription.truncated && requireFullReference) {
+      throw const FormatException('Transcription hit its note limit.');
     }
     final actual = transcription.notes
         .where((note) => note.start + note.duration <= cutoff)
+        .map(
+          (note) => BenchmarkNote(
+            pitch: note.midiNote,
+            onsetUs: note.start.inMicroseconds,
+            offsetUs: (note.start + note.duration).inMicroseconds,
+          ),
+        )
         .toList();
 
-    final onset = _match(
-      expected,
-      actual,
-      onsetTolerance: const Duration(milliseconds: 130),
-    );
-    final strict = _match(
-      expected,
-      actual,
-      onsetTolerance: const Duration(milliseconds: 130),
-      offsetTolerance: const Duration(milliseconds: 160),
-    );
-
-    stdout.writeln('MP3 → MIDI benchmark (diagnostic; no pass threshold)');
-    stdout.writeln('Audio window: ${audio.duration.inMilliseconds} ms');
+    final comparison = compareNotes(expected, actual);
+    final result = <String, Object>{
+      'methodology': 'maximum-cardinality-v1',
+      'onsetToleranceMs': 130,
+      'offsetToleranceMs': 160,
+      'audioWindowMs': audio.duration.inMilliseconds,
+      'referenceExcluded': reference.length - expected.length,
+      'truncated': transcription.truncated,
+      ...comparison.toJson(),
+    };
+    stdout.writeln('PCM → MIDI benchmark (aligned sources required)');
+    stdout.writeln('Reference ${expected.length}, detected ${actual.length}');
+    _printScore('Pitch + onset', comparison.onset);
+    _printScore('Pitch + onset + offset', comparison.strict);
     stdout.writeln(
-      'Reference MIDI: ${midi.noteCount} total notes, '
-      '${midi.duration.inMilliseconds} ms',
+      'Octave confusions: ${comparison.octaveConfusions.length}',
     );
-    stdout.writeln('Reference notes in window: ${expected.length}');
-    stdout.writeln(
-      'Reference notes excluded by window: '
-      '${playableNotes.length - expected.length}',
-    );
-    stdout.writeln('Detected notes in window: ${actual.length}');
-    _report('Exact pitch + onset (±130ms)', onset);
-    _report('Exact pitch + onset (±130ms) + offset (±160ms)', strict);
-    stdout.writeln(
-      'NOTE: Metrics require aligned audio and reference MIDI. '
-      'WAV fixtures share exact time zero; MP3 codec delay is not calibrated.',
-    );
-    if (transcription.truncated) {
-      stdout.writeln('WARNING: transcription hit its note limit.');
+    if (outputPath != null) {
+      await File(outputPath).writeAsString(
+        '${const JsonEncoder.withIndent('  ').convert(result)}\n',
+      );
     }
   } catch (error) {
     stderr.writeln('Benchmark failed: $error');
@@ -120,53 +134,21 @@ Future<void> main(List<String> arguments) async {
   }
 }
 
-({int matched, int expected, int actual}) _match(
-  List<MidiNote> reference,
-  List<RecordedNote> detected, {
-  required Duration onsetTolerance,
-  Duration? offsetTolerance,
-}) {
-  final matchedIndices = <int>{};
-  var hits = 0;
-  for (final target in reference) {
-    var nearestIndex = -1;
-    var nearestError = onsetTolerance.inMicroseconds + 1;
-    for (var i = 0; i < detected.length; i++) {
-      if (matchedIndices.contains(i)) continue;
-      final candidate = detected[i];
-      if (candidate.midiNote != target.midiNote) continue;
-      final onsetError = (candidate.start - target.start).inMicroseconds.abs();
-      if (onsetError > onsetTolerance.inMicroseconds) continue;
-      if (offsetTolerance != null) {
-        final actualEnd = candidate.start + candidate.duration;
-        final referenceEnd = target.start + target.duration;
-        final offsetError = (actualEnd - referenceEnd).inMicroseconds.abs();
-        if (offsetError > offsetTolerance.inMicroseconds) continue;
-      }
-      if (onsetError < nearestError) {
-        nearestError = onsetError;
-        nearestIndex = i;
-      }
-    }
-    if (nearestIndex >= 0) {
-      matchedIndices.add(nearestIndex);
-      hits++;
-    }
-  }
-  return (matched: hits, expected: reference.length, actual: detected.length);
+void _usage() {
+  stderr.writeln(
+    'Usage: dart run tool/mp3_benchmark.dart '
+    '<mono-24000hz.f32> <aligned-reference.mid> '
+    '[--require-full-reference] [--json-output report.json]',
+  );
+  exitCode = 64;
 }
 
-void _report(String label, ({int matched, int expected, int actual}) result) {
-  final precision = result.actual == 0
-      ? (result.expected == 0 ? 1.0 : 0.0)
-      : result.matched / result.actual;
-  final recall = result.expected == 0 ? 1.0 : result.matched / result.expected;
-  final denominator = precision + recall;
-  final f1 = denominator == 0 ? 0.0 : 2 * precision * recall / denominator;
+void _printScore(String label, MatchScore score) {
   stdout.writeln(
-    '$label: matched ${result.matched}, '
-    'precision ${precision.toStringAsFixed(3)}, '
-    'recall ${recall.toStringAsFixed(3)}, '
-    'F1 ${f1.toStringAsFixed(3)}',
+    '$label: matched ${score.truePositives}, FP ${score.falsePositives}, '
+    'FN ${score.falseNegatives}, '
+    'precision ${score.precision.toStringAsFixed(3)}, '
+    'recall ${score.recall.toStringAsFixed(3)}, '
+    'F1 ${score.f1.toStringAsFixed(3)}',
   );
 }
