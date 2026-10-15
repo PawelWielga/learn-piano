@@ -50,7 +50,7 @@ def check_fixture(manifest: dict, fixtures: Path, scenario: str) -> None:
     entry = manifest["scenarios"][scenario]
     for extension in ("wav", "mid"):
         filename = fixtures / f"{scenario}.{extension}"
-        if sha256(filename) != entry[f"{extension}_sha256"]:
+        if sha256(filename) != entry["midi_sha256" if extension == "mid" else "wav_sha256"]:
             raise ValueError(f"Fixture checksum mismatch: {filename}")
 
 
