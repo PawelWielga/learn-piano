@@ -40,8 +40,65 @@ flutter pub get
 dart run tool/mp3_benchmark.dart /tmp/triad.f32 /tmp/learn-piano-fixtures/triad.mid
 ```
 
-These F1 figures are **diagnostic only**; a statistically defensible matcher, measured baseline and CI regression thresholds are the subject of #56. Synthetic tones also do not replace real-device and acoustic-piano tests.
+This quick single-file command is diagnostic. The reviewed regression gate below validates fixture provenance, tests matching, and measures every generated case.
 
 ## Git history
 
 Removing the two historical binaries from the present branch **does not remove them from old commits or existing clones/forks**. No history rewrite or force-push was performed; the decision and any coordinated cleanup remain with the repo owner (#54). A unit test rejects any tracked audio/MIDI binary under `benchmarks/mp3-to-midi`; explicitly reviewed exceptions would need a change to that guard.
+
+## Reproducible accuracy and regression gate (issue #56)
+
+The benchmark checks the **real transcription algorithm** against locally synthesized
+WAV/PCM with an exactly aligned MIDI reference. The Python runner validates each
+WAV and MIDI SHA-256 against the generated manifest before computing any metric.
+The five approved fixtures also check their exact reference note events against
+[baseline.json](baseline.json). Changed note material or time offsets are rejected.
+
+After installing Flutter/Dart and FFmpeg (with the app dependencies resolved), run:
+
+```sh
+python3 benchmarks/mp3-to-midi/generate.py --output /tmp/learn-piano-fixtures
+python3 -m unittest discover -s benchmarks/mp3-to-midi -p 'test_*.py' -v
+cd app && flutter pub get && flutter test test/benchmark/note_matching_test.dart && cd ..
+python3 benchmarks/mp3-to-midi/run_benchmark.py \
+  --fixtures /tmp/learn-piano-fixtures \
+  --baseline benchmarks/mp3-to-midi/baseline.json \
+  --output /tmp/learn-piano-benchmark-report
+```
+
+The report contains JSON note-level false positives and false negatives, likely
+octave mistakes, onset/offset absolute error mean/p50/p95/max, and a Markdown table
+per scenario with mono/poly labels. CI uploads only the manifest and report, not
+raw audio. The process exits nonzero when the regression budget fails; the
+Python unit tests include forced regression cases that must fail.
+
+**Metric definition:** pitch must match exactly and absolute onset error must
+be at most **130 ms**. The separate strict score additionally requires absolute
+offset error at most **160 ms**. Both matching passes find a deterministic
+**maximum-cardinality one-to-one matching** (augmenting paths), so no detected
+or reference note can receive two true positives. Candidate edges are ordered
+by absolute timing error, but global minimum timing error is not guaranteed.
+Precision = TP / (TP + FP), recall = TP / (TP + FN), F1 = harmonic mean.
+Octave errors are pairs of still-unmatched notes offset by multiples of 12
+semitones with onsets within tolerance; they **remain FP and FN**, never TP.
+Timing percentile values describe correctly paired notes, not ignored misses.
+
+**Baseline:** results measured by Actions on 2026-10-15 with the old matcher
+yielded zero FP/FN and F1 1.000 (both policies) for `range_c2_c6` (2 notes),
+`triad` (3), `bass_melody` (4), `repeated_c4` (3) and
+`overlap_voices` (3). Those five cases are locked in `baseline.json` with
+a **zero regression budget** for F1 loss, extra FP and extra FN. This is a
+comparison to actual measured results, not an arbitrary F1=0.95 threshold.
+`dyad`, `staccato_rests` and `dynamics` are additional **diagnostic**
+scenarios until their results are explicitly reviewed and approved.
+
+To change reference music, matching policy or budgets, update the generator
+and `baseline.json` in the same reviewed PR, explain why and inspect newly
+generated CI metrics first. Never weaken the baseline merely to make an
+unexplained algorithm regression pass.
+
+This is an intentionally narrow, easy **clean synthetic PCM** dataset.
+It does not validate real piano acoustics, room noise, microphone input, or
+MP3 encoder/decoder delay. Future comparisons of actual MP3 must measure
+and compensate codec alignment first; the benchmark must not present WAV
+metrics as MP3 accuracy.
