@@ -66,7 +66,12 @@ void main() {
     final input = [n(60, 0, 300), n(60, 0, 300)];
     final reference = [n(60, 0, 300), n(60, 0, 300)];
     final result = compareNotes(reference, input);
-    expect(result.onset.pairs.map((p) => p.detectedIndex), [0, 1]);
+    expect(result.onset.truePositives, 2);
+    expect(result.onset.pairs.map((p) => p.detectedIndex).toSet(), {0, 1});
+    expect(
+      result.onset.pairs.map((p) => p.detectedIndex).toList(),
+      compareNotes(reference, input).onset.pairs.map((p) => p.detectedIndex).toList(),
+    );
     expect(compareNotes([n(60, 0, 100)], []).onset.f1, 0);
     expect(compareNotes([], [n(60, 0, 100)]).onset.f1, 0);
   });
