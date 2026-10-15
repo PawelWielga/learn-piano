@@ -1,10 +1,20 @@
-name: MP3 to MIDI benchmark
+name: Synthetic MP3-to-MIDI transcription benchmark
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'benchmarks/mp3-to-midi/**'
+      - 'app/lib/src/recording/mp3_note_transcriber.dart'
+      - 'app/lib/src/recording/polyphonic_frame_analyzer.dart'
+      - 'app/tool/mp3_benchmark.dart'
+      - '.github/workflows/mp3-benchmark.yml'
   push:
     branches: [main]
     paths:
       - 'benchmarks/mp3-to-midi/**'
+      - 'app/lib/src/recording/mp3_note_transcriber.dart'
+      - 'app/lib/src/recording/polyphonic_frame_analyzer.dart'
       - 'app/tool/mp3_benchmark.dart'
       - '.github/workflows/mp3-benchmark.yml'
   workflow_dispatch:
@@ -14,32 +24,44 @@ permissions:
 
 jobs:
   benchmark:
-    name: Measure MP3 transcription against MIDI
+    name: Generate and measure legal synthetic PCM/MIDI
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout benchmark and source
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Verify reference fixture rights and exact timing
+        run: python3 -m unittest discover -s benchmarks/mp3-to-midi -p 'test_*.py' -v
+      - name: Generate synchronized reference files
+        run: python3 benchmarks/mp3-to-midi/generate.py --output /tmp/learn-piano-fixtures
       - name: Set up Flutter (Dart runtime)
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.7'
           channel: stable
           cache: true
-      - name: Install FFmpeg tools
+      - name: Install FFmpeg
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg
-      - name: Inspect audio metadata
-        run: |
-          ffprobe -v error -show_entries format=duration,bit_rate             -of default=noprint_wrappers=1             benchmarks/mp3-to-midi/your-reality/source.mp3
-      - name: Decode first 80 seconds to mono float PCM
-        run: |
-          ffmpeg -hide_banner -loglevel error -y             -i benchmarks/mp3-to-midi/your-reality/source.mp3             -t 80 -ac 1 -ar 24000 -acodec pcm_f32le -f f32le             /tmp/your-reality.f32
       - name: Resolve Dart packages
         working-directory: app
         run: flutter pub get
-      - name: Measure precision, recall and F1
+      - name: Measure clean PCM against synchronized MIDI (diagnostic only)
         working-directory: app
+        shell: bash
         run: |
-          dart run tool/mp3_benchmark.dart             /tmp/your-reality.f32             ../benchmarks/mp3-to-midi/your-reality/reference.mid
+          set -euo pipefail
+          for scenario in range_c2_c6 triad bass_melody repeated_c4 overlap_voices; do
+            echo "## $scenario (clean generated PCM, no codec delay)" | tee -a "$GITHUB_STEP_SUMMARY"
+            ffmpeg -hide_banner -loglevel error -y \
+              -i "/tmp/learn-piano-fixtures/${scenario}.wav" \
+              -ac 1 -ar 24000 -f f32le "/tmp/${scenario}.f32"
+            dart run tool/mp3_benchmark.dart "/tmp/${scenario}.f32" \
+              "/tmp/learn-piano-fixtures/${scenario}.mid" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
+      - name: Store reproducibility manifest (no audio uploads)
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-benchmark-manifest
+          path: /tmp/learn-piano-fixtures/manifest.json
+          retention-days: 14
