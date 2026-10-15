@@ -46,6 +46,16 @@ jobs:
       - name: Resolve Dart packages
         working-directory: app
         run: flutter pub get
+      - name: Print formatted Dart sources for applying consistent style
+        working-directory: app
+        run: |
+          dart format --output=write tool/note_matching.dart tool/mp3_benchmark.dart test/benchmark/note_matching_test.dart
+          for file in tool/note_matching.dart tool/mp3_benchmark.dart test/benchmark/note_matching_test.dart; do
+            echo "BEGIN_FORMATTED:$file"
+            base64 -w0 "$file"
+            echo
+            echo "END_FORMATTED:$file"
+          done
       - name: Test one-to-one note matcher
         working-directory: app
         run: flutter test test/benchmark/note_matching_test.dart
