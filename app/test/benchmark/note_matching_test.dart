@@ -9,17 +9,20 @@ BenchmarkNote n(int pitch, int onsetMs, int offsetMs) => BenchmarkNote(
 );
 
 void main() {
-  test('greedy failure: augmenting path recovers maximum-cardinality matching', () {
-    final result = compareNotes(
-      [n(60, 50, 100), n(60, 115, 165)],
-      [n(60, 65, 115), n(60, 0, 60)],
-      onsetToleranceUs: 50000,
-    );
-    expect(result.onset.truePositives, 2);
-    expect(result.onset.pairs.map((p) => p.detectedIndex), [1, 0]);
-    expect(result.onset.falsePositives, 0);
-    expect(result.onset.falseNegatives, 0);
-  });
+  test(
+    'greedy failure: augmenting path recovers maximum-cardinality matching',
+    () {
+      final result = compareNotes(
+        [n(60, 50, 100), n(60, 115, 165)],
+        [n(60, 65, 115), n(60, 0, 60)],
+        onsetToleranceUs: 50000,
+      );
+      expect(result.onset.truePositives, 2);
+      expect(result.onset.pairs.map((p) => p.detectedIndex), [1, 0]);
+      expect(result.onset.falsePositives, 0);
+      expect(result.onset.falseNegatives, 0);
+    },
+  );
 
   test('repeated notes are not double matched', () {
     final result = compareNotes(
@@ -42,10 +45,7 @@ void main() {
   });
 
   test('strict offset errors are counted, with onset error statistics', () {
-    final result = compareNotes(
-      [n(60, 100, 400)],
-      [n(60, 120, 700)],
-    );
+    final result = compareNotes([n(60, 100, 400)], [n(60, 120, 700)]);
     expect(result.onset.truePositives, 1);
     expect(result.strict.truePositives, 0);
     expect(result.strict.falsePositives, 1);
@@ -62,19 +62,25 @@ void main() {
     expect(result.octaveConfusions, hasLength(1));
   });
 
-  test('identical onset, repeated pitch, silence and no matches are deterministic', () {
-    final input = [n(60, 0, 300), n(60, 0, 300)];
-    final reference = [n(60, 0, 300), n(60, 0, 300)];
-    final result = compareNotes(reference, input);
-    expect(result.onset.truePositives, 2);
-    expect(result.onset.pairs.map((p) => p.detectedIndex).toSet(), {0, 1});
-    expect(
-      result.onset.pairs.map((p) => p.detectedIndex).toList(),
-      compareNotes(reference, input).onset.pairs.map((p) => p.detectedIndex).toList(),
-    );
-    expect(compareNotes([n(60, 0, 100)], []).onset.f1, 0);
-    expect(compareNotes([], [n(60, 0, 100)]).onset.f1, 0);
-  });
+  test(
+    'identical onset, repeated pitch, silence and no matches are deterministic',
+    () {
+      final input = [n(60, 0, 300), n(60, 0, 300)];
+      final reference = [n(60, 0, 300), n(60, 0, 300)];
+      final result = compareNotes(reference, input);
+      expect(result.onset.truePositives, 2);
+      expect(result.onset.pairs.map((p) => p.detectedIndex).toSet(), {0, 1});
+      expect(
+        result.onset.pairs.map((p) => p.detectedIndex).toList(),
+        compareNotes(
+          reference,
+          input,
+        ).onset.pairs.map((p) => p.detectedIndex).toList(),
+      );
+      expect(compareNotes([n(60, 0, 100)], []).onset.f1, 0);
+      expect(compareNotes([], [n(60, 0, 100)]).onset.f1, 0);
+    },
+  );
 
   test('rejects invalid inputs and negative tolerances', () {
     expect(() => compareNotes([n(128, 0, 200)], []), throwsArgumentError);
@@ -89,6 +95,12 @@ void main() {
     final expected = [n(60, 0, 100), n(60, 60, 160), n(60, 120, 220)];
     final actual = [n(60, 5, 105), n(60, 65, 165), n(60, 125, 225)];
     expect(compareNotes(expected, actual).strict.truePositives, 3);
-    expect(compareNotes(expected.reversed.toList(), actual.reversed.toList()).strict.truePositives, 3);
+    expect(
+      compareNotes(
+        expected.reversed.toList(),
+        actual.reversed.toList(),
+      ).strict.truePositives,
+      3,
+    );
   });
 }
