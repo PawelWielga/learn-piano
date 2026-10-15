@@ -57,7 +57,7 @@ jobs:
               -i "/tmp/learn-piano-fixtures/${scenario}.wav" \
               -ac 1 -ar 24000 -f f32le "/tmp/${scenario}.f32"
             dart run tool/mp3_benchmark.dart "/tmp/${scenario}.f32" \
-              "/tmp/learn-piano-fixtures/${scenario}.mid" | tee -a "$GITHUB_STEP_SUMMARY"
+              "/tmp/learn-piano-fixtures/${scenario}.mid" --require-full-reference | tee -a "$GITHUB_STEP_SUMMARY"
           done
       - name: Store reproducibility manifest (no audio uploads)
         uses: actions/upload-artifact@v4
