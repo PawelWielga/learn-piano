@@ -1,0 +1,61 @@
+name: Realtime synthetic PCM detector scorecard
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/lib/src/pitch/**'
+      - 'app/lib/src/recording/polyphonic_frame_analyzer.dart'
+      - 'app/test/pitch/**'
+      - 'app/tool/note_matching.dart'
+      - 'scripts/realtime_scorecard_summary.py'
+      - '.github/workflows/realtime-scorecard.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/lib/src/pitch/**'
+      - 'app/lib/src/recording/polyphonic_frame_analyzer.dart'
+      - 'app/test/pitch/**'
+      - 'app/tool/note_matching.dart'
+      - 'scripts/realtime_scorecard_summary.py'
+      - '.github/workflows/realtime-scorecard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scorecard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.7'
+          channel: stable
+          cache: true
+      - name: Resolve packages
+        working-directory: app
+        run: flutter pub get
+      - name: Measure both existing realtime algorithms (metadata only)
+        working-directory: app
+        env:
+          REALTIME_SCORECARD_JSON: /tmp/learn-piano-realtime/scorecard.json
+        run: flutter test test/pitch/realtime_scorecard_test.dart
+      - name: Summarize note and compute errors
+        if: always()
+        run: |
+          if test -f /tmp/learn-piano-realtime/scorecard.json; then
+            python3 scripts/realtime_scorecard_summary.py \
+              /tmp/learn-piano-realtime/scorecard.json | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Archive metrics, not PCM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: realtime-synthetic-scorecard
+          path: /tmp/learn-piano-realtime/scorecard.json
+          if-no-files-found: warn
+          retention-days: 14
