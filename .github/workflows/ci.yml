@@ -30,6 +30,13 @@ jobs:
           node-version: '22'
       - name: Resolve dependencies
         run: flutter pub get
+      - name: Produce canonical realtime test formatting
+        run: |
+          dart format --output=write test/pitch/realtime_pcm_replay_test.dart
+          echo "BEGIN_REALTIME_FORMATTED"
+          base64 -w0 test/pitch/realtime_pcm_replay_test.dart
+          echo
+          echo "END_REALTIME_FORMATTED"
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
