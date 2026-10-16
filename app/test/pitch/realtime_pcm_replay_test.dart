@@ -26,6 +26,7 @@ class TestTone {
     this.second = 0,
     this.third = 0,
     this.cents = 0,
+    this.tailMs = 0,
   });
 
   final int pitch;
@@ -35,6 +36,7 @@ class TestTone {
   final double second;
   final double third;
   final double cents;
+  final int tailMs;
 }
 
 /// Deterministic AudioWorklet-like packets with monotonic audio-clock time.
@@ -48,13 +50,17 @@ List<PcmFrame> packets(
   final signal = Float32List(length);
   for (final note in tones) {
     final first = (sampleRate * note.startMs / 1000).round();
-    final last = math.min(length, (sampleRate * note.endMs / 1000).round());
+    final heldEnd = (sampleRate * note.endMs / 1000).round();
+    final tailSamples = (sampleRate * note.tailMs / 1000).round();
+    final last = math.min(length, heldEnd + tailSamples);
     final frequency =
         440 * math.pow(2, (note.pitch - 69 + note.cents / 100) / 12);
     for (var i = first; i < last; i++) {
       final local = i - first;
       final phase = 2 * math.pi * frequency * local / sampleRate;
-      final release = math.min(1.0, (last - i) / (sampleRate * 0.015));
+      final release = i < heldEnd
+          ? math.min(1.0, (heldEnd - i) / (sampleRate * 0.015))
+          : 0.12 * (1 - (i - heldEnd) / tailSamples);
       signal[i] +=
           note.gain *
           release *
@@ -89,8 +95,11 @@ List<PcmFrame> packets(
 }
 
 /// Same 120ms cadence as mono training. Real detector and tracker.
-List<NoteEvent> mono(List<PcmFrame> frames, {NoteEventTracker? tracker}) {
-  const detector = PitchDetector();
+List<NoteEvent> mono(
+  List<PcmFrame> frames, {
+  NoteEventTracker? tracker,
+  PitchDetector detector = const PitchDetector(),
+}) {
   final state = tracker ?? NoteEventTracker();
   final events = <NoteEvent>[];
   Duration? last;
@@ -202,6 +211,47 @@ void main() {
       }
     },
   );
+
+  test('quiet gain needs sensitivity setting and stays below noise gate', () {
+    for (final rate in rates) {
+      final frames = packets(rate, 2300, [
+        const TestTone(69, 400, 1750, gain: 0.009),
+      ]);
+      expect(onsets(mono(frames)), isEmpty);
+      final sensitive = mono(
+        frames,
+        detector: const PitchDetector(minRms: 0.005),
+      );
+      expect(onsets(sensitive).map((e) => e.midiNote), [69]);
+    }
+  });
+
+  test('tuning near the boundary requires explicit wider tolerance', () {
+    for (final rate in rates) {
+      final frames = packets(rate, 2300, [
+        const TestTone(69, 400, 1750, cents: 42),
+      ]);
+      expect(onsets(mono(frames)), isEmpty);
+      final tolerant = mono(
+        frames,
+        tracker: NoteEventTracker(maxCentsDeviation: 45),
+      );
+      expect(onsets(tolerant).map((e) => e.midiNote), [69]);
+    }
+  });
+
+  test('quiet reverberant tail does not create a second key strike', () {
+    for (final rate in rates) {
+      final events = mono(packets(rate, 2600, [
+        const TestTone(60, 400, 1600, gain: 0.24, tailMs: 450),
+      ]));
+      expect(onsets(events).map((e) => e.midiNote), [60]);
+      expect(
+        events.where((e) => e.type == NoteEventType.noteOff),
+        hasLength(1),
+      );
+    }
+  });
 
   test('WaitForNote rejects held C4; advances on three distinct strikes', () {
     final midi = const MidiParser().parse(
