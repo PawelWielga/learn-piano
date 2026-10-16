@@ -9,7 +9,13 @@ import '../../tool/note_matching.dart' as matching;
 import 'realtime_pcm_replay_test.dart' as fixtures;
 
 class _Scenario {
-  const _Scenario(this.name, this.source, this.rate, this.tones, {this.lengthMs = 2600});
+  const _Scenario(
+    this.name,
+    this.source,
+    this.rate,
+    this.tones, {
+    this.lengthMs = 2600,
+  });
   final String name;
   final RealtimeDetectorSource source;
   final int rate;
@@ -18,40 +24,71 @@ class _Scenario {
 }
 
 const _scenarios = <_Scenario>[
-  _Scenario('mono_c2_44100', RealtimeDetectorSource.yin, 44100,
-    [fixtures.TestTone(36, 400, 1550)]),
-  _Scenario('mono_c2_48000', RealtimeDetectorSource.yin, 48000,
-    [fixtures.TestTone(36, 400, 1550)]),
-  _Scenario('mono_c6_48000', RealtimeDetectorSource.yin, 48000,
-    [fixtures.TestTone(84, 400, 1550)]),
+  _Scenario('mono_c2_44100', RealtimeDetectorSource.yin, 44100, [
+    fixtures.TestTone(36, 400, 1550),
+  ]),
+  _Scenario('mono_c2_48000', RealtimeDetectorSource.yin, 48000, [
+    fixtures.TestTone(36, 400, 1550),
+  ]),
+  _Scenario('mono_c6_48000', RealtimeDetectorSource.yin, 48000, [
+    fixtures.TestTone(84, 400, 1550),
+  ]),
   _Scenario('mono_repeated_c4', RealtimeDetectorSource.yin, 48000, [
     fixtures.TestTone(60, 400, 1100),
     fixtures.TestTone(60, 1550, 2250),
   ], lengthMs: 3100),
   _Scenario('mono_silence', RealtimeDetectorSource.yin, 48000, []),
-  _Scenario('poly_dyad_44100', RealtimeDetectorSource.legacyPolyphonicFft,
-    44100, [fixtures.TestTone(60, 400, 1650),
-    fixtures.TestTone(64, 400, 1650)]),
-  _Scenario('poly_bass_dyad_48000', RealtimeDetectorSource.legacyPolyphonicFft,
-    48000, [fixtures.TestTone(48, 400, 1750, gain: 0.23, second: 0.08),
-    fixtures.TestTone(62, 400, 1750, gain: 0.12, second: 0.08)]),
-  _Scenario('poly_triad_48000', RealtimeDetectorSource.legacyPolyphonicFft,
-    48000, [fixtures.TestTone(48, 400, 1750, gain: 0.23, second: 0.08),
-    fixtures.TestTone(62, 400, 1750, gain: 0.12, second: 0.08),
-    fixtures.TestTone(65, 400, 1750, gain: 0.12, second: 0.08)]),
-  _Scenario('poly_four_48000', RealtimeDetectorSource.legacyPolyphonicFft,
-    48000, [fixtures.TestTone(48, 400, 1750, gain: 0.23, second: 0.08),
-    fixtures.TestTone(62, 400, 1750, gain: 0.12, second: 0.08),
-    fixtures.TestTone(65, 400, 1750, gain: 0.12, second: 0.08),
-    fixtures.TestTone(69, 400, 1750, gain: 0.12, second: 0.08)]),
-  _Scenario('poly_octave_overlap_48000',
-    RealtimeDetectorSource.legacyPolyphonicFft, 48000,
-    [fixtures.TestTone(48, 400, 1750, gain: 0.23, second: 0.08),
-    fixtures.TestTone(60, 400, 1750, gain: 0.12, second: 0.08)]),
+  _Scenario(
+    'poly_dyad_44100',
+    RealtimeDetectorSource.legacyPolyphonicFft,
+    44100,
+    [fixtures.TestTone(60, 400, 1650), fixtures.TestTone(64, 400, 1650)],
+  ),
+  _Scenario(
+    'poly_bass_dyad_48000',
+    RealtimeDetectorSource.legacyPolyphonicFft,
+    48000,
+    [
+      fixtures.TestTone(48, 400, 1750, gain: 0.23, second: 0.08),
+      fixtures.TestTone(62, 400, 1750, gain: 0.12, second: 0.08),
+    ],
+  ),
+  _Scenario(
+    'poly_triad_48000',
+    RealtimeDetectorSource.legacyPolyphonicFft,
+    48000,
+    [
+      fixtures.TestTone(48, 400, 1750, gain: 0.23, second: 0.08),
+      fixtures.TestTone(62, 400, 1750, gain: 0.12, second: 0.08),
+      fixtures.TestTone(65, 400, 1750, gain: 0.12, second: 0.08),
+    ],
+  ),
+  _Scenario(
+    'poly_four_48000',
+    RealtimeDetectorSource.legacyPolyphonicFft,
+    48000,
+    [
+      fixtures.TestTone(48, 400, 1750, gain: 0.23, second: 0.08),
+      fixtures.TestTone(62, 400, 1750, gain: 0.12, second: 0.08),
+      fixtures.TestTone(65, 400, 1750, gain: 0.12, second: 0.08),
+      fixtures.TestTone(69, 400, 1750, gain: 0.12, second: 0.08),
+    ],
+  ),
+  _Scenario(
+    'poly_octave_overlap_48000',
+    RealtimeDetectorSource.legacyPolyphonicFft,
+    48000,
+    [
+      fixtures.TestTone(48, 400, 1750, gain: 0.23, second: 0.08),
+      fixtures.TestTone(60, 400, 1750, gain: 0.12, second: 0.08),
+    ],
+  ),
 ];
 
 List<matching.BenchmarkNote> _eventsToNotes(
-    List<NoteEvent> events, int lastAtUs) {
+  List<NoteEvent> events,
+  int lastAtUs,
+) {
   final active = <int, int>{};
   final notes = <matching.BenchmarkNote>[];
   for (final event in events) {
@@ -61,28 +98,45 @@ List<matching.BenchmarkNote> _eventsToNotes(
       // previous ongoing key remains a separate event in the scorecard.
       final prior = active[event.midiNote];
       if (prior != null) {
-        notes.add(matching.BenchmarkNote(
-          pitch: event.midiNote, onsetUs: prior, offsetUs: microseconds));
+        notes.add(
+          matching.BenchmarkNote(
+            pitch: event.midiNote,
+            onsetUs: prior,
+            offsetUs: microseconds,
+          ),
+        );
       }
       active[event.midiNote] = microseconds;
     } else {
       final start = active.remove(event.midiNote);
       if (start != null) {
-        notes.add(matching.BenchmarkNote(
-          pitch: event.midiNote, onsetUs: start, offsetUs: microseconds));
+        notes.add(
+          matching.BenchmarkNote(
+            pitch: event.midiNote,
+            onsetUs: start,
+            offsetUs: microseconds,
+          ),
+        );
       }
     }
   }
   for (final entry in active.entries) {
-    notes.add(matching.BenchmarkNote(
-      pitch: entry.key, onsetUs: entry.value, offsetUs: lastAtUs));
+    notes.add(
+      matching.BenchmarkNote(
+        pitch: entry.key,
+        onsetUs: entry.value,
+        offsetUs: lastAtUs,
+      ),
+    );
   }
   return notes;
 }
 
 Map<String, Object?> _run(_Scenario scenario) {
   final frames = fixtures.packets(
-    scenario.rate, scenario.lengthMs, scenario.tones,
+    scenario.rate,
+    scenario.lengthMs,
+    scenario.tones,
   );
   final detector = scenario.source == RealtimeDetectorSource.yin
       ? YinRealtimeDetector()
@@ -95,18 +149,22 @@ Map<String, Object?> _run(_Scenario scenario) {
   }
   watch.stop();
   final rssAfter = ProcessInfo.currentRss;
-  final expected = scenario.tones.map((tone) =>
-    matching.BenchmarkNote(pitch: tone.pitch,
-      onsetUs: tone.startMs * 1000, offsetUs: tone.endMs * 1000),
-  ).toList();
-  final detected = _eventsToNotes(
-    events, scenario.lengthMs * 1000,
-  );
+  final expected = scenario.tones
+      .map(
+        (tone) => matching.BenchmarkNote(
+          pitch: tone.pitch,
+          onsetUs: tone.startMs * 1000,
+          offsetUs: tone.endMs * 1000,
+        ),
+      )
+      .toList();
+  final detected = _eventsToNotes(events, scenario.lengthMs * 1000);
   // Stable onset state machines impose >200ms of detector latency.
   // Compare policies use 650ms onset / 700ms offset. This is NOT the
   // stricter offline transcription tolerance from issue #56.
   final comparison = matching.compareNotes(
-    expected, detected,
+    expected,
+    detected,
     onsetToleranceUs: 650000,
     offsetToleranceUs: 700000,
   );
@@ -125,8 +183,7 @@ Map<String, Object?> _run(_Scenario scenario) {
     'strict': comparison.strict.toJson(),
     'octaveConfusions': comparison.octaveConfusions,
     'algorithmicLatencyMs': [
-      for (final p in comparison.onset.pairs)
-        p.onsetErrorUs / 1000,
+      for (final p in comparison.onset.pairs) p.onsetErrorUs / 1000,
     ],
     'processedPackets': frames.length,
     'computeWallMs': watch.elapsedMicroseconds / 1000,
@@ -148,17 +205,20 @@ void main() {
       results.add(result);
       final score = result['onset']! as Map<String, Object>;
       // ignore: avoid_print
-      print('REALTIME ${scenario.name}'
+      print(
+        'REALTIME ${scenario.name}'
         ' TP=${score['matched']}'
         ' FP=${score['falsePositives']}'
         ' FN=${score['falseNegatives']}'
-        ' computeMs=${result['computeWallMs']}');
+        ' computeMs=${result['computeWallMs']}',
+      );
     }
     expect(results.length, _scenarios.length);
     final silent = results.firstWhere((r) => r['name'] == 'mono_silence');
     expect((silent['onset'] as Map<String, Object>)['falsePositives'], 0);
-    final c3c4 = results.firstWhere((r) =>
-      r['name'] == 'poly_octave_overlap_48000');
+    final c3c4 = results.firstWhere(
+      (r) => r['name'] == 'poly_octave_overlap_48000',
+    );
     expect((c3c4['missedPitches'] as List<int>).length, lessThanOrEqualTo(1));
     expect((c3c4['detectedPitches'] as List<int>), contains(48));
 
@@ -169,14 +229,18 @@ void main() {
       path.parent.createSync(recursive: true);
       path.writeAsStringSync(
         const JsonEncoder.withIndent('  ').convert({
-          'scope': 'Synthetic PCM only, no physical piano or Android device',
-          'modelStatus': 'Not evaluated (no verified weights/runtime)',
-          'onsetToleranceMs': 650,
-          'offsetToleranceMs': 700,
-          'computeTiming': 'Stopwatch VM wall time for detector.observe only',
-          'memoryTiming': 'Process RSS before/after each case, NOT peak heap',
-          'cases': results,
-        }) + '\n',
+              'scope':
+                  'Synthetic PCM only, no physical piano or Android device',
+              'modelStatus': 'Not evaluated (no verified weights/runtime)',
+              'onsetToleranceMs': 650,
+              'offsetToleranceMs': 700,
+              'computeTiming':
+                  'Stopwatch VM wall time for detector.observe only',
+              'memoryTiming':
+                  'Process RSS before/after each case, NOT peak heap',
+              'cases': results,
+            }) +
+            '\n',
       );
     }
   });
