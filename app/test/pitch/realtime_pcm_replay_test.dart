@@ -242,9 +242,11 @@ void main() {
 
   test('quiet reverberant tail does not create a second key strike', () {
     for (final rate in rates) {
-      final events = mono(packets(rate, 2600, [
-        const TestTone(60, 400, 1600, gain: 0.24, tailMs: 450),
-      ]));
+      final events = mono(
+        packets(rate, 2600, [
+          const TestTone(60, 400, 1600, gain: 0.24, tailMs: 450),
+        ]),
+      );
       expect(onsets(events).map((e) => e.midiNote), [60]);
       expect(
         events.where((e) => e.type == NoteEventType.noteOff),
