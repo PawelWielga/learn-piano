@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:learn_piano/src/audio/audio_file_picker.dart';
-import 'package:learn_piano/src/recording/anti_alias_decimator.dart';
+import 'package:learn_piano/src/audio/anti_alias_decimator.dart';
 import 'package:learn_piano/src/recording/mp3_note_transcriber.dart';
 import 'package:learn_piano/src/recording/note_recorder.dart';
 
