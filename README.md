@@ -46,13 +46,12 @@ Więcej: [app/README.md](app/README.md).
 
 ## Układ poziomy
 
-Na pionowym ekranie pojawia się komunikat o obróceniu urządzenia. Aplikacja
-zachowuje wczytane MIDI, wybór melodii i postęp treningu po obrocie.
-Jeśli podczas ćwiczenia działał mikrofon, jego nasłuch zostaje zatrzymany,
-a trening wstrzymany. Po powrocie do poziomu trzeba ręcznie wznowić ćwiczenie.
-Manifest zainstalowanej PWA sugeruje orientację poziomą, ale zwykła karta
-mobilnej przeglądarki (szczególnie Safari iOS) nie udostępnia niezawodnego
-wymuszenia fizycznego obrotu. Można też poszerzyć okno na desktopie.
+Aplikacja działa w pionie i poziomie. Nie wymusza obrotu urządzenia ani
+nie zasłania interfejsu komunikatem o orientacji. Przechodzenie między
+orientacjami zachowuje wczytane MIDI, wybór melodii i postęp treningu.
+Sama zmiana rozmiaru ekranu nie zatrzymuje mikrofonu ani odtwarzania;
+węższy ekran może wymagać poziomego przewijania klawiatury.
+Na małych telefonach poziomy układ nadal zapewnia więcej miejsca do ćwiczeń.
 
 ## Trening na telefonie w poziomie
 
