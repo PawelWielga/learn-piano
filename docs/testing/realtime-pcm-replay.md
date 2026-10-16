@@ -22,3 +22,10 @@ test microphone hardware, room acoustics, phone latency, noisy environments
 or Android integration. The current spectral chord tracker is experimental;
 future model comparisons belong in #72. Physical criteria in #7 and #16
 remain open until real equipment is available.
+
+**Observed synthetic limitation (2026-10-16):** When C3 (MIDI 48) has a
+stronger fundamental than the simultaneous C4 (MIDI 60), the current FFT
+tracker can suppress C4 as if it were merely C3's second harmonic. The
+octave-overlap test records missing notes and guards a basic bound, but
+**does not claim good chord recall**. The issue is explicitly tracked in #72.
+Non-octave overlapping chords have stricter assertions.
