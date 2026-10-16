@@ -151,11 +151,7 @@ void main() {
       for (var pitch = 36; pitch <= 84; pitch++) {
         final frame = packets(rate, 150, [TestTone(pitch, 0, 150)]).first;
         final candidate = detector.detect(frame.samples, rate);
-        expect(
-          candidate?.midiNote,
-          pitch,
-          reason: 'pitch $pitch at $rate',
-        );
+        expect(candidate?.midiNote, pitch, reason: 'pitch $pitch at $rate');
       }
     }
   });
@@ -307,7 +303,9 @@ void main() {
       final missed = pitches.toSet().difference(detected);
       final ghosts = detected.difference(pitches.toSet());
       // ignore: avoid_print
-      print('Poly voices=$voices detected=$detected missing=$missed ghost=$ghosts');
+      print(
+        'Poly voices=$voices detected=$detected missing=$missed ghost=$ghosts',
+      );
       expect(missed, isEmpty);
       expect(ghosts.length, lessThanOrEqualTo(2));
     }
@@ -315,10 +313,14 @@ void main() {
 
   test('octave-overlapping dyad reports masked upper note explicitly', () {
     final expected = <int>{48, 60};
-    final detected = onsets(poly(packets(48000, 2600, [
-      const TestTone(48, 400, 1750, gain: 0.23, second: 0.08),
-      const TestTone(60, 400, 1750, gain: 0.12, second: 0.08),
-    ]))).map((e) => e.midiNote).toSet();
+    final detected = onsets(
+      poly(
+        packets(48000, 2600, [
+          const TestTone(48, 400, 1750, gain: 0.23, second: 0.08),
+          const TestTone(60, 400, 1750, gain: 0.12, second: 0.08),
+        ]),
+      ),
+    ).map((e) => e.midiNote).toSet();
     final missing = expected.difference(detected);
     final ghosts = detected.difference(expected);
     // Known spectral masking limitation, tracked in #72.
