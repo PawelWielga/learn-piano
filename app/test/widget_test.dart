@@ -116,7 +116,7 @@ void main() {
     expect(find.textContaining('Próbkowanie:'), findsOneWidget);
   });
 
-  testWidgets('rotating to portrait stops active microphone capture', (
+  testWidgets('rotating to portrait keeps active microphone capture', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -135,13 +135,14 @@ void main() {
     tester.view.physicalSize = const Size(390, 844);
     await tester.pump();
     await tester.pump();
-    expect(input.stops, 1);
-    expect(find.text('Mikrofon nieaktywny'), findsOneWidget);
+    expect(input.stops, 0);
+    expect(find.text('Nasłuch aktywny'), findsOneWidget);
 
     tester.view.physicalSize = const Size(844, 390);
     await tester.pump();
     expect(input.starts, 1);
-    expect(find.text('Włącz mikrofon'), findsOneWidget);
+    expect(input.stops, 0);
+    expect(find.text('Wyłącz mikrofon'), findsOneWidget);
   });
 
   testWidgets('starts, displays PCM metadata and stops', (tester) async {
