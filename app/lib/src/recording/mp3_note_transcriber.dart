@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import '../audio/audio_file_picker.dart';
 import '../pitch/detection_preferences.dart';
-import 'anti_alias_decimator.dart';
+import '../audio/anti_alias_decimator.dart';
 import 'note_recorder.dart';
 import 'polyphonic_frame_analyzer.dart';
 
