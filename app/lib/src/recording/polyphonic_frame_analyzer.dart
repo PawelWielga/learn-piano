@@ -61,11 +61,17 @@ class PolyphonicFrameAnalyzer {
   final _bitReverse = Uint16List(fftSize);
   late final List<List<double>> _partials;
 
+  /// [pcm] must already be at [sampleRate], not at the original source rate.
+  /// For sources >=32 kHz, filter and downsample using AntiAliasDecimator
+  /// before passing a center index divided by [decimation].
+  ///
   /// The returned strengths are in PCM-like linear amplitude units. A pitch
   /// can be present alongside others; returned data is owned by the caller.
   Float64List analyze(Float32List pcm, int centerSample) {
     for (var i = 0; i < fftSize; i++) {
-      final source = centerSample + (i - fftSize ~/ 2) * decimation;
+      // Input has already been low-pass filtered and decimated once when
+      // applicable. Never stride over raw high-rate PCM here.
+      final source = centerSample + i - fftSize ~/ 2;
       final sample = source < 0 || source >= pcm.length ? 0.0 : pcm[source];
       _real[_bitReverse[i]] = sample * _window[i];
       _imag[i] = 0;
