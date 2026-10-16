@@ -8,7 +8,6 @@ import '../audio/audio_input_factory.dart';
 import '../audio/note_output.dart';
 import '../audio/note_output_factory.dart';
 import '../instrument/instrument_range.dart';
-import '../layout/landscape_gate.dart';
 import '../midi/melody_part_analyzer.dart';
 import '../pitch/note_event_tracker.dart';
 import '../pitch/polyphonic_note_tracker.dart';
@@ -74,7 +73,6 @@ class _TrainingScreenState extends State<TrainingScreen>
 
   bool _busy = false;
   bool _listening = false;
-  bool _landscapeBlocked = false;
   int _startRequestId = 0;
   bool _awaitingSilence = true;
   Duration? _quietSince;
@@ -121,26 +119,6 @@ class _TrainingScreenState extends State<TrainingScreen>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final blocked = isPortraitViewport(context);
-    if (blocked && !_landscapeBlocked) {
-      // Cancel a pending getUserMedia request as well as active capture.
-      _startRequestId++;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || !_landscapeBlocked) return;
-        _stopAuto();
-        _releaseKeyboardNotes();
-        if (_snapshot.phase == TrainingPhase.running) {
-          setState(() => _snapshot = _engine.pause());
-        }
-        if (_listening) unawaited(_stopCapture());
-      });
-    }
-    _landscapeBlocked = blocked;
-  }
-
-  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) _stopAuto();
   }
@@ -153,7 +131,6 @@ class _TrainingScreenState extends State<TrainingScreen>
       return;
     }
     if (_busy ||
-        _landscapeBlocked ||
         _snapshot.phase == TrainingPhase.error ||
         widget.selection.notes.isEmpty) {
       return;
@@ -351,7 +328,6 @@ class _TrainingScreenState extends State<TrainingScreen>
   void _onKeyboardDown(int note) {
     if (_mode != TrainingInputMode.keyboard ||
         _autoPlaying ||
-        _landscapeBlocked ||
         _busy ||
         _snapshot.isCompleted ||
         _snapshot.phase == TrainingPhase.error ||
@@ -408,7 +384,7 @@ class _TrainingScreenState extends State<TrainingScreen>
   }
 
   Future<void> _switchInputMode(TrainingInputMode mode) async {
-    if (_busy || _autoPlaying || _landscapeBlocked || _mode == mode) return;
+    if (_busy || _autoPlaying || _mode == mode) return;
     _startRequestId++;
     _releaseKeyboardNotes();
     if (_mode == TrainingInputMode.microphone) {
@@ -428,7 +404,6 @@ class _TrainingScreenState extends State<TrainingScreen>
     if (_busy ||
         _autoPlaying ||
         _listening ||
-        _landscapeBlocked ||
         _snapshot.phase == TrainingPhase.error) {
       return;
     }
@@ -447,7 +422,7 @@ class _TrainingScreenState extends State<TrainingScreen>
 
     try {
       await _input.start();
-      if (!mounted || requestId != _startRequestId || _landscapeBlocked) {
+      if (!mounted || requestId != _startRequestId) {
         await _input.stop();
         return;
       }
