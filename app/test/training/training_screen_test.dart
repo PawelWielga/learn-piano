@@ -594,7 +594,7 @@ void main() {
     expect(find.text('0 / 3 nut'), findsOneWidget);
   });
 
-  testWidgets('portrait suspends listening without losing training progress', (
+  testWidgets('portrait keeps listening and training progress', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -612,14 +612,15 @@ void main() {
     tester.view.physicalSize = const Size(390, 844);
     await tester.pump();
     await tester.pump();
-    expect(fake.stops, 1);
-    expect(find.text('Ćwiczenie wstrzymane'), findsOneWidget);
+    expect(fake.stops, 0);
     expect(find.text('1 / 3 nut'), findsOneWidget);
+    expect(find.byKey(const Key('training-stage-canvas')), findsOneWidget);
+    expect(tester.takeException(), isNull);
 
     tester.view.physicalSize = const Size(844, 390);
     await tester.pump();
     expect(fake.starts, 1);
-    expect(find.text('Wznów'), findsOneWidget);
+    expect(fake.stops, 0);
     expect(find.text('1 / 3 nut'), findsOneWidget);
   });
 
