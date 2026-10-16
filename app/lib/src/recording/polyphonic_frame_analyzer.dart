@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-/// Spectral multi-pitch candidates for *decoded files*, never microphone input.
+/// Spectral multi-pitch candidates for decoded files and buffered live PCM.
 ///
 /// A small, dependency-free harmonic matching pursuit. This is deliberately a
 /// lightweight approximation to piano transcription, not an ML piano model:
