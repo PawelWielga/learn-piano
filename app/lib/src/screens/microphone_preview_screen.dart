@@ -10,7 +10,6 @@ import '../pitch/pitch_detector.dart';
 import '../pitch/detection_preferences.dart';
 import '../pitch/detection_preferences_store_factory.dart';
 import '../instrument/instrument_range.dart';
-import '../layout/landscape_gate.dart';
 import '../instrument/instrument_range_store.dart';
 import '../instrument/instrument_range_store_factory.dart';
 import '../widgets/piano_keyboard.dart';
@@ -49,7 +48,6 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
 
   bool _busy = false;
   bool _listening = false;
-  bool _landscapeBlocked = false;
   int _startRequestId = 0;
   int? _sampleRate;
   int? _frameSize;
@@ -89,21 +87,6 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
         });
       }
     });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final blocked = isPortraitViewport(context);
-    if (blocked && !_landscapeBlocked) {
-      _startRequestId++;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _landscapeBlocked && _listening) {
-          unawaited(_stop());
-        }
-      });
-    }
-    _landscapeBlocked = blocked;
   }
 
   Future<void> _loadInstrumentRange() async {
@@ -155,7 +138,7 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
   }
 
   Future<void> _start() async {
-    if (_busy || _listening || _landscapeBlocked) return;
+    if (_busy || _listening) return;
     final requestId = ++_startRequestId;
     setState(() {
       _busy = true;
@@ -172,7 +155,7 @@ class _MicrophonePreviewScreenState extends State<MicrophonePreviewScreen> {
     });
     try {
       await _input.start();
-      if (!mounted || requestId != _startRequestId || _landscapeBlocked) {
+      if (!mounted || requestId != _startRequestId) {
         await _input.stop();
         return;
       }
