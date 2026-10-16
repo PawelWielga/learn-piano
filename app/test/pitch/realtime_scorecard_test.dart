@@ -227,8 +227,7 @@ void main() {
     if (target != null && target.isNotEmpty) {
       final path = File(target);
       path.parent.createSync(recursive: true);
-      path.writeAsStringSync(
-        const JsonEncoder.withIndent('  ').convert({
+      final json = const JsonEncoder.withIndent('  ').convert({
               'scope':
                   'Synthetic PCM only, no physical piano or Android device',
               'modelStatus': 'Not evaluated (no verified weights/runtime)',
@@ -239,9 +238,8 @@ void main() {
               'memoryTiming':
                   'Process RSS before/after each case, NOT peak heap',
               'cases': results,
-            }) +
-            '\n',
-      );
+            });
+      path.writeAsStringSync('$json\n');
     }
   });
 }
