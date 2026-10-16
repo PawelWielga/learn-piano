@@ -11,7 +11,8 @@ of the training screen and invokes the real YIN `PitchDetector`,
 `PolyphonicNoteTracker` directly.
 
 The tests cover each C2–C6 semitone, low notes with strong harmonics, weak
-deterministic noise, silence, ±30-cent tuning, held C2, repeated C4,
+deterministic noise, silence, sensitive quiet notes, tuning at ±30 and
++42 cents, reverberation-like fading tails, held C2, repeated C4,
 interrupted capture, an octave leap, and 2–4 pitches with a stronger bass.
 A single continuous key must not complete C4–C4–C4. CI prints synthetic
 algorithmic NoteOn latency in milliseconds relative to scheduled onsets,
