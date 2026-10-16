@@ -3,9 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:learn_piano/src/learn_piano_app.dart';
 
 void main() {
-  testWidgets('portrait renders the app and permits navigating between screens', (
-    tester,
-  ) async {
+  testWidgets('portrait supports navigation', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.resetPhysicalSize);
@@ -27,7 +25,10 @@ void main() {
     tester.view.physicalSize = const Size(390, 844);
     await tester.pumpAndSettle();
 
-    expect(tester.state<NavigatorState>(find.byType(Navigator)), same(navigator));
+    expect(
+      tester.state<NavigatorState>(find.byType(Navigator)),
+      same(navigator),
+    );
     expect(find.text('Test mikrofonu'), findsOneWidget);
 
     await tester.pageBack();
