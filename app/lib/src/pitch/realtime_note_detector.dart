@@ -69,8 +69,7 @@ class YinRealtimeDetector implements RealtimeNoteDetector {
     }
     if (_lastAnalyzed != null &&
         frame.capturedAt >= _lastAnalyzed! &&
-        frame.capturedAt - _lastAnalyzed! <
-            const Duration(milliseconds: 120)) {
+        frame.capturedAt - _lastAnalyzed! < const Duration(milliseconds: 120)) {
       return RealtimeDetection(
         source: RealtimeDetectorSource.yin,
         events: const <NoteEvent>[],
@@ -113,7 +112,7 @@ class YinRealtimeDetector implements RealtimeNoteDetector {
 /// FFT magnitudes are model probabilities or providing invented confidence.
 class FftRealtimeDetector implements RealtimeNoteDetector {
   FftRealtimeDetector({PolyphonicNoteTracker? tracker})
-      : _tracker = tracker ?? PolyphonicNoteTracker();
+    : _tracker = tracker ?? PolyphonicNoteTracker();
 
   final PolyphonicNoteTracker _tracker;
 
