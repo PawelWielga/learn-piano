@@ -156,6 +156,14 @@ Uruchamianie lokalne: `flutter run -d chrome` z `app/`. Jeżeli środowisko nie 
 5. Nie wykonuj destrukcyjnych operacji repozytorium, nie zmieniaj konfiguracji Pages, nie dodawaj sekretów ani nie usuwaj funkcji bez wymagania. Zmiany w workflowach oceniaj pod kątem uprawnień, triggerów i ryzyka publikacji.
 6. W podsumowaniu pracy podaj: wykonany zakres, zmienione pliki, wyniki faktycznie uruchomionych testów, nierozwiązane ryzyka oraz numer powiązanego issue.
 
+## 8a. Zasady UI/UX i UI UX Pro Max Skill
+
+- Przy zadaniach dotyczących UI/UX, responsywności, dostępności, układu ekranu, nawigacji, ikon, kolorów i typografii przeczytaj i zastosuj lokalny skill: [`.agents/skills/ui-ux-pro-max/SKILL.md`](.agents/skills/ui-ux-pro-max/SKILL.md). Jest to źródło pomocniczych porad, a nie nadrzędna specyfikacja produktu.
+- W pierwszej kolejności wyszukaj zalecenia dla Fluttera: `python3 .agents/skills/ui-ux-pro-max/scripts/search.py "piano practice touch landscape" --stack flutter`. Dodatkowe wyszukiwania `--domain ux` stosuj do konkretnego problemu. Skrypt wymaga tylko Pythona 3 (stdlib); nie instaluj pakietów systemowych na maszynie użytkownika.
+- Zachowaj wymagania Learn Piano: Flutter Web-first, telefon w poziomie, dotykowa klawiatura, czytelny podgląd nut, duże pola klikalne, stabilny stan mikrofonu i treningu, dostępność oraz lokalne przetwarzanie audio. Porady dla React/Tailwind nie powinny zmieniać stosu technologicznego Flutter.
+- Przy znaczących modyfikacjach estetyki lub globalnego design systemu najpierw przedstaw propozycję do akceptacji; nie nadpisuj istniejącego wyglądu ani nie generuj plików `--persist` bez osobnej decyzji.
+- Szczegóły użycia, źródło i licencja skilla: [`docs/ui-ux-skill.md`](docs/ui-ux-skill.md).
+
 ## 9. Przydatne odnośniki
 
 - [Aktualna roadmapa prac — #67](https://github.com/PawelWielga/learn-piano/issues/67)
