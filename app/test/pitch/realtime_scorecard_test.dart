@@ -228,17 +228,14 @@ void main() {
       final path = File(target);
       path.parent.createSync(recursive: true);
       final json = const JsonEncoder.withIndent('  ').convert({
-              'scope':
-                  'Synthetic PCM only, no physical piano or Android device',
-              'modelStatus': 'Not evaluated (no verified weights/runtime)',
-              'onsetToleranceMs': 650,
-              'offsetToleranceMs': 700,
-              'computeTiming':
-                  'Stopwatch VM wall time for detector.observe only',
-              'memoryTiming':
-                  'Process RSS before/after each case, NOT peak heap',
-              'cases': results,
-            });
+        'scope': 'Synthetic PCM only, no physical piano or Android device',
+        'modelStatus': 'Not evaluated (no verified weights/runtime)',
+        'onsetToleranceMs': 650,
+        'offsetToleranceMs': 700,
+        'computeTiming': 'Stopwatch VM wall time for detector.observe only',
+        'memoryTiming': 'Process RSS before/after each case, NOT peak heap',
+        'cases': results,
+      });
       path.writeAsStringSync('$json\n');
     }
   });
