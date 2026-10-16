@@ -18,8 +18,18 @@ void main() {
       expect(result.hasCalibratedNoteProbabilities, false);
       events.addAll(result.events);
     }
-    expect(events.where((e) => e.type == NoteEventType.noteOn).map((e) => e.midiNote), [60]);
-    expect(events.where((e) => e.type == NoteEventType.noteOff).map((e) => e.midiNote), [60]);
+    expect(
+      events
+          .where((e) => e.type == NoteEventType.noteOn)
+          .map((e) => e.midiNote),
+      [60],
+    );
+    expect(
+      events
+          .where((e) => e.type == NoteEventType.noteOff)
+          .map((e) => e.midiNote),
+      [60],
+    );
     detector.reset();
     final second = <NoteEvent>[];
     for (final frame in frames) {
@@ -43,8 +53,10 @@ void main() {
       expect(result.hasCalibratedNoteProbabilities, false);
       events.addAll(result.events);
     }
-    final pitches = events.where((e) => e.type == NoteEventType.noteOn)
-        .map((e) => e.midiNote).toSet();
+    final pitches = events
+        .where((e) => e.type == NoteEventType.noteOn)
+        .map((e) => e.midiNote)
+        .toSet();
     expect(pitches, contains(48));
     // Known C3/C4 masking must remain observable, but a later fix
     // must not fail the test simply because it detects C4 correctly.
