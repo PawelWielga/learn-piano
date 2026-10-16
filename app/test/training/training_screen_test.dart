@@ -594,9 +594,7 @@ void main() {
     expect(find.text('0 / 3 nut'), findsOneWidget);
   });
 
-  testWidgets('portrait keeps listening and training progress', (
-    tester,
-  ) async {
+  testWidgets('portrait preserves training', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(844, 390);
     addTearDown(tester.view.resetPhysicalSize);
