@@ -88,30 +88,21 @@ Silnik śledzi aktualnie brzmiące wysokości. Drugie `NoteOn` bez `NoteOff` tej
 
 Testy `test/training/wait_for_note_engine_test.dart` obejmują poprawne i błędne nuty/oktawy, C4-C4-C4, pauzę i wznowienie, reset w trakcie trzymania klawisza, koniec utworu i błędne partie. `test/training/wait_for_note_pipeline_test.dart` łączy prawdziwe fixtury MIDI z selektorem partii, trackerem pitch i silnikiem przy deterministycznej sekwencji nut.
 
-## Pozioma orientacja ekranu (#33)
+## Obsługa pionu i poziomu
 
-`MaterialApp.builder` zawiera `LandscapeGate`. Przy viewportach wyższych
-niż szerszych zasłania interfejs komunikatem o obróceniu urządzenia, wyłącza
-interakcje i ukrywa niedostępne elementy przed czytnikami ekranu. Nawigator
-pozostaje zamontowany, więc po obrocie nie znika import MIDI ani pozycja
-treningu. Ekrany mikrofonu i ćwiczenia reagują na zmianę rozmiaru przez
-`MediaQuery`: zatrzymują aktywny nasłuch, a trening przechodzi w pauzę.
-Rozpoczęte, lecz niedokończone żądanie mikrofonu jest unieważniane. Powrót
-do poziomu **nie** wznawia mikrofonu bez działania użytkownika.
+Learn Piano nie blokuje orientacji ekranu ani nie wymaga trybu pełnoekranowego.
+Ekran główny, import, mikrofon, nagrywanie i trening pozostają dostępne
+także w pionie. Obrócenie urządzenia nie zatrzymuje nasłuchu ani nagrywania,
+nie pauzuje treningu i nie traci wczytanego MIDI. Odtwarzanie i nawigacja
+pozostają w tym samym stanie. Mikrofon nadal zwalnia zasoby po opuszczeniu
+odpowiedniego ekranu lub po rzeczywistym przerwaniu wejścia audio.
 
-`web/manifest.json` deklaruje `orientation: landscape` dla przeglądarek
-obsługujących tę wskazówkę po instalacji PWA. W zwykłej karcie, zwłaszcza
-Safari na iOS, nie ma niezawodnego programowego blokowania orientacji.
-Przycisk **Włącz poziomy ekran** na komunikacie próbuje po kliknięciu
-przejść w tryb pełnoekranowy i wykonać `screen.orientation.lock('landscape')`.
-Jeśli przeglądarka nie obsługuje tego API albo odmówi, pokazuje instrukcję
-ręcznego obrotu i wyłączenia blokady systemowej. Gdy blokada nie powiedzie
-się po wejściu w pełny ekran, przycisk próbuje z niego wyjść. Testy
-`test_js/orientation_lock.test.cjs` obejmują sukces, brak API i odmowę.
-Pionowe okna desktopowe również widzą wskazówkę o poszerzeniu okna.
+`web/manifest.json` dopuszcza dowolną orientację także po instalacji PWA.
+Klawiatura ćwiczenia może przewijać się poziomo na wąskich ekranach;
+do wygodnej gry wieloma klawiszami poziomy widok nadal bywa lepszy.
 
-Widget tests: `test/layout/landscape_gate_test.dart` i testy zmiany
-orientacji w `widget_test.dart` oraz `training/training_screen_test.dart`.
+Testy zmian orientacji: `test/layout/portrait_navigation_test.dart`,
+`test/widget_test.dart` oraz `test/training/training_screen_test.dart`.
 Test na fizycznym telefonie pozostaje częścią #16.
 
 ## Trening na ekranowej klawiaturze (#41)
