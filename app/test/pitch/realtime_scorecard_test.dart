@@ -159,7 +159,8 @@ void main() {
     expect((silent['onset'] as Map<String, Object>)['falsePositives'], 0);
     final c3c4 = results.firstWhere((r) =>
       r['name'] == 'poly_octave_overlap_48000');
-    expect((c3c4['missedPitches'] as List<int>), contains(60));
+    expect((c3c4['missedPitches'] as List<int>).length, lessThanOrEqualTo(1));
+    expect((c3c4['detectedPitches'] as List<int>), contains(48));
 
     // An optional CI-only JSON artifact. No PCM is serialized.
     final target = Platform.environment['REALTIME_SCORECARD_JSON'];
