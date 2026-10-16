@@ -39,19 +39,6 @@ jobs:
       - name: Resolve packages
         working-directory: app
         run: flutter pub get
-      - name: Canonical Dart formatting for scorecard sources (temporary)
-        working-directory: app
-        run: |
-          dart format --output=write \
-            lib/src/pitch/realtime_note_detector.dart \
-            test/pitch/realtime_note_detector_test.dart \
-            test/pitch/realtime_scorecard_test.dart
-          for file in lib/src/pitch/realtime_note_detector.dart test/pitch/realtime_note_detector_test.dart test/pitch/realtime_scorecard_test.dart; do
-            echo "BEGIN_FORMATTED:$file"
-            base64 -w0 "$file"
-            echo
-            echo "END_FORMATTED:$file"
-          done
       - name: Measure both existing realtime algorithms (metadata only)
         working-directory: app
         env:
