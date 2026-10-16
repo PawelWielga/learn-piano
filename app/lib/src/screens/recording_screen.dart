@@ -9,7 +9,6 @@ import '../audio/note_output_factory.dart';
 import '../instrument/instrument_range.dart';
 import '../instrument/instrument_range_store.dart';
 import '../instrument/instrument_range_store_factory.dart';
-import '../layout/landscape_gate.dart';
 import '../pitch/detection_preferences.dart';
 import '../pitch/detection_preferences_store_factory.dart';
 import '../pitch/note_event_tracker.dart';
@@ -61,7 +60,6 @@ class _RecordingScreenState extends State<RecordingScreen>
   bool _recording = false;
   bool _listening = false;
   bool _busy = false;
-  bool _portraitBlocked = false;
   int _startRequestId = 0;
   int? _stableNote;
   Duration? _micOrigin;
@@ -101,21 +99,6 @@ class _RecordingScreenState extends State<RecordingScreen>
     } catch (_) {
       // Browser storage is optional.
     }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final blocked = isPortraitViewport(context);
-    if (blocked && !_portraitBlocked) {
-      _startRequestId++;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _portraitBlocked) {
-          unawaited(_stop(message: 'Nagrywanie zakończone po obrocie ekranu.'));
-        }
-      });
-    }
-    _portraitBlocked = blocked;
   }
 
   @override
@@ -168,7 +151,7 @@ class _RecordingScreenState extends State<RecordingScreen>
   }
 
   Future<void> _start() async {
-    if (_busy || _recording || _portraitBlocked) return;
+    if (_busy || _recording) return;
     final request = ++_startRequestId;
     setState(() {
       _error = null;
@@ -190,7 +173,7 @@ class _RecordingScreenState extends State<RecordingScreen>
     setState(() => _busy = true);
     try {
       await _input.start();
-      if (!mounted || request != _startRequestId || _portraitBlocked) {
+      if (!mounted || request != _startRequestId) {
         await _input.stop();
         return;
       }
@@ -397,7 +380,7 @@ class _RecordingScreenState extends State<RecordingScreen>
                     const SizedBox(height: 8),
                     RecordingKeyboard(
                       range: _range,
-                      enabled: _recording && !_portraitBlocked,
+                      enabled: _recording,
                       onNoteDown: _noteDown,
                       onNoteUp: _noteUp,
                     ),
