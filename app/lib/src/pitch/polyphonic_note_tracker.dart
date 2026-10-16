@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import '../audio/anti_alias_decimator.dart';
 import '../recording/polyphonic_frame_analyzer.dart';
 import 'note_event_tracker.dart';
 
@@ -21,6 +22,7 @@ class PolyphonicNoteTracker {
   PolyphonicFrameAnalyzer? _analyzer;
   int? _sampleRate;
   final Float32List _buffer = Float32List(8192);
+  final Float32List _halfRateBuffer = Float32List(4096);
   int _received = 0;
   int _samplesSinceAnalysis = 0;
   Duration? _lastAt;
@@ -79,7 +81,7 @@ class PolyphonicNoteTracker {
     final quiet = math.sqrt(sum / 2048) < minimumRms;
     final levels = quiet
         ? Float64List(_analyzer!.maxMidi - _analyzer!.minMidi + 1)
-        : _analyzer!.analyze(_buffer, _buffer.length ~/ 2);
+        : _analyzeWindow();
     final events = <NoteEvent>[];
 
     for (var i = 0; i < levels.length; i++) {
@@ -109,6 +111,23 @@ class PolyphonicNoteTracker {
       }
     }
     return events;
+  }
+
+  Float64List _analyzeWindow() {
+    final analyzer = _analyzer!;
+    if (analyzer.decimation == 1) {
+      return analyzer.analyze(_buffer, _buffer.length ~/ 2);
+    }
+    // The FFT is shared with file transcription: never feed original-rate
+    // PCM into its half-rate bins or fold high harmonics into lower pitches.
+    // Keep this buffer reusable; live capture has no full-file preprocessing.
+    AntiAliasDecimator.processRange(
+      _buffer,
+      _halfRateBuffer,
+      0,
+      _halfRateBuffer.length,
+    );
+    return analyzer.analyze(_halfRateBuffer, _halfRateBuffer.length ~/ 2);
   }
 
   void reset() {

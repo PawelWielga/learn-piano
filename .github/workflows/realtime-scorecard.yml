@@ -6,6 +6,7 @@ on:
     paths:
       - 'app/lib/src/pitch/**'
       - 'app/lib/src/recording/polyphonic_frame_analyzer.dart'
+      - 'app/lib/src/audio/anti_alias_decimator.dart'
       - 'app/test/pitch/**'
       - 'app/tool/note_matching.dart'
       - 'scripts/realtime_scorecard_summary.py'
@@ -15,6 +16,7 @@ on:
     paths:
       - 'app/lib/src/pitch/**'
       - 'app/lib/src/recording/polyphonic_frame_analyzer.dart'
+      - 'app/lib/src/audio/anti_alias_decimator.dart'
       - 'app/test/pitch/**'
       - 'app/tool/note_matching.dart'
       - 'scripts/realtime_scorecard_summary.py'

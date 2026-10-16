@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../audio/audio_file_picker.dart';
 import '../pitch/detection_preferences.dart';
+import '../audio/anti_alias_decimator.dart';
 import 'note_recorder.dart';
 import 'polyphonic_frame_analyzer.dart';
 
@@ -33,6 +34,40 @@ class Mp3NoteTranscriber {
       sensitivity: mode == Mp3TranscriptionMode.accurate ? 0.17 : 0.24,
       maxVoices: mode == Mp3TranscriptionMode.accurate ? 8 : 5,
     );
+    // Prepare a filtered half-rate PCM buffer exactly once, not once per
+    // window. Raw audio still drives the energy gate and the source timeline.
+    // Chunked preprocessing yields to the UI and honors cancellation.
+    final downsampled = analyzer.decimation == 2;
+    final analysisSamples = downsampled
+        ? Float32List(AntiAliasDecimator.outputLength(audio.samples.length))
+        : audio.samples;
+    if (downsampled) {
+      const chunkSize = 8192;
+      for (var from = 0; from < analysisSamples.length; from += chunkSize) {
+        if (isCancelled?.call() ?? false) {
+          throw const Mp3TranscriptionCancelled();
+        }
+        final to = math.min(from + chunkSize, analysisSamples.length);
+        // Invalid PCM must fail instead of being hidden by the FIR.
+        for (
+          var i = from * 2;
+          i < math.min(to * 2, audio.samples.length);
+          i++
+        ) {
+          if (!audio.samples[i].isFinite) {
+            throw const FormatException('Niepoprawne próbki audio.');
+          }
+        }
+        AntiAliasDecimator.processRange(
+          audio.samples,
+          analysisSamples,
+          from,
+          to,
+        );
+        onProgress?.call(0.1 * to / analysisSamples.length);
+        await Future<void>.delayed(Duration.zero);
+      }
+    }
     // 23ms (accurate) / 46ms (fast), instead of the previous 130ms.
     final hop = math.max(
       1,
@@ -104,7 +139,7 @@ class Mp3NoteTranscriber {
       }
       final audible = count > 0 && math.sqrt(energy / count) >= gate;
       final levels = audible
-          ? analyzer.analyze(audio.samples, center)
+          ? analyzer.analyze(analysisSamples, center ~/ analyzer.decimation)
           : Float64List(tracks.length);
 
       for (var i = 0; i < tracks.length; i++) {
@@ -153,7 +188,8 @@ class Mp3NoteTranscriber {
         break;
       }
       if (center ~/ hop % 6 == 0) {
-        onProgress?.call((center / lastCenter).clamp(0.0, 1.0));
+        final fraction = (center / lastCenter).clamp(0.0, 1.0);
+        onProgress?.call(downsampled ? 0.1 + 0.9 * fraction : fraction);
         await Future<void>.delayed(Duration.zero);
       }
     }
