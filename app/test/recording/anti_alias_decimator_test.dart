@@ -42,37 +42,50 @@ DecodedAudioFile harmonicFixture(int rate, List<RecordedNote> notes) {
     for (var i = start; i < stop; i++) {
       final elapsed = (i - start) / rate;
       final remaining = (stop - i) / rate;
-      final envelope = math.min(1.0, math.min(elapsed / 0.012, remaining / 0.018));
+      final envelope = math.min(
+        1.0,
+        math.min(elapsed / 0.012, remaining / 0.018),
+      );
       final phase = 2 * math.pi * hertz * elapsed;
-      samples[i] += 0.25 * envelope *
-          (math.sin(phase) + 0.18 * math.sin(2 * phase) +
+      samples[i] +=
+          0.25 *
+          envelope *
+          (math.sin(phase) +
+              0.18 * math.sin(2 * phase) +
               0.08 * math.sin(3 * phase));
     }
   }
-  return DecodedAudioFile(name: 'synthetic.wav', samples: samples, sampleRate: rate);
+  return DecodedAudioFile(
+    name: 'synthetic.wav',
+    samples: samples,
+    sampleRate: rate,
+  );
 }
 
 void main() {
   for (final rate in <int>[44100, 48000]) {
-    test('downsampling at $rate Hz suppresses folded high-frequency aliases', () {
-      // Above the new Nyquist frequency; naive stride-2 would fold it down.
-      final input = sine(rate, rate == 44100 ? 15000 : 16000);
-      final naive = Float32List.fromList(
-        List<double>.generate(
-          AntiAliasDecimator.outputLength(input.length),
-          (i) => input[2 * i],
-        ),
-      );
-      final filtered = AntiAliasDecimator.decimate(input);
-      final unfilteredRms = rms(naive);
-      final filteredRms = rms(filtered);
-      expect(unfilteredRms, greaterThan(0.40));
-      expect(
-        filteredRms / unfilteredRms,
-        lessThan(0.02),
-        reason: 'Aliases must be attenuated by more than 34 dB.',
-      );
-    });
+    test(
+      'downsampling at $rate Hz suppresses folded high-frequency aliases',
+      () {
+        // Above the new Nyquist frequency; naive stride-2 would fold it down.
+        final input = sine(rate, rate == 44100 ? 15000 : 16000);
+        final naive = Float32List.fromList(
+          List<double>.generate(
+            AntiAliasDecimator.outputLength(input.length),
+            (i) => input[2 * i],
+          ),
+        );
+        final filtered = AntiAliasDecimator.decimate(input);
+        final unfilteredRms = rms(naive);
+        final filteredRms = rms(filtered);
+        expect(unfilteredRms, greaterThan(0.40));
+        expect(
+          filteredRms / unfilteredRms,
+          lessThan(0.02),
+          reason: 'Aliases must be attenuated by more than 34 dB.',
+        );
+      },
+    );
 
     test('downsampling at $rate Hz preserves piano frequencies', () {
       for (final hz in <double>[65.406, 261.626, 1046.502, 2093.005]) {
@@ -94,11 +107,14 @@ void main() {
       for (final expected in reference) {
         expect(
           result.notes.any(
-            (actual) => actual.midiNote == expected.midiNote &&
+            (actual) =>
+                actual.midiNote == expected.midiNote &&
                 (actual.start - expected.start).inMilliseconds.abs() <= 130 &&
                 ((actual.start + actual.duration) -
-                        (expected.start + expected.duration))
-                    .inMilliseconds.abs() <= 160,
+                            (expected.start + expected.duration))
+                        .inMilliseconds
+                        .abs() <=
+                    160,
           ),
           isTrue,
           reason: 'Missing MIDI ${expected.midiNote} at $rate Hz',
@@ -114,13 +130,21 @@ void main() {
     final chunked = Float32List(AntiAliasDecimator.outputLength(input.length));
     for (var from = 0; from < chunked.length; from += 997) {
       AntiAliasDecimator.processRange(
-        input, chunked, from, math.min(chunked.length, from + 997),
+        input,
+        chunked,
+        from,
+        math.min(chunked.length, from + 997),
       );
     }
     expect(chunked, orderedEquals(expected));
     expect(input, orderedEquals(original));
     expect(
-      () => AntiAliasDecimator.processRange(input, chunked, 2, chunked.length + 1),
+      () => AntiAliasDecimator.processRange(
+        input,
+        chunked,
+        2,
+        chunked.length + 1,
+      ),
       throwsRangeError,
     );
   });
