@@ -12,6 +12,13 @@ their original rate and samples. The original PCM still feeds the onset RMS
 gate and duration timestamps: the analyzer works on the filtered buffer with
 the original center index divided by two. The source file is never modified.
 
+The same spectral analyzer also powers the experimental realtime chord tracker.
+Its reusable 8192-sample microphone buffer is low-pass filtered into a reusable
+4096-sample analysis buffer before each FFT. This avoids silently treating raw
+48 kHz samples as if they were already at 24 kHz, which would shift recognized
+pitches by an octave. The existing synthetic realtime scorecard and chord tests
+must pass as well as the MP3 tests.
+
 The FIR output is computed once for the entire imported file rather than once
 per FFT window. It is processed in bounded chunks, yielding between chunks to
 keep cancellation and progress responsive. This is a targeted safety fix for
