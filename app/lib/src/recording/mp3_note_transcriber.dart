@@ -49,7 +49,11 @@ class Mp3NoteTranscriber {
         }
         final to = math.min(from + chunkSize, analysisSamples.length);
         // Invalid PCM must fail instead of being hidden by the FIR.
-        for (var i = from * 2; i < math.min(to * 2, audio.samples.length); i++) {
+        for (
+          var i = from * 2;
+          i < math.min(to * 2, audio.samples.length);
+          i++
+        ) {
           if (!audio.samples[i].isFinite) {
             throw const FormatException('Niepoprawne próbki audio.');
           }
@@ -135,10 +139,7 @@ class Mp3NoteTranscriber {
       }
       final audible = count > 0 && math.sqrt(energy / count) >= gate;
       final levels = audible
-          ? analyzer.analyze(
-              analysisSamples,
-              center ~/ analyzer.decimation,
-            )
+          ? analyzer.analyze(analysisSamples, center ~/ analyzer.decimation)
           : Float64List(tracks.length);
 
       for (var i = 0; i < tracks.length; i++) {
@@ -188,9 +189,7 @@ class Mp3NoteTranscriber {
       }
       if (center ~/ hop % 6 == 0) {
         final fraction = (center / lastCenter).clamp(0.0, 1.0);
-        onProgress?.call(
-          downsampled ? 0.1 + 0.9 * fraction : fraction,
-        );
+        onProgress?.call(downsampled ? 0.1 + 0.9 * fraction : fraction);
         await Future<void>.delayed(Duration.zero);
       }
     }
