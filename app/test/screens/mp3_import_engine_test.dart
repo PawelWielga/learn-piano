@@ -80,19 +80,19 @@ TranscriptionResult _result({bool bends = false}) => TranscriptionResult(
   limitations: const ['Wynik syntetyczny, tylko do testu.'],
 );
 
-Future<void> _launch(WidgetTester tester, _Picker picker,
-    _ControllableEngine engine, _Exporter exporter) async {
+Future<void> _launch(
+  WidgetTester tester,
+  _Picker picker,
+  _ControllableEngine engine,
+  _Exporter exporter,
+) async {
   tester.view.physicalSize = const Size(1100, 1100);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
     MaterialApp(
-      home: Mp3ImportScreen(
-        picker: picker,
-        exporter: exporter,
-        engine: engine,
-      ),
+      home: Mp3ImportScreen(picker: picker, exporter: exporter, engine: engine),
     ),
   );
   await tester.tap(find.byKey(const Key('mp3-select')));
@@ -100,60 +100,67 @@ Future<void> _launch(WidgetTester tester, _Picker picker,
 }
 
 void main() {
-  testWidgets('fake engine controls progress and MIDI export without UI edits',
-      (tester) async {
-    final picker = _Picker();
-    final engine = _ControllableEngine();
-    final exporter = _Exporter();
-    await _launch(tester, picker, engine, exporter);
-    expect(engine.calls, 1);
-    expect(picker.picks, 1);
-    expect(engine.receivedOptions!.mode, TranscriptionMode.accurate);
+  testWidgets(
+    'fake engine controls progress and MIDI export without UI edits',
+    (tester) async {
+      final picker = _Picker();
+      final engine = _ControllableEngine();
+      final exporter = _Exporter();
+      await _launch(tester, picker, engine, exporter);
+      expect(engine.calls, 1);
+      expect(picker.picks, 1);
+      expect(engine.receivedOptions!.mode, TranscriptionMode.accurate);
 
-    engine.progress?.call(0.53);
-    await tester.pump();
-    expect(find.text('Analiza: 53%'), findsOneWidget);
-    engine.progress?.call(double.nan);
-    await tester.pump();
-    expect(find.text('Analiza: 53%'), findsOneWidget);
+      engine.progress?.call(0.53);
+      await tester.pump();
+      expect(find.text('Analiza: 53%'), findsOneWidget);
+      engine.progress?.call(double.nan);
+      await tester.pump();
+      expect(find.text('Analiza: 53%'), findsOneWidget);
 
-    engine.completer.complete(_result(bends: true));
-    await tester.pumpAndSettle();
-    expect(find.text('Rozpoznane nuty: 2'), findsOneWidget);
-    expect(find.text('Silnik: fake-model-v1'), findsOneWidget);
-    expect(find.text('Wynik syntetyczny, tylko do testu.'), findsOneWidget);
-    expect(find.byKey(const Key('mp3-pitch-bend-warning')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('mp3-save')));
-    await tester.pump();
-    final parsed = const MidiParser().parse(exporter.saved!);
-    expect(parsed.noteCount, 2);
-    expect(parsed.tracks.single.notes.map((n) => n.midiNote), [60, 64]);
-  });
+      engine.completer.complete(_result(bends: true));
+      await tester.pumpAndSettle();
+      expect(find.text('Rozpoznane nuty: 2'), findsOneWidget);
+      expect(find.text('Silnik: fake-model-v1'), findsOneWidget);
+      expect(find.text('Wynik syntetyczny, tylko do testu.'), findsOneWidget);
+      expect(find.byKey(const Key('mp3-pitch-bend-warning')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('mp3-save')));
+      await tester.pump();
+      final parsed = const MidiParser().parse(exporter.saved!);
+      expect(parsed.noteCount, 2);
+      expect(parsed.tracks.single.notes.map((n) => n.midiNote), [60, 64]);
+    },
+  );
 
-  testWidgets('cancel rejects late progress and result even if engine ignores it',
-      (tester) async {
-    final picker = _Picker();
-    final engine = _ControllableEngine();
-    final exporter = _Exporter();
-    await _launch(tester, picker, engine, exporter);
-    expect(engine.cancelled?.call(), false);
-    await tester.tap(find.byKey(const Key('mp3-cancel')));
-    await tester.pump();
-    expect(engine.cancelled?.call(), true);
-    engine.progress?.call(1);
-    engine.completer.complete(_result());
-    await tester.pumpAndSettle();
-    expect(find.text('Rozpoznane nuty: 0'), findsOneWidget);
-    expect(find.text('Analiza anulowana.'), findsOneWidget);
-    expect(exporter.saved, isNull);
-    expect(
-      tester.widget<OutlinedButton>(find.byKey(const Key('mp3-save'))).onPressed,
-      isNull,
-    );
-  });
+  testWidgets(
+    'cancel rejects late progress and result even if engine ignores it',
+    (tester) async {
+      final picker = _Picker();
+      final engine = _ControllableEngine();
+      final exporter = _Exporter();
+      await _launch(tester, picker, engine, exporter);
+      expect(engine.cancelled?.call(), false);
+      await tester.tap(find.byKey(const Key('mp3-cancel')));
+      await tester.pump();
+      expect(engine.cancelled?.call(), true);
+      engine.progress?.call(1);
+      engine.completer.complete(_result());
+      await tester.pumpAndSettle();
+      expect(find.text('Rozpoznane nuty: 0'), findsOneWidget);
+      expect(find.text('Analiza anulowana.'), findsOneWidget);
+      expect(exporter.saved, isNull);
+      expect(
+        tester
+            .widget<OutlinedButton>(find.byKey(const Key('mp3-save')))
+            .onPressed,
+        isNull,
+      );
+    },
+  );
 
-  testWidgets('invalid engine output is not exported and shows an error',
-      (tester) async {
+  testWidgets('invalid engine output is not exported and shows an error', (
+    tester,
+  ) async {
     final picker = _Picker();
     final engine = _ControllableEngine();
     final exporter = _Exporter();
@@ -177,8 +184,9 @@ void main() {
     expect(exporter.saved, isNull);
   });
 
-  testWidgets('disposed screen ignores late callbacks and completed results',
-      (tester) async {
+  testWidgets('disposed screen ignores late callbacks and completed results', (
+    tester,
+  ) async {
     final picker = _Picker();
     final engine = _ControllableEngine();
     final exporter = _Exporter();
