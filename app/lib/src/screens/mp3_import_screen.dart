@@ -119,16 +119,10 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
       });
       final result = await _engine.transcribe(
         audio,
-        options: TranscriptionOptions(
-          preferences: _preferences,
-          mode: _mode,
-        ),
+        options: TranscriptionOptions(preferences: _preferences, mode: _mode),
         isCancelled: () => !mounted || request != _request,
         onProgress: (progress) {
-          if (mounted &&
-              request == _request &&
-              progress.isFinite &&
-              _busy) {
+          if (mounted && request == _request && progress.isFinite && _busy) {
             setState(() => _progress = progress.clamp(0.0, 1.0));
           }
         },
@@ -241,9 +235,8 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                       selected: _mode == TranscriptionMode.fast,
                       onSelected: _busy
                           ? null
-                          : (_) => setState(
-                              () => _mode = TranscriptionMode.fast,
-                            ),
+                          : (_) =>
+                                setState(() => _mode = TranscriptionMode.fast),
                     ),
                     ChoiceChip(
                       key: const Key('mp3-mode-accurate'),
@@ -317,10 +310,8 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                   key: const Key('mp3-note-count'),
                   style: theme.textTheme.titleMedium,
                 ),
-                if (_engineId != null)
-                  Text('Silnik: $_engineId'),
-                for (final limitation in _limitations)
-                  Text(limitation),
+                if (_engineId != null) Text('Silnik: $_engineId'),
+                for (final limitation in _limitations) Text(limitation),
                 if (_hasPitchBends)
                   const Text(
                     'Uwaga: eksport MIDI nie zapisuje odstrojeń '
@@ -334,7 +325,9 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                     key: const Key('mp3-note-range'),
                   ),
                 if (_truncated)
-                  const Text('Wynik jest niepełny: silnik osiągnął swój limit nut.'),
+                  const Text(
+                    'Wynik jest niepełny: silnik osiągnął swój limit nut.',
+                  ),
                 if (_error != null) ...[
                   const SizedBox(height: 8),
                   Text(
