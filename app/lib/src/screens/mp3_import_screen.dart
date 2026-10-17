@@ -10,7 +10,8 @@ import '../pitch/pitch_detector.dart';
 import '../recording/midi_recording_export.dart';
 import '../recording/midi_recording_export_factory.dart';
 import '../recording/midi_recording_writer.dart';
-import '../recording/mp3_note_transcriber.dart';
+import '../transcription/transcription_engine.dart';
+import '../transcription/transcription_engine_factory.dart';
 import '../recording/note_recorder.dart';
 
 /// Local-only multi-pitch MP3 transcription. No microphone or cloud service.
@@ -20,13 +21,13 @@ class Mp3ImportScreen extends StatefulWidget {
     this.picker,
     this.exporter,
     this.detectionPreferences,
-    this.transcriber = const Mp3NoteTranscriber(),
+    this.engine,
   });
 
   final AudioFilePicker? picker;
   final MidiRecordingExporter? exporter;
   final DetectionPreferences? detectionPreferences;
-  final Mp3NoteTranscriber transcriber;
+  final TranscriptionEngine? engine;
 
   @override
   State<Mp3ImportScreen> createState() => _Mp3ImportScreenState();
@@ -34,6 +35,7 @@ class Mp3ImportScreen extends StatefulWidget {
 
 class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
   late final AudioFilePicker _picker;
+  late final TranscriptionEngine _engine;
   late final MidiRecordingExporter _exporter;
   late final DetectionPreferences _preferences;
   List<RecordedNote> _notes = const [];
@@ -46,13 +48,17 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
   bool _pickerReady = true;
   bool _pickerLoading = false;
   bool _truncated = false;
-  Mp3TranscriptionMode _mode = Mp3TranscriptionMode.accurate;
+  bool _hasPitchBends = false;
+  String? _engineId;
+  List<String> _limitations = const [];
+  TranscriptionMode _mode = TranscriptionMode.accurate;
   int _request = 0;
 
   @override
   void initState() {
     super.initState();
     _picker = widget.picker ?? createAudioFilePicker();
+    _engine = widget.engine ?? createTranscriptionEngine();
     _exporter = widget.exporter ?? createMidiRecordingExporter();
     if (_picker is PreparableAudioFilePicker) {
       _pickerReady = false;
@@ -107,30 +113,37 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
         _filename = audio.name;
         _duration = audio.duration;
         _truncated = false;
+        _hasPitchBends = false;
+        _engineId = null;
+        _limitations = const [];
       });
-      final result = await widget.transcriber.transcribe(
+      final result = await _engine.transcribe(
         audio,
-        preferences: _preferences,
-        mode: _mode,
+        options: TranscriptionOptions(preferences: _preferences, mode: _mode),
         isCancelled: () => !mounted || request != _request,
         onProgress: (progress) {
-          if (mounted && request == _request) {
-            setState(() => _progress = progress);
+          if (mounted && request == _request && progress.isFinite && _busy) {
+            setState(() => _progress = progress.clamp(0.0, 1.0));
           }
         },
       );
       if (!mounted || request != _request) return;
+      final normalized = result.toRecordedNotes();
+      if (!mounted || request != _request) return;
       setState(() {
-        _notes = result.notes;
+        _notes = normalized;
         _duration = result.duration;
         _truncated = result.truncated;
-        _message = result.notes.isEmpty
+        _hasPitchBends = result.hasPitchBends;
+        _engineId = result.engineId;
+        _limitations = List<String>.unmodifiable(result.limitations);
+        _message = normalized.isEmpty
             ? 'Nie wykryto nut. Spróbuj dokładnej analizy lub zwiększ '
                   'czułość w ustawieniach.'
-            : 'Rozpoznano ${result.notes.length} nut, także współbrzmienia. '
+            : 'Rozpoznano ${normalized.length} nut. '
                   'Sprawdź wynik odsłuchem po imporcie MIDI.';
       });
-    } on Mp3TranscriptionCancelled {
+    } on TranscriptionCancelled {
       // Leaving this screen invalidates the work. Do not retain PCM.
     } on AudioFilePickException catch (exception) {
       if (mounted && request == _request) {
@@ -206,10 +219,10 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Limit: 12 MB i 90 sekund. Analiza spektralna wspiera '
-                  'wielogłosowość, ale gęste akordy, perkusja, pogłos '
-                  'i wspólne harmoniczne mogą wprowadzać błędy. '
-                  'Czasy naciśnięć i zwolnień są szacowane.',
+                  'Limit: 12 MB i 90 sekund. Rozpoznawanie nut jest '
+                  'przybliżone, szczególnie przy gęstych akordach, '
+                  'perkusji i pogłosie. Czasy naciśnięć i zwolnień '
+                  'są szacowane.',
                 ),
                 const SizedBox(height: 12),
                 Wrap(
@@ -219,21 +232,20 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                     ChoiceChip(
                       key: const Key('mp3-mode-fast'),
                       label: const Text('Szybka'),
-                      selected: _mode == Mp3TranscriptionMode.fast,
+                      selected: _mode == TranscriptionMode.fast,
                       onSelected: _busy
                           ? null
-                          : (_) => setState(
-                              () => _mode = Mp3TranscriptionMode.fast,
-                            ),
+                          : (_) =>
+                                setState(() => _mode = TranscriptionMode.fast),
                     ),
                     ChoiceChip(
                       key: const Key('mp3-mode-accurate'),
                       label: const Text('Dokładna (wielogłosowa)'),
-                      selected: _mode == Mp3TranscriptionMode.accurate,
+                      selected: _mode == TranscriptionMode.accurate,
                       onSelected: _busy
                           ? null
                           : (_) => setState(
-                              () => _mode = Mp3TranscriptionMode.accurate,
+                              () => _mode = TranscriptionMode.accurate,
                             ),
                     ),
                   ],
@@ -298,10 +310,14 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                   key: const Key('mp3-note-count'),
                   style: theme.textTheme.titleMedium,
                 ),
-                const Text(
-                  'Obsługa wielogłosowości: do 8 jednoczesnych '
-                  'kandydatów w trybie dokładnym. Wynik przybliżony.',
-                ),
+                if (_engineId != null) Text('Silnik: $_engineId'),
+                for (final limitation in _limitations) Text(limitation),
+                if (_hasPitchBends)
+                  const Text(
+                    'Uwaga: eksport MIDI nie zapisuje odstrojeń '
+                    'wysokości (pitch bends).',
+                    key: Key('mp3-pitch-bend-warning'),
+                  ),
                 if (_notes.isNotEmpty)
                   Text(
                     'Zakres: ${PitchEstimate.nameForMidi(_notes.map((n) => n.midiNote).reduce((a, b) => a < b ? a : b))}'
@@ -309,7 +325,9 @@ class _Mp3ImportScreenState extends State<Mp3ImportScreen> {
                     key: const Key('mp3-note-range'),
                   ),
                 if (_truncated)
-                  const Text('Osiągnięto limit 8192 nut. Wynik jest niepełny.'),
+                  const Text(
+                    'Wynik jest niepełny: silnik osiągnął swój limit nut.',
+                  ),
                 if (_error != null) ...[
                   const SizedBox(height: 8),
                   Text(

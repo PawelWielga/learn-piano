@@ -6,6 +6,7 @@ on:
     paths:
       - 'benchmarks/mp3-to-midi/**'
       - 'app/lib/src/recording/mp3_note_transcriber.dart'
+      - 'app/lib/src/transcription/**'
       - 'app/lib/src/recording/polyphonic_frame_analyzer.dart'
       - 'app/lib/src/audio/anti_alias_decimator.dart'
       - 'app/test/recording/anti_alias_decimator_test.dart'
@@ -18,6 +19,7 @@ on:
     paths:
       - 'benchmarks/mp3-to-midi/**'
       - 'app/lib/src/recording/mp3_note_transcriber.dart'
+      - 'app/lib/src/transcription/**'
       - 'app/lib/src/recording/polyphonic_frame_analyzer.dart'
       - 'app/tool/mp3_benchmark.dart'
       - 'app/tool/note_matching.dart'
