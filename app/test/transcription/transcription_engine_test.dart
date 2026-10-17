@@ -39,10 +39,7 @@ void main() {
     expect(normalized.map((n) => n.midiNote), [60, 64, 72, 60]);
     expect(normalized[0].start, normalized[1].start);
     expect(normalized[0].duration, const Duration(milliseconds: 800));
-    expect(
-      () => normalized.add(normalized.first),
-      throwsUnsupportedError,
-    );
+    expect(() => normalized.add(normalized.first), throwsUnsupportedError);
 
     final midi = const MidiParser().parse(
       const MidiRecordingWriter().write(normalized),
@@ -67,18 +64,23 @@ void main() {
       note(60, 100, 200, confidence: double.nan),
       note(60, 100, 200, confidence: -0.1),
       note(60, 100, 200, confidence: 1.1),
-      note(60, 100, 200, bends: [
-        const NotePitchBend(at: Duration(milliseconds: 120), cents: 20),
-      ]),
-      note(60, 100, 200, bends: [
-        const NotePitchBend(at: Duration.zero, cents: double.infinity),
-      ]),
+      note(
+        60,
+        100,
+        200,
+        bends: [
+          const NotePitchBend(at: Duration(milliseconds: 120), cents: 20),
+        ],
+      ),
+      note(
+        60,
+        100,
+        200,
+        bends: [const NotePitchBend(at: Duration.zero, cents: double.infinity)],
+      ),
     ];
     for (final bad in invalid) {
-      expect(
-        () => result([bad]).toRecordedNotes(),
-        throwsFormatException,
-      );
+      expect(() => result([bad]).toRecordedNotes(), throwsFormatException);
     }
     expect(
       () => const TranscriptionResult(
@@ -114,39 +116,42 @@ void main() {
     expect(output.toRecordedNotes().single.midiNote, 69);
   });
 
-  test('legacy adapter preserves DSP output without calibration claims', () async {
-    const rate = 24000;
-    final audio = DecodedAudioFile(
-      name: 'silence.wav',
-      samples: Float32List(rate),
-      sampleRate: rate,
-    );
-    const engine = LegacyDspTranscriptionEngine();
-    final progress = <double>[];
-    final outcome = await engine.transcribe(audio, onProgress: progress.add);
-    expect(outcome.engineId, engine.engineId);
-    expect(outcome.notes, isEmpty);
-    expect(outcome.toRecordedNotes(), isEmpty);
-    expect(outcome.limitations, isNotEmpty);
-    expect(progress.last, 1);
-    expect(
-      () => outcome.notes.add(note(60, 1, 2)),
-      throwsUnsupportedError,
-    );
-  });
+  test(
+    'legacy adapter preserves DSP output without calibration claims',
+    () async {
+      const rate = 24000;
+      final audio = DecodedAudioFile(
+        name: 'silence.wav',
+        samples: Float32List(rate),
+        sampleRate: rate,
+      );
+      const engine = LegacyDspTranscriptionEngine();
+      final progress = <double>[];
+      final outcome = await engine.transcribe(audio, onProgress: progress.add);
+      expect(outcome.engineId, engine.engineId);
+      expect(outcome.notes, isEmpty);
+      expect(outcome.toRecordedNotes(), isEmpty);
+      expect(outcome.limitations, isNotEmpty);
+      expect(progress.last, 1);
+      expect(() => outcome.notes.add(note(60, 1, 2)), throwsUnsupportedError);
+    },
+  );
 
-  test('legacy adapter translates cancellation to the common exception', () async {
-    final audio = DecodedAudioFile(
-      name: 'cancel.wav',
-      samples: Float32List(24000),
-      sampleRate: 24000,
-    );
-    await expectLater(
-      const LegacyDspTranscriptionEngine().transcribe(
-        audio,
-        isCancelled: () => true,
-      ),
-      throwsA(isA<TranscriptionCancelled>()),
-    );
-  });
+  test(
+    'legacy adapter translates cancellation to the common exception',
+    () async {
+      final audio = DecodedAudioFile(
+        name: 'cancel.wav',
+        samples: Float32List(24000),
+        sampleRate: 24000,
+      );
+      await expectLater(
+        const LegacyDspTranscriptionEngine().transcribe(
+          audio,
+          isCancelled: () => true,
+        ),
+        throwsA(isA<TranscriptionCancelled>()),
+      );
+    },
+  );
 }
